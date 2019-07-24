@@ -1,0 +1,154 @@
+<div id="mmproperty_sidebar">
+  <div id="propertySidebarCurrentContent"></div>
+  <div id="propertySidebarTemplates">
+    <!-- model -->
+    <div id = "mmodelTemplate" class="template">
+      <div class = "attributeMinimizer minimizer"></div>
+      <div class="">
+        <div class="modelContent content">
+          <label>URI:
+            <input class = "uri">
+          </label>
+          <label>Namespace:
+            <input class = "namespace">
+          </label>
+          <label>Name:
+            <input class = "modelName" placeholder = "nameless">
+          </label>
+          <label>Packages:</label>
+          <div class = "packageList"></div>
+        </div>
+      </div>
+    </div>
+    <div id = "modelTemplate" class="template">
+      <div class = "attributeMinimizer minimizer"></div>
+      <div class="">
+        <div class="modelContent content">
+          <label>URI:
+            <input class = "uri" disabled>
+          </label>
+          <label>Namespace:
+            <input class = "namespace" disabled>
+          </label>
+          <label>Name:
+            <input class = "modelName" placeholder = "nameless">
+          </label>
+          <label>Packages:</label>
+          <div class = "packageList"></div>
+        </div>
+      </div>
+    </div>
+    <!-- package -->
+    <div id = "packageTemplate" class="template">
+      <div class = "attributeMinimizer minimizer"></div>
+      <div class="">
+        <div class="packageContent content">
+          <label>Name:
+            <input class = "packageName">
+          </label>
+          <label>Classes:</label>
+          <div class = "classList"></div>
+        </div>
+      </div>
+    </div>
+    <div id = "mpackageTemplate" class="template">
+      <div class = "attributeMinimizer minimizer"></div>
+      <div class="">
+        <div class="packageContent content">
+          <!-- <label>Name:<input class = "packageName"></label> -->
+          <label>Classes:</label>
+          <div class = "classList"></div>
+        </div>
+      </div>
+    </div>
+    <!-- class -->
+    <div id = "classTemplate" class="template">
+      <div class = "attributeMinimizer minimizer"></div>
+      <div class="">
+        <div class="classContent content">
+          <label>Name:
+            <input class = "className">
+          </label>
+          <label>Fields:</label>
+          <div class = "attributeList"></div>
+          <label>References:</label>
+          <div class = "referenceList"></div>
+        </div>
+      </div>
+    </div>
+    <div id = "mclassTemplate" class="template">
+      <div class = "attributeMinimizer minimizer"></div>
+      <div class="">
+        <div class="classContent content">
+          <label>Is Root<input type="checkbox" class="isRoot"></label>
+          <label>Class:
+            <input class = "className">
+          </label>
+          <label>Fields:</label>
+          <div class = "attributeList"></div>
+          <label>References:</label>
+          <div class = "referenceList"></div>
+        </div>
+      </div>
+    </div>
+    <!-- attribute -->
+    <div id = "attributeTemplate" class="template">
+      <div class = "attributeMinimizer minimizer"></div>
+      <div class="">
+        <div class="attributeContent content">
+          <label>Type:
+            <select class = "attributeType"></select>
+          </label>
+          <label>Name:
+            <input class = "attributeName">
+          </label>
+        </div>
+      </div>
+    </div>
+    <div id = "mattributeTemplate" class="template model attribute">
+      <div class = "attributeMinimizer minimizer"></div>
+      <div>
+        <div class = "content">
+          <label>Name:
+            <input type="text" class = "attributeName">
+          </label>
+          <label>Type:
+            <select class = "attributeType"></select>
+          </label>
+          <label>Value:
+            <input type="text" class = "attributeValue">
+          </label>
+        </div>
+      </div>
+    </div>
+    <!-- reference -->
+    <div id = "referenceTemplate" class="template metamodel reference">
+      <div class = "attributeMinimizer minimizer"></div>
+      <div class="">
+        <div class="content">
+          <label>Target Type:
+            <select class = "referenceType"></select>
+          </label>
+          <label>Name:
+            <input class = "referenceName">
+          </label>
+          <label>Is containment:
+            <input type="checkbox" class="referenceContainment">
+          </label>
+          <label>LowerBound:
+            <input type="number" class="referenceLowerBound">
+          </label>
+          <label>UpperBound:
+            <input type="number" class="referenceUpperBound">
+          </label>
+        </div>
+      </div>
+    </div>
+    <div id = "mreferenceTemplate" class="template model reference">
+      <div class = "attributeMinimizer minimizer"></div>
+      <div>
+        <div class = "content">Nothing editable here.</div>
+      </div>
+    </div>
+  </div>
+</div>

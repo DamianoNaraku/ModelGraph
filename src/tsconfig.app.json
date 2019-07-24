@@ -2,7 +2,8 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "outDir": "../out-tsc/app",
-    "types": []
+    "allowSyntheticDefaultImports": true, // my add
+    "types": ["node"] // node is my add, was empty.
   },
   "exclude": [
     "test.ts",
