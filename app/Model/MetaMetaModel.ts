@@ -1,4 +1,4 @@
-import {AttribETypes, Dictionary, IModel, Json, Status, U} from '../common/Joiner';
+import {AttribETypes, Dictionary, IAttribute, IModel, Json, ModelPiece, Status, U} from '../common/Joiner';
 import {ShortAttribETypes} from '../common/util';
 
 export class EType {
@@ -57,6 +57,20 @@ export class EType {
     const $selectors = $('select.TypeSelector');
     let i = 0;
     while (i < $selectors.length) { EType.updateTypeSelector($selectors[i++] as HTMLSelectElement); }
+  }
+
+  static fixPrimitiveTypeSelectors(root: Element = null): void {
+    if (!root) { root = document.body; }
+    const $selectors = $(root).find('select.TypeSelector');
+    // const selectors: HTMLSelectElement[] = $selectors[0];
+    let i = -1;
+    while (++i < $selectors.length) {
+      const select: HTMLSelectElement = $selectors[i] as HTMLSelectElement;
+      // if (select.selectedIndex !== 0 || select.options[0].getAttribute('selected')) { continue; }
+      const attr: IAttribute = ModelPiece.getLogic(select) as IAttribute;
+      if (!(attr instanceof IAttribute)) { continue; }
+      EType.updateTypeSelector(select, attr.getType());
+    }
   }
   static updateTypeSelector(selector: HTMLSelectElement, selectedType: EType = null): HTMLSelectElement {
     if (!selector) { return null; }

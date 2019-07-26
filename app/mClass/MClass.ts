@@ -112,7 +112,8 @@ export class MClass extends IClass {
       for (i = 0; i < arr[outi].length; i++) {
         const child = arr[outi][i];
         const value: Json | string = (child).generateModel();
-        const key: string = (U.isString(value) ? inlineMarker : '') + child.metaParent.name;
+        if (value === '' || value === null || value === undefined || U.isEmptyObject(value)) { continue; }
+        const key: string = (U.isPrimitive(value) ? inlineMarker : '') + child.metaParent.name;
         json[key] = value; }
     }
     return json;

@@ -147,8 +147,8 @@ export enum eCoreReference {
   xsitype = '@xsi:type', // "ecore:EReference"
   eType = '@eType', // "#//Player"
   containment = '@containment', // "true"
-  upperbound = '@upperbound', // "@1"
-  lowerbound = '@lowerbound', // does even exists?
+  upperbound = '@upperBound', // "@1"
+  lowerbound = '@lowerBound', // does even exists?
   name = '@name',
 }
 export enum eCoreAttribute {
@@ -204,6 +204,7 @@ export class U {
   private static sizeofvar = null;
   private static $sizeofvar = null;
   private static clipboardinput: HTMLInputElement = null;
+  static he = null;
 
   static clear(htmlNode: HTMLElement | SVGElement) {
     while (htmlNode.firstChild) {
@@ -231,13 +232,9 @@ export class U {
   }
 
   static pw(b: boolean, s: any, ...restArgs: any[]): string {
-    if (!b) {
-      return null;
-    }
-    if (restArgs === null || restArgs === undefined) {
-      restArgs = [];
-    }
-    console.trace();
+    if (!b) { return null; }
+    if (restArgs === null || restArgs === undefined) { restArgs = []; }
+    console['' + 'trace']();
     let str = 'Warning:' + s + '';
     console.log('pw[0/' + (restArgs.length + 1) + ']: ', s);
     for (let i = 0; i < restArgs.length; i++) {
@@ -412,7 +409,7 @@ export class U {
         U.pe(showErrors, 'requested null or undefined:', obj, ', canthrow ? ', canThrow, ', fillplath:', fullpath);
         if (canThrow) {
           U.pif(showErrors, 'wrong variable path:', debugPathOk + '.' + token, ': ' + token + ' is undefined. object = ', obj);
-          throw new DOMException('replaceVars.WrongVariablePath', 'replaceVars.WrongVariablePath');
+          throw new DOMException('replace_Vars.WrongVariablePath', 'replace_Vars.WrongVariablePath');
         } else {
           U.pif(showErrors, 'wrong variable path:', debugPathOk + '.' + token, ': ' + token + ' is undefined. ovjet = ', obj);
         }
@@ -525,9 +522,7 @@ export class U {
   static isParentOf(parent: HTMLElement | SVGElement, child: HTMLElement | SVGElement): boolean {
     //  parent chains:   element -> ... -> body -> html -> document -> null
     while (child !== null) {
-      if (parent === child) {
-        return true;
-      }
+      if (parent === child) { return true; }
       child = child.parentNode as HTMLElement | SVGElement;
     }
     return false;
@@ -639,16 +634,13 @@ export class U {
   }
 
   static isOnEdge(pt: GraphPoint, shape: GraphSize): boolean {
-    return U.isOnHorizontalEdges(pt, shape) || U.isOnVerticalEdges(pt, shape);
-  }
+    return U.isOnHorizontalEdges(pt, shape) || U.isOnVerticalEdges(pt, shape); }
 
   static isOnVerticalEdges(pt: GraphPoint, shape: GraphSize): boolean {
-    return U.isOnLeftEdge(pt, shape) || U.isOnRightEdge(pt, shape);
-  }
+    return U.isOnLeftEdge(pt, shape) || U.isOnRightEdge(pt, shape); }
 
   static isOnHorizontalEdges(pt: GraphPoint, shape: GraphSize): boolean {
-    return U.isOnTopEdge(pt, shape) || U.isOnBottomEdge(pt, shape);
-  }
+    return U.isOnTopEdge(pt, shape) || U.isOnBottomEdge(pt, shape); }
 
   static isOnRightEdge(pt: GraphPoint, shape: GraphSize): boolean {
     if (!pt || !shape) { return null; }
@@ -669,6 +661,31 @@ export class U {
     if (!pt || !shape) { return null; }
     return (pt.y === shape.y + shape.h) && (pt.x >= shape.x && pt.x <= shape.x + shape.w);
   }
+
+  static multiReplaceAll(a: string, searchText: string[] = [], replacement: string[] = []): string {
+    U.pe(!(searchText.length === replacement.length), 'search and replacement must be have same length:', searchText, replacement);
+    let i = -1;
+    while (++i < searchText.length) { a = U.replaceAll(a, searchText[i], replacement[i]); }
+    return a; }
+  static toFileName(a: string = 'nameless.txt'): string {
+    if (!a) { a = 'nameless.txt'; }
+    a = U.multiReplaceAll(a.trim(), ['\\', '//', ':', '*', '?', '<', '>', '"', '|'],
+                       ['[lslash]', '[rslash]', ';', '°', '_', '{', '}', '\'', '!']);
+    return a; }
+  static download(filename: string = 'nameless.txt', text: string = null, debug: boolean = true): void {
+    if (!text) { return; }
+    filename = U.toFileName(filename);
+    const htmla: HTMLAnchorElement = document.createElement('a');
+    const blob: Blob = new Blob([text], {type: 'text/plain', endings: 'native'});
+    const blobUrl: string = URL.createObjectURL(blob);
+    U.pif(debug, text + '|\r\n| <-- rn, |\n| <--n.');
+    htmla.style.display = 'none';
+    htmla.href = blobUrl;
+    htmla.download = filename;
+    document.body.appendChild(htmla);
+    htmla.click();
+    window.URL.revokeObjectURL(blobUrl);
+    document.body.removeChild(htmla); }
 
   /// arrotonda verso zero.
   static trunc(num: number): number {
@@ -1233,6 +1250,23 @@ export class U {
 
   static refreshPage(): void { window.location.href += ''; }
 
+
+  static isArray(v: any): boolean { return Array.isArray(v); }
+
+  static isEmptyObject(v: any): boolean { return $.isEmptyObject(v); }
+  static isObject(v: any, returnIfNull: boolean = true, returnIfUndefined: boolean = false): boolean {
+    if (v === null) { return returnIfNull; }
+    if (v === undefined) { return returnIfUndefined; }
+    return typeof v === 'object'; }
+
+  static isFunction(v: any): boolean { return (typeof v === 'function'); }
+
+  static isPrimitive(v: any, returnIfNull: boolean = true, returnIfUndefined: boolean = true): boolean {
+    if (v === null) { return returnIfNull; }
+    if (v === undefined) { return returnIfUndefined; }
+    // return (typeof v !== 'function') && (typeof v !== 'object') && (!U.isArray(v));
+    return !U.isObject(v) && !Array.isArray(v) && !U.isFunction(v); }
+
 }
 
 /**/
@@ -1715,4 +1749,27 @@ export class Size {
   tr(): Point { return new Point(this.x + this.w, this.y + 0); }
   bl(): Point { return new Point(this.x + 0,      this.y + this.h); }
   br(): Point { return new Point(this.x + this.w, this.y + this.h); }
+}
+
+
+export let FastXmi = require('fast-xml-parser');
+const he = require('he');
+(window as any).he = U.he = he;
+
+export class FastXmiOptions {
+  attributeNamePrefix = '@';
+  attrNodeName = 'attr'; // default is 'false'
+  textNodeName = '#text';
+  ignoreAttributes = true;
+  ignoreNameSpace = false;
+  allowBooleanAttributes = false;
+  parseNodeValue = true;
+  parseAttributeValue = false;
+  trimValues = false;
+  cdataTagName = '__cdata'; // default is 'false'
+  cdataPositionChar = '\\c';
+  localeRange = ''; // To support non english character in tag/attribute values.
+  parseTrueNumberOnly = false;
+  attrValueProcessor = (a => U.he.decode(a, {isAttributeValue: true})); // default is a=>a
+  tagValueProcessor = (a => U.he.decode(a)); // default is a=>a
 }

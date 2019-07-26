@@ -48,7 +48,7 @@ export class IAttribute extends ModelPiece {
     this.modify(json, true); }
 
   static GetDefaultStyle(type: ShortAttribETypes, modelRoot: IModel): HTMLElement {
-    const selector = '.' + (modelRoot === Status.status.m ? 'M' : 'MM') + 'DefaultStyles>.Attribute.Template.' + type;
+    const selector = '.' + (modelRoot === Status.status.m ? 'M' : 'MM') + 'DefaultStyles>.Attribute.Template'; // + '.' + type;
     let $template: JQuery<HTMLElement> = $(selector + '.Customized');
     if ($template.length === 0) { $template = $(selector); }
     U.pe($template.length !== 1, 'template not found? (' + $template.length + '); selector: "' + selector + '"');
@@ -206,16 +206,19 @@ export class IAttribute extends ModelPiece {
     const set = (k: string, v: any) => {
       while (info[k]) { k = '@' + k; }
       info[k] = v; };
-    const unset = (s: string) => { info[s] = undefined; };
-    const ism: boolean = this.getModelRoot().isMM();
+    const unset = (s: string) => { delete info[s]; };
+    const ism: boolean = this.getModelRoot().isM();
     set('tsClass', (ism ? '' : 'm') + 'mAttribute');
     set('type', this.getType().name);
     set('typeOriginal', this.getType().short);
     set('typeDetail', this.getType());
+    set('lowerbound', this.lowerbound);
+    set('upperbound', this.upperbound);
     if (ism) {
-      set('value', this.value);
+      set('values', this.value);
       unset('name');
-    }
+      unset('midname');
+      unset('fullname'); }
     return info; }
 
   getType(): EType { return this.type ? this.type : (this.metaParent ? (this.metaParent as IAttribute).type : null); }

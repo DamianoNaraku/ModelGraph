@@ -91,7 +91,8 @@ export abstract class ModelPiece {
 
   static getByID(id: number): ModelPiece { return ModelPiece.idToLogic[id]; }
   static LinkToLogic<T extends HTMLElement | SVGElement>(modelpiece: ModelPiece | IAttribute | IReference, html: T) {
-    U.pe(modelpiece.id === null || modelpiece.id === undefined, 'undefined id.', modelpiece);
+    if (modelpiece.id === null || modelpiece.id === undefined) { U.p('undefined id:', modelpiece); return; }
+    // U.pe(modelpiece.id === null || modelpiece.id === undefined, 'undefined id.', modelpiece);
     html.dataset.modelPieceID = '' + modelpiece.id; }
 
   /*
@@ -115,7 +116,10 @@ export abstract class ModelPiece {
     // if (!metaVersion) { metaVersion = this; }
     this.metaParent = metaVersion;
     this.instances = [];
-    if (this.metaParent) { this.metaParent.instances.push(this); this.metaParent.refreshGUI(); this.metaParent.refreshInstancesGUI(); }
+    if (this.metaParent) {
+      try { this.metaParent.instances.push(this); this.metaParent.refreshGUI(); this.metaParent.refreshInstancesGUI();
+      } catch (e) {} finally {}
+    }
     this.loadEdgeStyles();
     this.assignID(); }
 

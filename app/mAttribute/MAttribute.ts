@@ -161,11 +161,11 @@ export class MAttribute extends IAttribute {
     if ((this.metaParent as IAttribute).upperbound === 1) { ret = this.values.length ? this.values[0] : ''; }
     if (ret === '' + ret) { return '' + ret; }
     return JSON.stringify(ret); }
-  replaceVarsSetup(): void {
+  replaceVarsSetup(debug: boolean = false): void {
     const old = this.valuesStr;
-    console.log(this.values);
-    this.valuesStr = U.replaceAll(this.getValueStr(), '\n', '');
+    U.pif(debug, this.values);
+    this.valuesStr = U.replaceAll(this.getValueStr(), '\n', '', debug);
     if (this.valuesStr && this.valuesStr[0] === '[') {this.valuesStr = this.valuesStr.substr(1, this.valuesStr.length - 2); }
-    console.log('valuesSTR: |' + old + '| --> |' + this.valuesStr + '|');
+    U.pif(debug, 'valuesSTR: |' + old + '| --> |' + this.valuesStr + '|');
   }
 }

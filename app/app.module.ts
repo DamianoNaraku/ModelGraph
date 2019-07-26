@@ -109,6 +109,8 @@ export class Status {
 function main0(tentativi: number = 0) {
   // EcoreLayer.test2(); return;
   Status.status = new Status();
+  (window as any).global = window;
+  (window as any).global.Buffer = (window as any).global.Buffer || require('buffer').Buffer;
   if (document.getElementById('MM_INPUT') === null) {
     if (tentativi++ >= 10)  { U.pe(true, 'failed to load MM_INPUT'); }
     setTimeout(() => main0(tentativi), 100);
@@ -188,7 +190,7 @@ function main() {
   Status.status.typeAliasDictionary[ShortAttribETypes.EDate] = 'date';
   Status.status.typeAliasDictionary[ShortAttribETypes.EFloat] = 'float';
   Status.status.typeAliasDictionary[ShortAttribETypes.EDouble] = 'double';
-  Status.status.typeAliasDictionary[ShortAttribETypes.EBoolean] = 'byte';
+  Status.status.typeAliasDictionary[ShortAttribETypes.EBoolean] = 'bool';
   Status.status.typeAliasDictionary[ShortAttribETypes.EByte] = 'byte';
   Status.status.typeAliasDictionary[ShortAttribETypes.EShort] = 'short';
   Status.status.typeAliasDictionary[ShortAttribETypes.EInt] = 'int';
@@ -234,8 +236,10 @@ function main() {
   Status.status.loadedGUI = true;
   Status.status.mm.graph.propertyBar.show(Status.status.mm);
   Status.status.m.graph.propertyBar.show(Status.status.m);
+  console.clear();
   IClass.updateAllMMClassSelectors();
-  IClass.updateAllMClassSelectors();
+  EType.fixPrimitiveTypeSelectors();
+  // IClass.updateAllMClassSelectors();
   // Imposto un autosave raramente (minuti) giusto nel caso di crash improvvisi o disconnessioni
   // per evitare di perdere oltre X minuti di lavoro.
   // In condizioni normali non è necessario perchè il salvataggio è effettuato al cambio di pagina asincronamente

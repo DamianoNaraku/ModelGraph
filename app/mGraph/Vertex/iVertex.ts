@@ -12,7 +12,7 @@ import {
   ISidebar,
   IGraph,
   IModel,
-  Status, Size, Model, IReference, Dictionary, DetectZoom, PropertyBarr
+  Status, Size, Model, IReference, Dictionary, DetectZoom, PropertyBarr, EType
 } from '../../common/Joiner';
 import {Point} from '../iGraph';
 import MouseMoveEvent = JQuery.MouseMoveEvent;
@@ -40,6 +40,7 @@ export class GraphPoint {
     if (isNaN(+y)) { y = 0; }
     this.x = x;
     this.y = y; }
+  toString(): string { return '(' + this.x + ', ' + this.y + ')'; }
   clone(): GraphPoint { return new GraphPoint(this.x, this.y); }
   subtract(p2: GraphPoint, newInstance: boolean): GraphPoint {
     U.pe(!p2, 'subtract argument must be a valid point: ', p2);
@@ -289,6 +290,7 @@ export class IVertex {
     const modelPiece: ModelPiece = ModelPiece.getLogic(html);
     modelPiece.fieldChanged(e);
     $(html).trigger('click'); // updates the propertyBar
+    modelPiece.getModelRoot().refreshGUI();
   }
   static ChangePropertyBarContentClick(e: ClickEvent, isEdge: boolean = false) {
     const html: HTMLElement | SVGElement = e.target; // todo: approfondisci i vari tipi di target (current, orginal...)
@@ -318,6 +320,8 @@ export class IVertex {
     this.setGraph(logical.getModelRoot().graph);
     let i: number;
     const fields: IField[] = [];
+    return;
+    if (!this.classe || !this.classe.attributes) { return; }
     U.pe(!this.classe, 'undefined class while creating a vertex from class:', this.classe);
     U.pe(!this.classe.attributes, 'undefined class attributes while creating a vertex from class:', this.classe.attributes, this.classe);
     for (i = 0; i < this.classe.attributes.length; i++) {
@@ -488,6 +492,7 @@ export class IVertex {
   }
   drawCommonVertex(data: IPackage | IClass, htmlRaw: HTMLElement | SVGElement): HTMLElement | SVGElement {
     // console.log('drawCV()');
+    console.log(this.owner, this);
     const graphHtml: HTMLElement | SVGElement = this.owner.vertexContainer;
     if (graphHtml.contains(data.html)) { graphHtml.removeChild<HTMLElement | SVGElement>(data.html); }
     // console.log('drawing Vertex[' + data.name + '] with style:', htmlRaw, 'logic:', data);
@@ -507,7 +512,7 @@ export class IVertex {
     U.pe(!htmlRaw, 'failed to get attribute style:', data);
     if (data.getModelRoot().isM()) { data.replaceVarsSetup(); }
     let html: HTMLElement | SVGElement = U.cloneHtml(htmlRaw);
-    html = data.html = U.replaceVars<HTMLElement | SVGElement>(data, htmlRaw, false, true);
+    html = data.html = U.replaceVars<HTMLElement | SVGElement>(data, htmlRaw, false);
     // console.log('draw Attribute[' + data.midname + '] with style:', htmlRaw, 'logic:', data);
     data.linkToLogic(html);
     data.refreshGUI();
@@ -657,6 +662,9 @@ export class IVertex {
       default: U.pe(true, 'unexpected select value for addField:' + select.value); break;
       case 'Reference': modelPiece.addReference(); break;
       case 'Attribute': modelPiece.addAttribute(); break; }
+    EType.fixPrimitiveTypeSelectors();
+    // modelPiece.getModelRoot().refreshGUI();
+    // modelPiece.getModelRoot().refreshInstancesGUI();
     // console.log('addFieldClick(); pre:', debugOldJson, ', post:', modelPiece.getJson());
   }
   setFields(f: IField[]) {
@@ -706,6 +714,8 @@ export class IVertex {
     html.parentNode.removeChild(html); }
 
   getSize(): GraphSize {
-    return this.size.clone();
-  }
+    // this.owner.markgS(this.size, true, 'blue');
+    const html0: SVGForeignObjectElement = this.html() as SVGForeignObjectElement;
+    return U.getSvgSize(html0);
+}
 }

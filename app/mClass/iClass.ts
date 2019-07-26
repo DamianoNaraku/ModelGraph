@@ -11,8 +11,23 @@ import {
   ModelPiece,
   ISidebar,
   IGraph,
-  IReference, Status, DetectZoom, Model,
-  eCoreAttribute, eCoreClass, eCorePackage, eCoreReference, eCoreRoot, Point, GraphPoint, IModel, Size, StringSimilarity
+  IReference,
+  Status,
+  DetectZoom,
+  Model,
+  eCoreAttribute,
+  eCoreClass,
+  eCorePackage,
+  eCoreReference,
+  eCoreRoot,
+  Point,
+  GraphPoint,
+  IModel,
+  Size,
+  StringSimilarity,
+  EType,
+  MAttribute,
+  MReference, MClass
 } from '../common/Joiner';
 
 export class IClass extends ModelPiece {
@@ -65,34 +80,57 @@ export class IClass extends ModelPiece {
     return JSON.parse(str); }
 
   static updateAllMClassSelectors(): void {}
-  static updateAllMMClassSelectors(): void {
+  static updateAllMMClassSelectors(root0: Element = null, updateModel: boolean = true): void {
+    let root: Element = root0;
+    if (!Status.status.loadedGUI) { return; }
+    if (!root) { root = Status.status.mm.graph.container; }
     console.log('updateAllMMClassSelectors()');
-    const $selectors = $('select.ClassSelector');
+    const $selectors = $(root).find('select.ClassSelector');
+    // console.clear();
+    console.log('selects:', $selectors, root);
+    // U.pe(!root0, 'here1');
     let i = 0;
-    while (i < $selectors.length) { IClass.updateMMClassSelector($selectors[i++] as HTMLSelectElement); }
+    while (i < $selectors.length) {
+      IClass.updateMMClassSelector($selectors[i++] as HTMLSelectElement);
+    }
+
+    if (!updateModel) { return; }
     // if (Status.status.mm && Status.status.mm.sidebar) { Status.status.mm.sidebar.updateAll(); }
     if (Status.status.m && Status.status.m.sidebar) { Status.status.m.sidebar.loadDefaultHtmls(); }
     if (Status.status.m) { Status.status.m.refreshGUI(); }
   }
 
-  static updateMMClassSelector(selector: HTMLSelectElement, selected: IClass = null): HTMLSelectElement {
-    if (!selector || !Status.status.mm) { return; }
+  static updateMMClassSelector(htmlSelect: HTMLSelectElement, selected: IClass = null, debug = false): HTMLSelectElement {
+    if (!htmlSelect || !Status.status.loadedGUI) { return; }
     const optGrp: HTMLOptGroupElement = document.createElement('optgroup');
-    let toSelect: string = selected ? '' + selected.id : selector.value;
-    if (toSelect === '') { toSelect = null; }
-    U.clear(selector);
-    selector.appendChild(optGrp);
+    let toSelect: string;
+    if (debug) { console.clear(); }
+    if (!selected) {
+      const mp: ModelPiece = ModelPiece.getLogic(htmlSelect);
+      U.pif(debug, 'mp:', mp, 'select:', htmlSelect);
+      // if (mp instanceof IAttribute || mp instanceof MAttribute) { selected = mp.parent as IClass; }
+      if (mp instanceof IReference) { selected = (mp as IReference).target; }
+      U.pw(!selected, 'ClassSelectors must be held inside a m2-reference:', htmlSelect, 'mp:', mp) ;
+      if (!selected) { return; }
+      // if (mp instanceof IClass || mp instanceof MClass) { selected = mp.parent as IClass; }
+    }
+    toSelect = '' + selected.id;
+    U.pif(debug, 'selected:', selected);
+    U.clear(htmlSelect);
+    htmlSelect.appendChild(optGrp);
     optGrp.setAttribute('label', 'Class list');
     const mmClasses: IClass[] = Status.status.mm.getAllClasses();
     let i: number;
+    let found: boolean = false;
     for (i = 0; i < mmClasses.length; i++) {
       const classe: IClass = mmClasses[i];
       const opt: HTMLOptionElement = document.createElement('option');
       opt.value = '' + classe.id;
-      if (toSelect && opt.value === toSelect) { opt.selected = true; }
+      if (toSelect && opt.value === toSelect) { opt.selected = found = true; }
       opt.innerHTML = classe.name;
       optGrp.appendChild(opt); }
-    return selector; }
+    U.pw(debug && !found, 'class not found.', mmClasses);
+    return htmlSelect; }
 
   isRoot(): boolean { U.pe(true, 'm2 class cannot be roots.'); return false; }
   setRoot(value: boolean): void { U.pe(true, 'only usable in model version'); }
@@ -131,6 +169,7 @@ export class IClass extends ModelPiece {
   modify(json: Json, destructive: boolean) {
     if (!json) {json = IClass.generateEmptyeCore(); }
     this.setJson(json);
+    console.log('IClass.modify(); json:', json, '; metaVersion: ', this.metaParent, 'this:', this);
     /// own attributes.
     this.setName(Json.read<string>(this.json, eCoreClass.name), false);
     /*this.name = Json.read<string>(this.json, eCoreClass.name);
@@ -220,7 +259,12 @@ generateModel() {
       if (this.shouldBeDisplayedAsEdge()) { this.generateEdge(); } else {  this.generateVertex(null); }}
     if (this.vertex) { this.vertex.refreshGUI(); }
     let i = -1;
+    // while (++i < this.references.length) {} i = -1;
     while (++i < this.edges.length) { if (this.edges) { this.edges[i].refreshGui(); } }
+    if (this.vertex && this.vertex.html()) {
+      EType.fixPrimitiveTypeSelectors(this.vertex.html());
+      IClass.updateAllMMClassSelectors(this.vertex.html(), false);
+    }
   }
 
   addReference() {
@@ -228,7 +272,10 @@ generateModel() {
     this.references.push(ref);
     this.childrens.push(ref);
     this.json = this.generateModel();
+    ref.target = this;
+    ref.edges = ref.generateEdge();
     this.refreshGUI();
+    IClass.updateAllMMClassSelectors();
   }
 
   addAttribute() {

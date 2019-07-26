@@ -43,9 +43,15 @@ import * as stringsimilarity from '../../app/common/StringSimilarity.js';
 import * as detectzoooom from 'detect-zoom';
 import * as $$ from 'jquery';
 export let StringSimilarity = stringsimilarity;
-export let $ = $$;
+export const $ = $$;
 import * as ConvertXMLJSONRaw from 'xml-js';
-export let ConvertXMLJSON = ConvertXMLJSONRaw;
+export const ConvertXMLJSON = ConvertXMLJSONRaw;
+import * as _pr_json2xml from '../common/prj_json2xml.js';
+import * as _pr_xml2json from '../common/prj_xml2json.js';
+export const prjson2xml = _pr_json2xml;
+export const prxml2json = _pr_xml2json;
+
+
 
 
 

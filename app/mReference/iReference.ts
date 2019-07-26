@@ -18,6 +18,7 @@ export class IReference extends ModelPiece {
   type: AttribETypes = null;
   targetStr: string;
   target: IClass;
+  metaParent: IReference;
   upperbound: number = null;
   lowerbound: number = null;
   containment: boolean = null;
@@ -45,7 +46,7 @@ export class IReference extends ModelPiece {
     const json: Json = {};
     Json.write(json, eCoreReference.xsitype, 'ecore:EReference');
     Json.write(json, eCoreReference.eType, '#//' + parentClass.name);
-    Json.write(json, eCoreReference.lowerbound, '@1');
+    Json.write(json, eCoreReference.lowerbound, '@0');
     Json.write(json, eCoreReference.upperbound, '@1');
     Json.write(json, eCoreReference.containment, 'true');
     while (parentClass.isChildNameTaken(name + '_' + namei)) { namei++; }
@@ -283,28 +284,23 @@ export class IReference extends ModelPiece {
     info['' + 'tsClass'] = (this.getModelRoot().isMM() ? 'm' : '') + 'mReference';
     const myinfoKey: string[] = [];
     const myinfoVal: any[] = [];
-    myinfoKey.push('target');
-    myinfoVal.push(this.target);
-    myinfoKey.push('targetName');
-    myinfoVal.push(this.target ? this.target.name : null);
-    myinfoKey.push('typeOriginal');
-    myinfoVal.push(this.type);
-    myinfoKey.push('containment');
-    myinfoVal.push(this.containment);
-    myinfoKey.push('upperbound');
-    myinfoVal.push(this.upperbound);
-    myinfoKey.push('lowerbound');
-    myinfoVal.push(this.lowerbound);
-    let i = -1;
-    U.pe(myinfoVal.length !== myinfoKey.length, 'IReference.getInfo() error in code here.');
-    while (++i < myinfoKey.length) {
-      let key = myinfoKey[i];
-      const val = myinfoVal[i];
-      if (info[key]) { key = '@' + key; }
-      info[key] = val; }
+    const set = (k: string, v: any) => {
+      while (info[k]) { k = '@' + k; }
+      info[k] = v; };
+    set('target', this.target);
+    // set('typeOriginal', this.type);
+    set('containment', this.containment);
+    set('upperbound', this.upperbound);
+    set('lowerbound', this.lowerbound);
+    const targetinfo: any = !this.target ? null : this.target.getInfo(toLower);
+    let key: string;
+    console.log('targetinfo:', targetinfo);
+    for (key in targetinfo) {
+      if (!targetinfo.hasOwnProperty(key)) { continue; }
+      set(key, targetinfo[key]);
+    }
     return info; }
 
-    metaParent: IReference;
   canBeLinkedTo(hoveringTarget: IClass) {
     const targetmetaclass: IClass = this.metaParent ? this.metaParent.target : this.target;
     const hoveringmetaclass: IClass = hoveringTarget.metaParent ? hoveringTarget.metaParent as IClass : hoveringTarget;

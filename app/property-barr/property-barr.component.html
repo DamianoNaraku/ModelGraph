@@ -7,13 +7,13 @@
       <div class="">
         <div class="modelContent content">
           <label>URI:
-            <input class = "uri">
+            <input class = "uri" pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$">
           </label>
           <label>Namespace:
-            <input class = "namespace">
+            <input class = "namespace" pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$">
           </label>
           <label>Name:
-            <input class = "modelName" placeholder = "nameless">
+            <input class = "modelName" placeholder="nameless" pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$">
           </label>
           <label>Packages:</label>
           <div class = "packageList"></div>
@@ -31,7 +31,7 @@
             <input class = "namespace" disabled>
           </label>
           <label>Name:
-            <input class = "modelName" placeholder = "nameless">
+            <input class = "modelName" placeholder="nameless" pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$">
           </label>
           <label>Packages:</label>
           <div class = "packageList"></div>
@@ -44,7 +44,7 @@
       <div class="">
         <div class="packageContent content">
           <label>Name:
-            <input class = "packageName">
+            <input class = "packageName" pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$">
           </label>
           <label>Classes:</label>
           <div class = "classList"></div>
@@ -55,7 +55,7 @@
       <div class = "attributeMinimizer minimizer"></div>
       <div class="">
         <div class="packageContent content">
-          <!-- <label>Name:<input class = "packageName"></label> -->
+          <!-- <label>Name:<input class = "packageName"pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$"></label> -->
           <label>Classes:</label>
           <div class = "classList"></div>
         </div>
@@ -67,7 +67,7 @@
       <div class="">
         <div class="classContent content">
           <label>Name:
-            <input class = "className">
+            <input class = "className" pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$">
           </label>
           <label>Fields:</label>
           <div class = "attributeList"></div>
@@ -82,7 +82,7 @@
         <div class="classContent content">
           <label>Is Root<input type="checkbox" class="isRoot"></label>
           <label>Class:
-            <input class = "className">
+            <input class = "className" disabled>
           </label>
           <label>Fields:</label>
           <div class = "attributeList"></div>
@@ -100,7 +100,7 @@
             <select class = "attributeType"></select>
           </label>
           <label>Name:
-            <input class = "attributeName">
+            <input class = "attributeName" pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$">
           </label>
         </div>
       </div>
@@ -110,13 +110,13 @@
       <div>
         <div class = "content">
           <label>Name:
-            <input type="text" class = "attributeName">
+            <input type="text" class = "attributeName" disabled>
           </label>
           <label>Type:
             <select class = "attributeType"></select>
           </label>
           <label>Value:
-            <input type="text" class = "attributeValue">
+            <input type="text" class = "attributeValue" placeholder = "[ empty ]">
           </label>
         </div>
       </div>
@@ -130,16 +130,16 @@
             <select class = "referenceType"></select>
           </label>
           <label>Name:
-            <input class = "referenceName">
+            <input class = "referenceName" placeholder="Must be named." pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$">
           </label>
           <label>Is containment:
             <input type="checkbox" class="referenceContainment">
           </label>
           <label>LowerBound:
-            <input type="number" class="referenceLowerBound">
+            <input type="number" step="1" min="-1" class="referenceLowerBound" placeholder="-1">
           </label>
           <label>UpperBound:
-            <input type="number" class="referenceUpperBound">
+            <input type="number" step="1" min="-1" class="referenceUpperBound" placeholder="-1">
           </label>
         </div>
       </div>

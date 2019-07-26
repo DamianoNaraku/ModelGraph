@@ -79,18 +79,6 @@ export class PropertyBarr {
     U.pe(!optionFound, 'reference selected class option not found; optgrp:', optgrp, 'classes:', classes, ', searching:', selectedClass);
     return selectHtml; }
 
-  static fixPrimitiveTypeSelectors(): void {
-    const $selectors = $('....');
-    const selectors: HTMLSelectElement[] = $selectors[0];
-    let i = -1;
-    while (++i < selectors.length) {
-      get attrib and type from html.
-
-      controlal se c'è una opzione selected (facile, se è selezionata la prima senza il tag selected="true", allora è selected di default per sbaglio.
-        aggiusta solo quelli settati per sbaglio (saranno gli attrib dei vertici)
-      selectors[i]
-    }
-  }
   static makePrimitiveTypeSelector(selectHtml: HTMLSelectElement, selectedType: EType): HTMLSelectElement {
     if (selectHtml === null) { selectHtml = document.createElement('select'); }
     const optgrp: HTMLOptGroupElement = document.createElement('optgroup');

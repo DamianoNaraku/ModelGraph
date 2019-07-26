@@ -128,9 +128,12 @@ export class EdgePoint implements IEdgePoint {
     // console.log('up');
     this.unfollow();
   }
-  getCenter(): GraphPoint { return this.pos; }
-  getStartPoint(): GraphPoint { return this.edge.owner.fitToGrid(this.getCenter()); }
-  getEndPoint(): GraphPoint { return this.getStartPoint(); }
+  getCenter(fitHorizontal: boolean = false, fitVertical: boolean = false): GraphPoint {
+    return this.edge.owner.fitToGrid(this.pos, true, false, fitHorizontal, fitVertical); }
+  getStartPoint(fitHorizontal: boolean = true, fitVertical: boolean = true): GraphPoint {
+    return this.getCenter(fitHorizontal, fitVertical); }
+  getEndPoint(fitHorizontal: boolean = true, fitVertical: boolean = true): GraphPoint {
+    return this.getCenter(fitHorizontal, fitVertical); }
 
   moveTo(pos: GraphPoint, refresh: boolean, centra: boolean = true) {
     if (!this.edge) { return; }

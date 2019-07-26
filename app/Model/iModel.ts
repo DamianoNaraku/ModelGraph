@@ -157,8 +157,8 @@ export class IModel extends ModelPiece {
   }
 
   addEmptyClass(parentPackage: IPackage, metaVersion: IClass) {
-    console.log('addEmptyClass(); package:', parentPackage, '; metaVersion: ', metaVersion);
     const c = new IClass(parentPackage, null, metaVersion);
+    console.log('addEmptyClass(); package:', parentPackage, '; metaVersion: ', metaVersion, 'classe:', c);
     parentPackage.childrens.push(c);
     c.generateVertex(null).draw();
     IClass.updateAllMMClassSelectors();

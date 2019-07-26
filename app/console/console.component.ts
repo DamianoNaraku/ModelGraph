@@ -333,37 +333,44 @@ export class MyConsole {
       return this.errorFormatting('Spaces are not allowed inside a class, attribute or reference name-path.'); }
     const tokens: string[] = name.split('.');
     const modelPrio = Status.status.getActiveModel();
-    let info = this.getClassInfoByModel(modelPrio, tokens[0]);
+    let info = this.getModelPieceInfoByModel(modelPrio, tokens);
     if (info) { return this.stringify(info); }
     // info = this.getModelPieceInfoByModel(modelPrio.isMM() ? Status.status.m : Status.status.mm, tokens);
-    info = this.getClassInfoByModel(modelPrio.isMM() ? Status.status.m : Status.status.mm, tokens[0]);
+    info = this.getModelPieceInfoByModel(modelPrio.isMM() ? Status.status.m : Status.status.mm, tokens);
     if (info) { return this.stringify(info); }
     return this.errorFormatting('"' + name + '" is not matching any class, attribute or reference name-path.');
   }
   stringify(obj: any): string {
     const str = util.inspect(obj, null, 0);
     return str; }
-  getClassInfoByModel(m: IModel, token: string, debug: boolean = true): IClass {
-    return this.getModelPieceInfoByModel(m, [token], debug) as IClass; }
+  getClassInfoByModel(m: IModel, tokens: string[], debug: boolean = true): IClass {
+    return this.getModelPieceInfoByModel(m, tokens, debug) as IClass; }
   getModelPieceInfoByModel(m: IModel, tokens: string[], debug: boolean = true): any {
     const toLower = true;
     const classes: IClass[] = m.getAllClasses();
+    debug = true;
     let i = -1;
     if (toLower) { while (++i < tokens.length) { tokens[i] = toLower ? tokens[i].toLowerCase() : tokens[i]; } }
     i = -1;
     let current: IClass = null;
     while (++i < classes.length) {
       const classe = classes[i];
+      U.pe(!classe.name, 'err');
+      if (!classe.name) { return null; }
       U.pif(debug, tokens[0] + '===' + classe.name + ' ? ' + (classe.name.toLowerCase() === tokens[0]));
       if (classe.name.toLowerCase() === tokens[0]) { current = classe; break; }
     }
-    i = 0;
     let ret: any = current;
+    U.pif(debug, 'tokens:', tokens);
+    i = 0;
     while (++i < tokens.length) {
       const oldRet = ret;
-      if (ret instanceof  ModelPiece) { ret = (ret as ModelPiece).getInfo(toLower)[tokens[i]]; }
-      else { ret = ret[tokens[i]]; }
-      U.pif(debug, 'ret: ', oldRet, ' ---> ', ret);
+      U.pif(debug, 'PRE_ret: ', oldRet, ' ---> ', ret, 'token[' + i + '/' + tokens.length + '] = |' + tokens[i] + '|, tok:', tokens);
+      if (ret instanceof ModelPiece) { U.pif(debug, 'Modelpiece'); ret = (ret as ModelPiece).getInfo(toLower);
+      } else { U.pif(debug, 'Terminale'); }
+      U.pif(debug, 'gotInfo:', ret);
+      ret = ret[tokens[i]];
+      U.pif(debug, 'POST_ret: ', oldRet, ' ---> ', ret, 'token[' + i + '] = |' + tokens[i] + '|');
     }
     if (ret instanceof ModelPiece) { return ret.getInfo(); }
     return ret;

@@ -87,13 +87,12 @@ export class IEdge {
     // return ModelPiece.getLogic(e.target).edge;
     return IEdge.getByHtml(e.target);
   }
-  static getByHtml(html0: HTMLElement | SVGElement): IEdge {
-    const debug = false;
+  static getByHtml(html0: HTMLElement | SVGElement, debug: boolean = false): IEdge {
     if (!html0) { return null; }
     let html = html0;
-    while ( html && (!html.dataset || !html.dataset.modelPieceID)) { html = html.parentNode as HTMLElement | SVGElement; }
+    while ( html && (!html.dataset || !html.dataset.edgeid)) { html = html.parentNode as HTMLElement | SVGElement; }
     const ret = html ? IEdge.getByID(+html.dataset.edgeid) : null;
-    U.pif(debug && !ret, 'failed to find edge. html0:', html0, 'html:', html, 'map:', IEdge.idToEdge);
+    U.pe(debug && !ret, 'failed to find edge. html0:', html0, 'html:', html, 'map:', IEdge.idToEdge);
     return ret; }
 
   static getByID(id: number): IEdge { return IEdge.idToEdge[id]; }
@@ -158,7 +157,7 @@ export class IEdge {
     return svg; }
 
 
-  private static makePathSegment(prevPt: GraphPoint, nextPt: GraphPoint, mode: EdgeModes, angularFavDirectionIsHorizontal: boolean = null,
+  private static makePathSegment(prevPt: GraphPoint, nextPt: GraphPoint, mode0: EdgeModes, angularFavDirectionIsHorizontal: boolean = null,
                                  prevVertexSize: GraphSize, nextVertexSize: GraphSize, type: string = ' L', debug = false): string {
     // todo: devi rifare totalmente la parte di "angularFavDirection" basandoti su se cade perpendicolare sul vertice e devi usare
     // 2 variabili, forzando la direzione ad essere per forza perpendicolare sul lato su cui risiede il vertex.startPt o .endPt
@@ -167,24 +166,44 @@ export class IEdge {
     // poi deve sparire perchè devo generare 2 diverse favDirection e non una sola.
     let m;
     let pathStr = '';
-    const pt1IsOnHorizontalSide = U.isOnHorizontalEdges(prevPt, prevVertexSize);
-    const pt2IsOnHorizontalSide = U.isOnHorizontalEdges(nextPt, nextVertexSize);
-    if (mode === EdgeModes.angular23Auto && prevVertexSize && nextVertexSize) {
-      if (!U.isOnEdge(prevPt, prevVertexSize) || !U.isOnEdge(nextPt, nextVertexSize)) {
-        console.clear();
-        const g = Status.status.getActiveModel().graph;
-        /*g.markg(prevPt, false, 'green');
-        g.markgS(prevVertexSize, false, 'green');
-        g.markg(prevPt, false);
-        g.markgS(prevVertexSize, false);*/
-        console.log('not on vertex border. pt:', prevPt, 'vertex:', prevVertexSize);
-        console.log('not on vertex border. nextpt:', nextPt, 'nextvertex:', nextVertexSize);
-        // U.pw(true, (!U.isOnEdge(prevPt, prevVertexSize) ? 'prev' : 'next') + ' not on vertex border.');
-        return '';
-      }
-      console.log('directions:', pt1IsOnHorizontalSide, pt2IsOnHorizontalSide);
-      mode = (pt1IsOnHorizontalSide && pt2IsOnHorizontalSide) ? EdgeModes.angular3 : EdgeModes.angular2;
+    const pt1IsOnHorizontalSide = !prevVertexSize ? null : U.isOnHorizontalEdges(prevPt, prevVertexSize);
+    const pt2IsOnHorizontalSide = !nextVertexSize ? null : U.isOnHorizontalEdges(nextPt, nextVertexSize);
+
+    // if (prevVertexSize) { prevPt = prevVertexSize} //IVertex.closestIntersection(); }
+    if (debug) {
+      console.clear();
+      Status.status.getActiveModel().graph.markg(prevPt, true, 'green');
+      if (prevVertexSize) { Status.status.getActiveModel().graph.markgS(prevVertexSize, false, 'white'); }
+      Status.status.getActiveModel().graph.markg(nextPt, false, 'green');
+      if (nextVertexSize) { Status.status.getActiveModel().graph.markgS(nextVertexSize, false); }
     }
+    U.pif(debug, 'prev:' + (pt1IsOnHorizontalSide) + ', next:' + (pt2IsOnHorizontalSide),
+      'm0:' + mode0 + ' --> ' + mode0 + ', favDirection' + angularFavDirectionIsHorizontal);
+    // return '';
+    U.pif(debug, 'directions:', pt1IsOnHorizontalSide, pt2IsOnHorizontalSide);
+    if (!U.isOnEdge(prevPt, prevVertexSize)) { U.pw(debug, 'prev not on border'); return ''; }
+    if (!U.isOnEdge(nextPt, nextVertexSize)) { U.pw(debug, 'next not on border'); return ''; }
+    U.pe(prevVertexSize && !U.isOnEdge(prevPt, prevVertexSize) || nextVertexSize && !U.isOnEdge(nextPt, nextVertexSize), 'not on border');
+
+    if (prevVertexSize && !U.isOnEdge(prevPt, prevVertexSize) || nextVertexSize && !U.isOnEdge(nextPt, nextVertexSize)) {
+      /*console.clear();
+      const g = Status.status.getActiveModel().graph;
+      g.markg(prevPt, false, 'green');
+      g.markgS(prevVertexSize, false, 'green');
+      g.markg(prevPt, false);
+      g.markgS(prevVertexSize, false);
+      console.log('not on vertex border. pt:', prevPt, 'vertex:', prevVertexSize);
+      console.log('not on vertex border. nextpt:', nextPt, 'nextvertex:', nextVertexSize);
+      U.pw(true, (!U.isOnEdge(prevPt, prevVertexSize) ? 'prev' : 'next') + ' not on vertex border.');
+      return '';
+      */
+    }
+    let mode: EdgeModes = mode0;
+    if (prevVertexSize && nextVertexSize) {
+      // mode = (pt1IsOnHorizontalSide && pt2IsOnHorizontalSide) ? EdgeModes.angular3 : EdgeModes.angular2;
+    }
+    // if (mode === EdgeModes.angular23Auto) { mode = EdgeModes.angular3; }
+
     /*
     if (prevVertexSize && mode === EdgeModes.angular23Auto) {
       // U.pe(angularFavDirectionIsHorizontal === null, 'preferred direction is useless with prevVertexSize');
@@ -196,7 +215,8 @@ export class IEdge {
       if (angularFavDirectionIsHorizontal === true && U.isOnHorizontalEdges(prevPt, prevVertexSize)) {
         mode = EdgeModes.angular2; angularFavDirectionIsHorizontal = false; }
       U.pif(debug, 'favdirection post:', angularFavDirectionIsHorizontal);
-    } */   /* compute last favorite direction * /
+    } */
+    /* compute last favorite direction * /
 let lastIsHorizontalSide: boolean = null;
 const endPt: GraphPoint = allRealPt[allRealPt.length - 1].pos;
 const penultimoPt: GraphPoint = allRealPt[allRealPt.length - 2].getStartPoint();
@@ -211,28 +231,40 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
   ' Vertex.endpoint:', endPt, '; vertexSize:', endVertexSize);*/
     /* done setting realpoints.pos, now draw path */
     let oldPathStr = pathStr;
+
+    if (mode === EdgeModes.angular23Auto) { mode = mode0 = EdgeModes.angular3; }
+    const angular23: EdgeModes = EdgeModes.angular3;
+    // if (mode0 === angular23 && prevVertexSize && !pt1IsOnHorizontalSide && nextVertexSize && pt2IsOnHorizontalSide) {
+    U.pif(debug, mode0 === angular23, !!prevVertexSize, pt1IsOnHorizontalSide);
+    if (mode0 === angular23 && prevVertexSize && pt1IsOnHorizontalSide) {
+      angularFavDirectionIsHorizontal = false;
+      mode = EdgeModes.angular3;
+      U.pif(debug, 'fixed'); }
+    // if (prevVertexSize) { angularFavDirectionIsHorizontal = pt1IsOnHorizontalSide; }
+    // if (nextVertexSize) { angularFavDirectionIsHorizontal = !pt2IsOnHorizontalSide; }
+    // if (mode === angular23 && prev)
     switch (mode) {
       default: U.pe(true, 'unexpected EdgeMode:', mode); break;
       case EdgeModes.angular2:
         m = GraphPoint.getM(prevPt, nextPt); // coefficiente angolare della prossima linea disegnata (come se fosse dritta)
         if (angularFavDirectionIsHorizontal === null) { angularFavDirectionIsHorizontal = Math.abs(m) <= 1; } // angolo <= abs(45°)
         if (angularFavDirectionIsHorizontal) {
-          // todo: e qui dovrei appendere un path invisibile che cambia cursore in HorizontalResizer intercettare gli eventi edge.
+          // qui resizer orizzontale
           oldPathStr = pathStr;
           pathStr += type + (nextPt.x) + ' ' + (prevPt.y);
           U.pif(debug, 'pathStr: ', oldPathStr, ' --> ', pathStr, '; ang2 favdirectionHorizontal');
         } else {
-          // todo: qui resizer verticale.
+          // qui resizer verticale.
           oldPathStr = pathStr;
           pathStr += type + (prevPt.x) + ' ' + (nextPt.y);
           U.pif(debug, 'pathStr: ', oldPathStr, ' --> ', pathStr, '; ang2 favdirectionVertical');
         }
-        // todo: qui resizer opposto al precedente.
+        // qui resizer opposto al precedente.
         // oldPathStr = pathStr;
         // pathStr += type + (nextPt.x) + ' ' + (nextPt.y);
         // U.pif(debug, 'pathStr: ', oldPathStr, ' --> ', pathStr, '; ang2 end ridondante?');
         break;
-      case EdgeModes.angular23Auto + '': break;
+      case EdgeModes.angular23Auto + '': U.pw(true, 'mode.angular23Auto should be replaced before entering here'); break;
       case EdgeModes.angular3:
         m = GraphPoint.getM(prevPt, nextPt); // coefficiente angolare della prossima linea disegnata (come se fosse dritta)
         if (angularFavDirectionIsHorizontal === null) { angularFavDirectionIsHorizontal = Math.abs(m) <= 1; } // angolo <= abs(45°)
@@ -264,6 +296,7 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
     oldPathStr = pathStr;
     pathStr += type + (nextPt.x) + ' ' + (nextPt.y);
     U.pif(debug, 'pathStr: ', oldPathStr, ' --> ', pathStr, '; lastPt comune a tutti.');
+
     return pathStr; }
   /*private static midPointMouseDown(e: JQuery.MouseDownEvent) {
     IEdge.tempMidPoint_ModelPiece = ModelPiece.getLogic(e.currentTarget);
@@ -305,22 +338,26 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
     let oldpathStr = pathStr;
     const graph: IGraph = this.logic.getModelRoot().graph;
     for (i = 1; i < allRealPt.length; i++) { // escludo il primo punto dal loop.
-      const ep: EdgePoint = allRealPt[i];
+      const curr: EdgePoint = allRealPt[i];
       const prev: EdgePoint = allRealPt[i - 1];
       const favdirection: boolean = null; // i === allRealPt.length - 1 ? lastdirectionIsHorizontal : null;
       const prevVertexSize: GraphSize = i === 1 ? startVertexSize : null;
       const nextVertexSize: GraphSize = i === allRealPt.length - 1 ? endVertexSize : null;
       oldpathStr = pathStr;
-      const pt1: GraphPoint = graph.fitToGrid(prev.getStartPoint(), true);
-      const pt2: GraphPoint = graph.fitToGrid(ep.getEndPoint(), true);
+      /* const prevFitGridVertical: boolean = false; // prevVertexSize ? U.isOnHorizontalEdges(prev.getStartPoint(), prevVertexSize) : true;
+      const prevFitGridHorizontal: boolean = false; // prevVertexSize ? U.isOnHorizon todo;
+      const nextFitToGridHorizontal: boolean = false;
+      const nextFitToGridVertical: boolean = false;*/
+      const prevPt: GraphPoint = prev.getStartPoint(!prevVertexSize, !prevVertexSize);
+      const currPt: GraphPoint = curr.getEndPoint(!nextVertexSize, !nextVertexSize);
       if (debug) {
-        graph.markg(pt1, true, 'green');
-        graph.markg(pt2, false, 'green');
+        graph.markg(prevPt, true, 'green');
+        graph.markg(currPt, false, 'green');
         graph.markgS(prevVertexSize, false, 'blue');
         graph.markgS(nextVertexSize, false); }
       // if (i === 1) { pt1.moveOnNearestBorder(startVertexSize, false); }
       // if (i === allRealPt.length - 1) { pt2.moveOnNearestBorder(endVertexSize, false); }
-      pathStr += IEdge.makePathSegment(pt1, pt2, this.mode, favdirection, prevVertexSize, nextVertexSize);
+      pathStr += IEdge.makePathSegment(prevPt, currPt, this.mode, favdirection, prevVertexSize, nextVertexSize);
       U.pif(debug, 'pathStr[' + (i) + '/' + allRealPt.length + ']: ' + oldpathStr + ' --> ' + pathStr);
     }
 
@@ -417,8 +454,7 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
       (e: MouseMoveEvent) => {
         // const mp: IClass | IReference = ModelPiece.getLogic(e.currentTarget) as IClass | IReference;
         // U.pe( mp === null || mp === undefined, 'unable to get logic of:', e.currentTarget);
-        const edge: IEdge = IEdge.get(e);
-        U.pe( !e , 'unable to get edge of:', e.currentTarget);
+        const edge: IEdge = IEdge.getByHtml(e.target, true);
         edge.onMouseMove(e); } );
     $html.off('click.addEdgePoint').on('click.addEdgePoint', (e: ClickEvent) => { IEdge.get(e).onClick(e); });
     $html.find('.Edge').off('mouseover.cursor').on('mouseover.cursor', (e: MouseOverEvent) => { IEdge.get(e).onMouseOver(e); });
@@ -447,7 +483,7 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
     const d = this.html.getAttributeNS(null, 'd');
     const dArr: string[] = d.split('L');
     let i;
-    const allNodes: EdgePoint[] = this.getAllRealMidPoints();
+    const realMidPoints: EdgePoint[] = this.getAllRealMidPoints();
     const nodiFittizi: EdgePointFittizio[] = [];
     let realNodeIndex = 0;
     let puntiReali = 0;
@@ -455,16 +491,37 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
       const tmp = dArr[i].replace('M', '').replace('L', '').trim().split(' ');
       const pt: GraphPoint = new GraphPoint(+tmp[0], +tmp[1]);
       let target: EdgePoint = null;
-      U.pif(debug, 'getAllFakePoints() d:', d, 'pt', pt, 'allnodes:', allNodes, 'index:', realNodeIndex, 'match?',
-        realNodeIndex >= allNodes.length ? 'overflow' : allNodes[realNodeIndex].pos.equals(pt));
-      if (this.owner.fitToGrid(allNodes[realNodeIndex].pos).equals(pt)) {
+      U.pif(debug, 'getAllFakePoints() d:', d, 'pt', pt, 'realMidPoints:', realMidPoints, 'index:', realNodeIndex, 'match?',
+        realNodeIndex >= realMidPoints.length ? 'overflow' : realMidPoints[realNodeIndex].pos.equals(pt));
+      const fitToGrid: boolean = i !== 0 || i !== dArr.length - 1;
+      let fitHorizontal: boolean;
+      let fitVertical: boolean;
+      if (i !== 0 && i !== dArr.length - 1) { fitHorizontal = fitVertical = true; }
+      if (i === 0 && !U.isOnHorizontalEdges(pt, this.start.getSize())) { fitHorizontal = false; fitVertical = true; }
+      if (i === 0 && U.isOnHorizontalEdges(pt, this.start.getSize())) { fitHorizontal = true; fitVertical = false; }
+      if (i === dArr.length - 1 && !U.isOnHorizontalEdges(pt, this.end.getSize())) { fitHorizontal = false; fitVertical = true; }
+      if (i === dArr.length - 1 && U.isOnHorizontalEdges(pt, this.end.getSize())) { fitHorizontal = true; fitVertical = false; }
+      // fitHorizontal = (i === 0 && U.isOnHorizontalEdges(pt, this.start.getSize()));
+      const midPoint: GraphPoint = realMidPoints[realNodeIndex].getStartPoint(fitHorizontal, fitVertical);
+      // todo: se cambi endpoint !== startpoint, devi fare due check.
+      // const prevPt: GraphPoint = allNodes[realNodeIndex].getStartPoint(!!prevVertexSize, !!prevVertexSize);
+      // const currPt: GraphPoint = curr.getEndPoint(!!nextVertexSize, !!nextVertexSize);
+      console.log(pt, ' =?= ', midPoint, pt.equals(midPoint));
+      if (pt.equals(midPoint)) {
         puntiReali++;
-        target = allNodes[realNodeIndex++];
+        target = realMidPoints[realNodeIndex++];
       }
       nodiFittizi.push( new EdgePointFittizio(pt, target)); }
-    const realMidPointCount: number = this.getAllRealMidPoints().length;
-    U.pe(puntiReali < 2 || puntiReali < realMidPointCount, 'fallimento nell\'assegnare fakepoints ai punti reali. Assegnati:'
-      + puntiReali + ' / ' + realMidPointCount + '; fittizi:', nodiFittizi, ' reali:', this.getAllRealMidPoints());
+    if (puntiReali < 2 || puntiReali < realMidPoints.length) {
+      const prettyFittizi: string[] = [];
+      const prettyRealMidPoints: string[] = [];
+      i = -1;
+      while (++i < nodiFittizi.length) { prettyFittizi.push(nodiFittizi[i].pos.toString()); }
+      i = -1;
+      while (++i < realMidPoints.length) { prettyRealMidPoints.push(realMidPoints[i].pos.toString()); }
+      U.pw(true, 'fallimento nell\'assegnare fakepoints ai punti reali. Assegnati:' + puntiReali + ' / ' + prettyRealMidPoints.length
+        + '; fittizi trovati:', prettyFittizi, ' reali:', prettyRealMidPoints, ' path:', dArr);
+    }
     return nodiFittizi; }
 
   getBoundingMidPoints(e: ClickEvent | MouseMoveEvent | MouseUpEvent | MouseDownEvent | MouseEvent | MouseEnterEvent | MouseLeaveEvent,
@@ -569,16 +626,19 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
     let i = -1;
     this.startNode.refreshGUI(null, false);
     this.endNode.refreshGUI(null, false);
+    let cursor: string;
     switch (this.logic.edgeStyleCommon.style) {
+      default: cursor = 'help'; break;
       case EdgeModes.straight: break;
       case EdgeModes.angular2:
       case EdgeModes.angular3:
       case EdgeModes.angular23Auto:
-        if (preFake.pos.x === nextFake.pos.x) { this.shadow.style.cursor = this.html.style.cursor = 'col-resize';
-        } else if (preFake.pos.y === nextFake.pos.y) { this.shadow.style.cursor = this.html.style.cursor = 'row-resize';
-        } else { this.shadow.style.cursor = this.html.style.cursor = 'no-drop'; }
+        if (preFake.pos.x === nextFake.pos.x) { cursor = 'col-resize';
+        } else if (preFake.pos.y === nextFake.pos.y) { cursor = 'row-resize';
+        } else {cursor = 'no-drop'; }
         break;
     }
+    this.shadow.style.cursor = this.html.style.cursor = cursor;
     while (++i < this.midNodes.length) { this.midNodes[i].refreshGUI(null, false); }
     pre.refreshGUI(null, true);
     post.refreshGUI(null, true);

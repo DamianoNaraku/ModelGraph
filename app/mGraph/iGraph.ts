@@ -91,11 +91,11 @@ export class IGraph {
     this.addGraphEventListeners();
     this.ShowGrid();
   }
-  fitToGrid(pt0: GraphPoint, clone: boolean = true, debug: boolean = false): GraphPoint {
+  fitToGrid(pt0: GraphPoint, clone: boolean = true, debug: boolean = false, fitHorizontal = true, fitVertical = true): GraphPoint {
     const pt: GraphPoint = clone ? pt0.clone() : pt0;
     U.pe(!this.grid, 'grid not initialized.');
-    if ( !isNaN(this.grid.x) && this.grid.x > 0) { pt.x = U.trunc(pt.x / this.grid.x) * this.grid.x; }
-    if ( !isNaN(this.grid.y) && this.grid.y > 0) { pt.y = U.trunc(pt.y / this.grid.y) * this.grid.y; }
+    if (fitHorizontal && !isNaN(this.grid.x) && this.grid.x > 0) { pt.x = U.trunc(pt.x / this.grid.x) * this.grid.x; }
+    if (fitVertical && !isNaN(this.grid.y) && this.grid.y > 0) { pt.y = U.trunc(pt.y / this.grid.y) * this.grid.y; }
     U.pif(debug, 'fitToGrid(', pt0, '); this.grid:', this.grid, ' = ', pt);
     return pt; }
 /*
@@ -175,7 +175,7 @@ export class IGraph {
   toHtmlCoordS(s: GraphSize): Size {
     const tl = this.toHtmlCoord(new GraphPoint(s.x, s.y));
     const br = this.toHtmlCoord(new GraphPoint(s.x + s.w, s.y + s.h));
-    return new Size(tl.x, tl.y, br.x - tl.x, br.y - tl.x); }
+    return new Size(tl.x, tl.y, br.x - tl.x, br.y - tl.y); }
   toHtmlCoord(p: GraphPoint): Point {
     const graphSize: Size = U.sizeof(this.container);
     const ret: Point = new Point(p.x, p.y);
@@ -191,16 +191,26 @@ export class IGraph {
   getAllVertexIsBroke() { return this.vertex; }
 
   markClick(e: JQuery.ClickEvent, clean: boolean = true) { return this.mark(new Point(e.pageX, e.pageY), clean); }
-  markg(gp: GraphPoint, clean: boolean = false, color: string = 'red'): void { return this.mark(this.toHtmlCoord(gp), clean, color); }
-  markgS(gs: GraphSize, clean: boolean = false, color: string = 'red'): void { return this.markS(this.toHtmlCoordS(gs), clean, color); }
-  markS(s: Size, clean: boolean = false, color: string = 'red'): void {
-    this.mark(s.tl(), clean, color);
-    color = 'white';
-    this.mark(s.tr(), false, color);
-    color = 'purple';
-    this.mark(s.bl(), false, color);
-    color = 'orange';
-    this.mark(s.br(), false, color);
+  markg(gp: GraphPoint, clean: boolean = false, colorTop: string = 'red'): void {
+    return this.mark(this.toHtmlCoord(gp), clean, colorTop); }
+  markgS(gs: GraphSize, clean: boolean = false, colorTop: string = 'red', colorBot: string = null): void {
+    /*if (!colorBot) { colorBot = colorTop; }
+    this.markg(gs.tl(), clean, colorTop);
+    this.markg(gs.tr(), false, colorTop);
+    this.markg(gs.bl(), false, colorBot);
+    this.markg(gs.br(), false, colorBot);*/
+    // const htmls: Size = this.owner.toHtmlCoordS(size0);
+    return this.markS(this.toHtmlCoordS(gs), clean, colorTop, colorBot);
+  }
+  markS(s: Size, clean: boolean = false, colorTop: string = 'red', colorBot: string = null): void {
+    if (!colorBot) { colorBot = colorTop; }
+    this.mark(s.tl(), clean, colorTop);
+    // color = 'white';
+    this.mark(s.tr(), false, colorTop);
+    // color = 'purple';
+    this.mark(s.bl(), false, colorBot);
+    // color = 'orange';
+    this.mark(s.br(), false, colorBot);
   }
   mark(p: Point, clean: boolean = false, color: string = 'red'): void {
     const gp: GraphPoint = this.toGraphCoord(p);
