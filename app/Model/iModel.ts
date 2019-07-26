@@ -17,6 +17,7 @@ import {eCoreClass, eCoreRoot, InputPopup} from '../common/util';
 import ChangeEvent = JQuery.ChangeEvent;
 
 export class IModel extends ModelPiece {
+  static emptyModel = '{}'; // todo
   // packages: IPackage[] = null;
   graph: IGraph = null;
   sidebar: ISidebar = null;

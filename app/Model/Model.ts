@@ -16,7 +16,7 @@ import {
 import {MPackage} from '../mPackage/MPackage.component';
 
 export class Model extends IModel {
-  private static emptyModel = 'empty model: todo'; // todo
+  static emptyModel = '{}'; // todo
   protected json: Json = null;
   metaParent: MetaModel = null;
   instances: ModelPiece[] = [];

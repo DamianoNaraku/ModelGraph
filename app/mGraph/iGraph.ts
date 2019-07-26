@@ -173,6 +173,7 @@ export class IGraph {
     }
     return ret; }
   toHtmlCoordS(s: GraphSize): Size {
+    if (s === null) { return null; }
     const tl = this.toHtmlCoord(new GraphPoint(s.x, s.y));
     const br = this.toHtmlCoord(new GraphPoint(s.x + s.w, s.y + s.h));
     return new Size(tl.x, tl.y, br.x - tl.x, br.y - tl.y); }
@@ -204,6 +205,7 @@ export class IGraph {
   }
   markS(s: Size, clean: boolean = false, colorTop: string = 'red', colorBot: string = null): void {
     if (!colorBot) { colorBot = colorTop; }
+    U.pe(!s, 'size cannot be null.');
     this.mark(s.tl(), clean, colorTop);
     // color = 'white';
     this.mark(s.tr(), false, colorTop);

@@ -290,7 +290,10 @@ export class IVertex {
     const modelPiece: ModelPiece = ModelPiece.getLogic(html);
     modelPiece.fieldChanged(e);
     $(html).trigger('click'); // updates the propertyBar
-    modelPiece.getModelRoot().refreshGUI();
+    // const m: IModel = modelPiece.getModelRoot();
+    const mm: IModel = Status.status.mm;
+    const m: IModel = Status.status.m;
+    setTimeout( () => { mm.refreshGUI(); m.refreshGUI(); }, 1);
   }
   static ChangePropertyBarContentClick(e: ClickEvent, isEdge: boolean = false) {
     const html: HTMLElement | SVGElement = e.target; // todo: approfondisci i vari tipi di target (current, orginal...)

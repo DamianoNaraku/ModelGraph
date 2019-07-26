@@ -148,7 +148,7 @@ const M2InputXml: string = '<?xml version="1.0" encoding="UTF-8"?>\n' +
 function main() {
   U.tabSetup();
   U.resizableBorderSetup();
-  window['' + 'help'] = ['setBackup (backup <= save)', 'backupSave (save <= backup)', 'destroy (the backup)'];
+  window['' + 'help'] = ['setBackup (backup <= save)', 'backupSave (save <= backup)', 'destroy (the backup)', 'discardSave (stop autosave)'];
   window['' + 'destroy'] = () => {
     localStorage.setItem('LastOpenedMM', null);
     localStorage.setItem('LastOpenedM', null);

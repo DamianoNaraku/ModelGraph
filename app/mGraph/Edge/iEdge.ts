@@ -23,6 +23,7 @@ import MouseOverEvent = JQuery.MouseOverEvent;
 import MouseEnterEvent = JQuery.MouseEnterEvent;
 import MouseLeaveEvent = JQuery.MouseLeaveEvent;
 import htmlString = JQuery.htmlString;
+import {first} from 'rxjs/operators';
 export enum EdgeModes {
   straight = 'straight',
   angular2 = 'angular con 2 segmenti.',
@@ -181,8 +182,8 @@ export class IEdge {
       'm0:' + mode0 + ' --> ' + mode0 + ', favDirection' + angularFavDirectionIsHorizontal);
     // return '';
     U.pif(debug, 'directions:', pt1IsOnHorizontalSide, pt2IsOnHorizontalSide);
-    if (!U.isOnEdge(prevPt, prevVertexSize)) { U.pw(debug, 'prev not on border'); return ''; }
-    if (!U.isOnEdge(nextPt, nextVertexSize)) { U.pw(debug, 'next not on border'); return ''; }
+    if (prevVertexSize && !U.isOnEdge(prevPt, prevVertexSize)) { U.pw(debug, 'prev not on border'); return ''; }
+    if (nextVertexSize && !U.isOnEdge(nextPt, nextVertexSize)) { U.pw(debug, 'next not on border'); return ''; }
     U.pe(prevVertexSize && !U.isOnEdge(prevPt, prevVertexSize) || nextVertexSize && !U.isOnEdge(nextPt, nextVertexSize), 'not on border');
 
     if (prevVertexSize && !U.isOnEdge(prevPt, prevVertexSize) || nextVertexSize && !U.isOnEdge(nextPt, nextVertexSize)) {
@@ -309,7 +310,6 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
   private static midPointMouseUp(e: JQuery.MouseUpEvent) { }*/
 
   refreshGui(debug: boolean = false, useRealEndVertex: boolean = null, usemidnodes: boolean = null) {
-    if (debug === null) { debug = false; }
     if (useRealEndVertex === null) { useRealEndVertex = this.useRealEndVertex; }
     if (usemidnodes === null) { usemidnodes = this.useMidNodes; }
     /* setup variables */
@@ -337,6 +337,7 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
     let pathStr = 'M' + (allRealPt[0].getStartPoint().x) + ' ' + (allRealPt[0].getStartPoint().y);
     let oldpathStr = pathStr;
     const graph: IGraph = this.logic.getModelRoot().graph;
+    if (debug) { console.clear(); }
     for (i = 1; i < allRealPt.length; i++) { // escludo il primo punto dal loop.
       const curr: EdgePoint = allRealPt[i];
       const prev: EdgePoint = allRealPt[i - 1];
@@ -350,14 +351,15 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
       const nextFitToGridVertical: boolean = false;*/
       const prevPt: GraphPoint = prev.getStartPoint(!prevVertexSize, !prevVertexSize);
       const currPt: GraphPoint = curr.getEndPoint(!nextVertexSize, !nextVertexSize);
-      if (debug) {
+      if (false && debug) {
         graph.markg(prevPt, true, 'green');
         graph.markg(currPt, false, 'green');
-        graph.markgS(prevVertexSize, false, 'blue');
-        graph.markgS(nextVertexSize, false); }
+        if (prevVertexSize) { graph.markgS(prevVertexSize, false, 'blue'); }
+        if (nextVertexSize) { graph.markgS(nextVertexSize, false); } }
       // if (i === 1) { pt1.moveOnNearestBorder(startVertexSize, false); }
       // if (i === allRealPt.length - 1) { pt2.moveOnNearestBorder(endVertexSize, false); }
       pathStr += IEdge.makePathSegment(prevPt, currPt, this.mode, favdirection, prevVertexSize, nextVertexSize);
+      U.pif(debug, 'pathStr: RealPts:' + '[' + i + '] = ' + currPt.toString() + '; prev:' + prevPt.toString());
       U.pif(debug, 'pathStr[' + (i) + '/' + allRealPt.length + ']: ' + oldpathStr + ' --> ' + pathStr);
     }
 
@@ -406,6 +408,8 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
       // const HeadSize: GraphSize = this.owner.toGraphCoordS(U.sizeof(this.edgeHead));
       U.pif(debug, 'size of head: ', HeadSize);
       U.pif(debug, 'str1:', firstStr, 'str2:', secondStr, 'pt1:', firstPt, 'pt2:', secondPt, 'm:', m);
+      // U.pe( false && Status.status.loadedGUI && firstPt.x === firstPt.y && firstPt.x === 0, 'cannot be', this, this.midNodes);
+      // U.pe( Status.status.loadedGUI && firstPt.x === firstPt.y && firstPt.x === 0, 'cannot be', this, this.midNodes);
       if (m === Number.POSITIVE_INFINITY) { // link hit on top
         (this.edgeHead).setAttributeNS(null, 'x', '' + (firstPt.x - HeadSize.w / 2));
         (this.edgeHead).setAttributeNS(null, 'y', '' + (firstPt.y - HeadSize.h)); }
@@ -506,7 +510,7 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
       // todo: se cambi endpoint !== startpoint, devi fare due check.
       // const prevPt: GraphPoint = allNodes[realNodeIndex].getStartPoint(!!prevVertexSize, !!prevVertexSize);
       // const currPt: GraphPoint = curr.getEndPoint(!!nextVertexSize, !!nextVertexSize);
-      console.log(pt, ' =?= ', midPoint, pt.equals(midPoint));
+      U.pif(debug, pt, ' =?= ', midPoint, pt.equals(midPoint));
       if (pt.equals(midPoint)) {
         puntiReali++;
         target = realMidPoints[realNodeIndex++];
@@ -519,7 +523,7 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
       while (++i < nodiFittizi.length) { prettyFittizi.push(nodiFittizi[i].pos.toString()); }
       i = -1;
       while (++i < realMidPoints.length) { prettyRealMidPoints.push(realMidPoints[i].pos.toString()); }
-      U.pw(true, 'fallimento nell\'assegnare fakepoints ai punti reali. Assegnati:' + puntiReali + ' / ' + prettyRealMidPoints.length
+      U.pw(debug, 'fallimento nell\'assegnare fakepoints ai punti reali. Assegnati:' + puntiReali + ' / ' + prettyRealMidPoints.length
         + '; fittizi trovati:', prettyFittizi, ' reali:', prettyRealMidPoints, ' path:', dArr);
     }
     return nodiFittizi; }
@@ -611,7 +615,7 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
     this.onMouseOver(e as any, false);
     // nothing, CursorFollower is doing the job alone.
   }
-  onMouseOver(e: MouseOverEvent | MouseMoveEvent, canFail: boolean = false): void {
+  onMouseOver(e: MouseOverEvent | MouseMoveEvent, canFail: boolean = false, debug: boolean = false): void {
     // if (this.isSelected) { return; }
     if (IEdge.refChanging) { return; }
     const fakePoints: EdgePointFittizio[] = this.getAllFakePoints();
@@ -620,16 +624,16 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
     const preFake: EdgePointFittizio = tmp[0];
     const nextFake: EdgePointFittizio = tmp[1];
     const pre: EdgePoint = preFake.getPreviousRealPt(fakePoints);
-    const post: EdgePoint = nextFake.getNextRealPt(fakePoints);
+    const next: EdgePoint = nextFake.getNextRealPt(fakePoints);
     U.pe(!pre, 'failed to get previousRealPt of point:', preFake, ', all fakePoints:', fakePoints);
-    U.pe(!post, 'failed to get nextRealPt of point:', nextFake, ', all fakePoints:', fakePoints);
+    U.pe(!next, 'failed to get nextRealPt of point:', nextFake, ', all fakePoints:', fakePoints);
     let i = -1;
     this.startNode.refreshGUI(null, false);
     this.endNode.refreshGUI(null, false);
     let cursor: string;
     switch (this.logic.edgeStyleCommon.style) {
       default: cursor = 'help'; break;
-      case EdgeModes.straight: break;
+      case EdgeModes.straight: cursor = 'select'; break;
       case EdgeModes.angular2:
       case EdgeModes.angular3:
       case EdgeModes.angular23Auto:
@@ -640,25 +644,30 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
     }
     this.shadow.style.cursor = this.html.style.cursor = cursor;
     while (++i < this.midNodes.length) { this.midNodes[i].refreshGUI(null, false); }
+    if (debug) { console.clear(); }
+    U.pif(debug, 'fake     pre: ', preFake, ', next:', nextFake);
+    U.pif(debug, 'real     pre: ', pre, ', next:', next);
     pre.refreshGUI(null, true);
-    post.refreshGUI(null, true);
-    switch (this.mode) {
-      default:  this.shell.style.cursor = 'pointer'; break;
+    next.refreshGUI(null, true);
+    /* switch (this.mode) {
+      default: this.shell.style.cursor = 'pointer'; break;
       case EdgeModes.angular2: case EdgeModes.angular23Auto: case EdgeModes.angular3:
         if (pre.pos.x === post.pos.x) { this.shell.style.cursor = 'row-resize'; }
         if (pre.pos.y === post.pos.y) { this.shell.style.cursor = 'col-resize'; }
-        break;
-    }
+        break; }*/
   }
   onClick(e: ClickEvent): void {
     // console.log('IEdge.clicked:', this);
+    const debug = false;
     this.isSelected = true;
     IEdge.selecteds.push(this);
     let i;
     this.html.setAttributeNS(null, 'stroke-width', '' + 5);
     this.html.classList.add('selected_debug');
     this.startNode.show();
-    for (i = 0; i < this.midNodes; i++) { this.midNodes[i].show(); }
+    if (debug) { console.clear(); }
+    U.pif(debug, 'midnodes:', this.midNodes);
+    for (i = 0; i < this.midNodes; i++) { this.midNodes[i].show(debug); }
     this.endNode.show();
     // if (!triggered) { Status.status.getActiveModel().graph.propertyBar.styleEditor.showE(this.logic); }
     this.refreshGui();

@@ -21,7 +21,7 @@ import MouseUpEvent = JQuery.MouseUpEvent;
 import ContextMenuEvent = JQuery.ContextMenuEvent;
 export class InputPopup {
   static popupCounter = 0;
-  private html: HTMLElement;
+  html: HTMLElement;
   constructor(title: string, txtpre: string, txtpost: string, event: any[][] /* array of (['oninput', onInputFunction])*/,
               placeholder: string = null, value: string, inputType: string = 'input', inputSubType: string = null) {
     const value0 = value;
@@ -45,7 +45,8 @@ export class InputPopup {
         '<table class="typeTable"><tbody>' +
           '<tr class="typeRow"><td class="alias">' + txtpre + '</td>' +
           '<' + inputType + ' ' + inputSubType + ' ' + placeholder + ' ' + value + ' class="form-control popupInput" ' +
-              'aria-label="Small" aria-describedby="inputGroup-sizing-sm">' + innerValue + txtpost + '</td>' +
+              'aria-label="Small" aria-describedby="inputGroup-sizing-sm">' + innerValue + txtpost +
+          '</td>' +
           '</tr>' +
         '</tbody></table></div>' +
       '</div></div>');
@@ -57,6 +58,10 @@ export class InputPopup {
       $input.on(currentEvt[0], currentEvt[1]);
     }
     this.html = container;
+
+    if (inputType === 'textarea') {
+      this.getInputNode()[0].setAttribute('style', 'width: calc(75vw - 152px); height: calc(75vh - 200px);');
+    }
     this.show();
   }
   getInputNode(): JQuery<HTMLElement> { return $(this.html).find('.popupInput'); }
@@ -68,6 +73,16 @@ export class InputPopup {
     if (this.html && this.html.parentNode) {
       this.html.parentNode.removeChild(this.html);
       this.html = null; }
+  }
+
+  addOkButton(load1: string, finish: () => void) {
+    const input: HTMLElement = this.getInputNode()[0];
+    const button: HTMLButtonElement = document.createElement('button');
+    button.innerText = 'Confirm';
+    const size: Size = U.sizeof(button);
+    button.style.left = 'calc( 50% - ' + size.w / 2 + 'px);';
+    input.parentNode.appendChild(button);
+    $(button).on('click.btnclickpopup', finish);
   }
 }
 export enum eCoreRoot {
@@ -206,6 +221,7 @@ export class U {
   private static clipboardinput: HTMLInputElement = null;
   static he = null;
 
+  static production = true;
   static clear(htmlNode: HTMLElement | SVGElement) {
     while (htmlNode.firstChild) {
       htmlNode.removeChild(htmlNode.firstChild);
@@ -226,7 +242,7 @@ export class U {
       str += 'pe[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ' + s + '\t\t\r\n';
       console.log('pe[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ', s);
     }
-    alert(str);
+    if (!production) { alert(str); }
     s = (((b as unknown) as any[])['@makeMeCrash'] as any[])['@makeMeCrash'];
     return str;
   }
@@ -242,7 +258,7 @@ export class U {
       str += 'pw[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ' + s + '\t\t\r\n';
       console.log('pw[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ', s);
     }
-    alert(str);
+    if (!production) { alert(str); }
     // s = (((b as unknown) as any[])['@makeMeCrash'] as any[])['@makeMeCrash'];
     return str;
   }

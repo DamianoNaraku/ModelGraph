@@ -38,14 +38,13 @@ export class EdgePointFittizio {
     }
     return null;
   }
-  getNextRealPt(fittizi: EdgePointFittizio[], includeMySelf = true) {
+  getNextRealPt(fittizi: EdgePointFittizio[], includeMySelf = true, debug: boolean = false) {
     let index = fittizi.indexOf(this);
     U.pe(index < 0, 'the element must be inside the array');
     index -= (includeMySelf ? 1 : 0);
     while (++index < fittizi.length) {
-      console.log(index + '/' + fittizi.length + ']', fittizi[index], 'fittiziAll:', fittizi);
-      if (fittizi[index].realPoint) { return fittizi[index].realPoint; }
-    }
+      U.pif(debug, index + '/' + fittizi.length + ']', fittizi[index], 'fittiziAll:', fittizi);
+      if (fittizi[index].realPoint) { return fittizi[index].realPoint; } }
     return null;
   }
 }
@@ -145,24 +144,26 @@ export class EdgePoint implements IEdgePoint {
     this.show();
     if (refresh) { this.edge.refreshGui(); } }
 
-  show(): void {
+  show(debug: boolean = false): void {
     const oldParent: HTMLElement | SVGElement = this.html.parentNode as HTMLElement | SVGElement;
     if (oldParent) { oldParent.removeChild(this.html); }
     this.edge.shell.appendChild(this.html);
-    this.refreshGUI(null, null);
+    this.html.style.display = 'block';
+    this.refreshGUI(null, null, debug);
   }
   hide(): void { this.html.style.display = 'none'; }
 
 
-  public refreshGUI(select: boolean = null, highlight: boolean = null): void {
+  public refreshGUI(select: boolean = null, highlight: boolean = null, debug: boolean = false): void {
     if (select !== null) { this.isSelected = select; }
     if (highlight !== null) { this.isHighlighted = highlight; }
     if (this.isSelected) { this.styleSelected(); } else
-    if (this.isHighlighted) { this.styleHighlight(); } else { this.styleCommon(); }
+    if (this.isHighlighted) { this.styleHighlight(); } else { this.styleCommon(debug); }
   }
-  private styleCommon(): void {
-    if (!this.isAttached()) { return; }
+  private styleCommon(debug: boolean = false): void {
+    if (!this.isAttached()) { U.pw(debug, 'not attached', this); return; }
     const eps: EdgePointStyle = this.edge.logic.edgeStyleCommon.edgePointStyle;
+    if (debug) { this.html.setAttributeNS(null, 'debug', 'styleCommon'); }
     this.html.setAttributeNS(null, 'r', '' + eps.radius);
     this.html.setAttributeNS(null, 'stroke-width', '' + eps.strokeWidth);
     this.html.setAttributeNS(null, 'stroke', eps.strokeColor);
@@ -202,6 +203,8 @@ export class CursorFollowerEP extends EdgePoint {
         if (!f || !f.isAttached()) { return; }
         const graph = Status.status.getActiveModel().graph;
         f.moveTo(graph.toGraphCoord(new Point(e.pageX, e.pageY)), true);
+        f.edge.refreshGui(true);
+        /// here bug edge
       });
     $b.off('click.cursorFollowerEdgePoint_Detach').on('click.cursorFollowerEdgePoint_Detach',
       (e: ClickEvent) => {

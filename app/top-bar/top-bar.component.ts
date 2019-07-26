@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import ClickEvent = JQuery.ClickEvent;
-import {AttribETypes, IModel, Json, Options, prjson2xml, Status, U} from '../common/Joiner';
+import {AttribETypes, IModel, Json, Model, Options, prjson2xml, Status, U} from '../common/Joiner';
 import {FastXmi, FastXmiOptions, InputPopup, ShortAttribETypes} from '../common/util';
 import ChangeEvent = JQuery.ChangeEvent;
 import {EType} from '../Model/MetaMetaModel';
 import {json2xml, Options as XMLJSOptions} from 'xml-js';
 import JS2XML = XMLJSOptions.JS2XML;
 
+// @ts-ignore
 @Component({
   selector: 'app-top-bar',
   templateUrl: './top-bar.component.html',
@@ -38,6 +39,39 @@ export class TopBar {
     this.addEventListeners(); }
 
 
+  static load_empty(e: JQuery.ClickEvent, prefix: string) {
+    const empty: string = prefix === 'm' ? Model.emptyModel : IModel.emptyModel;
+    TopBar.load(empty, prefix);
+  }
+
+  static load_XMI_File(e: JQuery.ClickEvent, prefix: string) {
+    U.pe(true, 'loadXML todo: use load by JSON/string instead.');
+    // open file dialog
+    // read file
+    // transform in json
+    const json = 'fileContentTransformed';
+    TopBar.load(json, prefix);
+  }
+  static load(json: string, prefix: string) {
+    const m: IModel = prefix === 'm' ? Status.status.m : Status.status.mm;
+    m.save(false);
+    window['' + 'discardSave']();
+    localStorage.setItem('LastOpened' + prefix.toUpperCase(), json);
+    U.refreshPage();
+  }
+
+  static load_JSON_Text(e: JQuery.ClickEvent, prefix: string) {
+    const onoutput = (ee: Event) => {  finish(); };
+    const finish = () => {
+      const input: HTMLInputElement = popup.getInputNode()[0] as HTMLInputElement;
+      popup.destroy();
+      TopBar.load(input.value, prefix);
+    };
+    const popup: InputPopup = new InputPopup('paste JSON/string data', '', '',
+      [['input', onoutput], ['change', onoutput]], 'paste data here.', '', 'textarea');
+    // $(popup).find('.closeButton');
+    popup.addOkButton('Load', finish);
+    popup.show(); }
   static download_JSON_String(e: ClickEvent, modelstr: string): void {
     const model: IModel = Status.status[modelstr];
     U.pe(!model, 'invalid modelStr in export-save_str: |' + modelstr + '|, status:', status);
@@ -46,8 +80,6 @@ export class TopBar {
     U.clipboardCopy(savetxt);
     const popup: InputPopup = new InputPopup((model.isM() ? 'Model' : 'Metamodel') + ' eCore/JSON',
       '', '<br>Already copied to clipboard.', [], null, '' + savetxt, 'textarea');
-    const inputStyle = 'width: calc(75vw - 152px); height: calc(75vh - 200px);';
-    if (inputStyle) {  popup.getInputNode()[0].setAttribute('style', inputStyle); }
     popup.show();
   }
 
@@ -70,18 +102,18 @@ export class TopBar {
     savetxt = '' + prjson2xml.json2xml(json, ' ');
     savetxt = TopBar.formatXml(savetxt).trim();
     U.download((model.name || model.getDefaultPackage().name || 'unnamed') + '.ecore', savetxt); }
-  static formatXml = (xml: string) => {
-    var reg = /(>)\s*(<)(\/*)/g; // updated Mar 30, 2015
-    var wsexp = / *(.*) +\n/g;
-    var contexp = /(<.+>)(.+\n)/g;
+  static formatXml(xml: string): string {
+    const reg = /(>)\s*(<)(\/*)/g; // updated Mar 30, 2015
+    const wsexp = / *(.*) +\n/g;
+    const contexp = /(<.+>)(.+\n)/g;
     xml = xml.replace(reg, '$1\n$2$3').replace(wsexp, '$1\n').replace(contexp, '$1\n$2');
-    var pad = 0;
-    var formatted = '';
-    let lines = xml.split('\n');
-    var indent = 0;
-    var lastType = 'other';
+    const pad = 0;
+    let formatted = '';
+    const lines = xml.split('\n');
+    let indent = 0;
+    let lastType = 'other';
     // 4 types of tags - single, closing, opening, other (text, doctype, comment) - 4*4 = 16 transitions
-    var transitions = {
+    const transitions = {
       'single->single': 0,
       'single->closing': -1,
       'single->opening': 0,
@@ -99,33 +131,35 @@ export class TopBar {
       'other->opening': 0,
       'other->other': 0
     };
-
-    for (var i = 0; i < lines.length; i++) {
-      var ln = lines[i];
+    let i = 0;
+    for (i = 0; i < lines.length; i++) {
+      const ln = lines[i];
 
       // Luca Viggiani 2017-07-03: handle optional <?xml ... ?> declaration
       if (ln.match(/\s*<\?xml/)) {
-        formatted += ln + "\n";
+        formatted += ln + '\n';
         continue;
       }
       // ---
 
-      var single = Boolean(ln.match(/<.+\/>/)); // is this line a single tag? ex. <br />
-      var closing = Boolean(ln.match(/<\/.+>/)); // is this a closing tag? ex. </a>
-      var opening = Boolean(ln.match(/<[^!].*>/)); // is this even a tag (that's not <!something>)
-      var type = single ? 'single' : closing ? 'closing' : opening ? 'opening' : 'other';
-      var fromTo = lastType + '->' + type;
+      const single = Boolean(ln.match(/<.+\/>/)); // is this line a single tag? ex. <br />
+      const closing = Boolean(ln.match(/<\/.+>/)); // is this a closing tag? ex. </a>
+      const opening = Boolean(ln.match(/<[^!].*>/)); // is this even a tag (that's not <!something>)
+      const type = single ? 'single' : closing ? 'closing' : opening ? 'opening' : 'other';
+      const fromTo = lastType + '->' + type;
       lastType = type;
-      var padding = '';
+      let padding = '';
 
       indent += transitions[fromTo];
-      for (var j = 0; j < indent; j++) {
+      let j: number;
+      for (j = 0; j < indent; j++) {
         padding += '\t';
       }
-      if (fromTo == 'opening->closing')
+      if (fromTo === 'opening->closing') {
         formatted = formatted.substr(0, formatted.length - 1) + ln + '\n'; // substr removes line break (\n) from prev loop
-      else
+      } else {
         formatted += padding + ln + '\n';
+      }
     }
 
     return formatted;
@@ -186,12 +220,12 @@ export class TopBar {
     $t.find('.download_M_JSON').off('click.btn').on('click.btn', (e: ClickEvent) => { TopBar.download_JSON_File(e, 'm'); } );
     $t.find('.download_M_XMI').off('click.btn').on('click.btn', (e: ClickEvent) => { TopBar.download_XMI_File(e, 'm'); } );
     //// load
-    /*$t.find('.loadmmEmpty').off('click.btn').on('click.btn', (e: ClickEvent) => { TopBar.load_empty(e, 'mm'); } );
+    $t.find('.loadmmEmpty').off('click.btn').on('click.btn', (e: ClickEvent) => { TopBar.load_empty(e, 'mm'); } );
     $t.find('.loadmmFile').off('click.btn').on('click.btn', (e: ClickEvent) => { TopBar.load_XMI_File(e, 'mm'); } );
     $t.find('.loadmmTxt').off('click.btn').on('click.btn', (e: ClickEvent) => { TopBar.load_JSON_Text(e, 'mm'); } );
     $t.find('.loadmEmpty').off('click.btn').on('click.btn', (e: ClickEvent) => { TopBar.load_empty(e, 'm'); } );
     $t.find('.loadmFile').off('click.btn').on('click.btn', (e: ClickEvent) => { TopBar.load_XMI_File(e, 'm'); } );
-    $t.find('.loadmTxt').off('click.btn').on('click.btn', (e: ClickEvent) => { TopBar.load_JSON_Text(e, 'm'); } );*/
+    $t.find('.loadmTxt').off('click.btn').on('click.btn', (e: ClickEvent) => { TopBar.load_JSON_Text(e, 'm'); } );
   }
   showTypeMap(): void {
     const $shell = this.$html.find('#TypeMapper');
@@ -228,4 +262,5 @@ export class TopBar {
     const type: EType = EType.get(m3Type as ShortAttribETypes);
     type.changeAlias(input.value);
   }
+
 }
