@@ -1,0 +1,18 @@
+se aggiungo un campo nel m2, il campo non c'è in m1.
+$mattribute.ownstyle sembra non funzionare.
+rightclick?
+fai un big mmodel
+togli gli alert in pw e pe (U.prodution)
+
+refreshgui0() che fa il vero update
+refreshgui() che chiama tutti i refreshgui0 dal modelroot.
+
+esportaTXT, cambia nome a qualcosa ($non usato in model), ricarica TXT.
+m3 rename primitive types.
+
+controlla mail per vedere lista features.
+controlla add-remove midpoints.
+
+se aggiorno il valore di un input devo riaggiornare anche la classe holder (o tutto il grafo)
+
+SE non fixi questo: applica lo stesso stile a due classi diverse e mostra che solo una cambia stile in base al suo valore, se cambi valore devi reincollare di nuovo lo stile per forzare refresh.

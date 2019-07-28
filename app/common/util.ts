@@ -221,7 +221,7 @@ export class U {
   private static clipboardinput: HTMLInputElement = null;
   static he = null;
 
-  static production = true;
+  static production = true; // true;
   static clear(htmlNode: HTMLElement | SVGElement) {
     while (htmlNode.firstChild) {
       htmlNode.removeChild(htmlNode.firstChild);
@@ -242,7 +242,7 @@ export class U {
       str += 'pe[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ' + s + '\t\t\r\n';
       console.log('pe[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ', s);
     }
-    if (!production) { alert(str); }
+    if (!U.production) { alert(str); }
     s = (((b as unknown) as any[])['@makeMeCrash'] as any[])['@makeMeCrash'];
     return str;
   }
@@ -258,7 +258,7 @@ export class U {
       str += 'pw[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ' + s + '\t\t\r\n';
       console.log('pw[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ', s);
     }
-    if (!production) { alert(str); }
+    if (!U.production) { alert(str); }
     // s = (((b as unknown) as any[])['@makeMeCrash'] as any[])['@makeMeCrash'];
     return str;
   }
@@ -899,6 +899,7 @@ export class U {
   }
 
   static replaceAll(str: string, searchText: string, replacement: string, debug: boolean = false, warn: boolean = true): string {
+    if (!str) { return str; }
     return str.split(searchText).join(replacement);
     let lastPos = 0;
     if (searchText === replacement) {

@@ -515,7 +515,7 @@ export class IVertex {
     U.pe(!htmlRaw, 'failed to get attribute style:', data);
     if (data.getModelRoot().isM()) { data.replaceVarsSetup(); }
     let html: HTMLElement | SVGElement = U.cloneHtml(htmlRaw);
-    html = data.html = U.replaceVars<HTMLElement | SVGElement>(data, htmlRaw, false);
+    html = data.html = U.replaceVars<HTMLElement | SVGElement>(data, htmlRaw);
     // console.log('draw Attribute[' + data.midname + '] with style:', htmlRaw, 'logic:', data);
     data.linkToLogic(html);
     data.refreshGUI();

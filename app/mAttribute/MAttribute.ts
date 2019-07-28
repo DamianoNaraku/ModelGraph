@@ -73,8 +73,10 @@ export class MAttribute extends IAttribute {
   modify(json: Json, destructive: boolean) {
     this.setValue(json as any[]);
     if (!this.validate()) {
-      this.mark(true, 'errorValue');
+      this.setValue(null);
       U.pw(true, 'marked attribute (' + this.metaParent.name + ') with type ', this.getType(), 'values:', this.values, 'this:', this);
+      return true;
+      this.mark(true, 'errorValue');
     } else { this.mark(false, 'errorValue'); }
   }
   comformability(meta: IAttribute): number {
@@ -120,7 +122,8 @@ export class MAttribute extends IAttribute {
       case AttribETypes.EByte:
       case AttribETypes.EShort:
       case AttribETypes.EInt:
-      case AttribETypes.ELong: return U.isIntegerArray(this.values, this.getType().minValue, this.getType().maxValue);
+      case AttribETypes.ELong: return '' + (+this.values) === this.values + ''
+        || U.isIntegerArray(this.values, this.getType().minValue, this.getType().maxValue);
     }
   }
 
@@ -132,6 +135,7 @@ export class MAttribute extends IAttribute {
       case 'input': this.setValueStr((html as HTMLInputElement).value); break;
       case 'select': U.pe(true, 'non dovrebbero esserci campi select nel vertice di un MAttribute.'); break;
     }
+    try { this.parent.refreshGUI(); } catch (e){} finally {}
   }
 
   setValueStr(valStr: string) {
@@ -154,17 +158,30 @@ export class MAttribute extends IAttribute {
     // console.clear();
     // console.log('setvalue: |', values0, '| --> ', values, 'defaultv:', defaultv, 'type:', type);
     this.values = values;
+    U.pe('' + values === '' + undefined, 'undef:', values, this);
     // this.replaceVarsSetup();
     this.refreshGUI(); }
   getValueStr(): string {
     let ret: any = this.values;
     if ((this.metaParent as IAttribute).upperbound === 1) { ret = this.values.length ? this.values[0] : ''; }
-    if (ret === '' + ret) { return '' + ret; }
-    return JSON.stringify(ret); }
+    if (ret === '' + ret) { ret = '' + ret; }
+    ret = Array.isArray(ret) ? JSON.stringify(ret) : '' + ret;
+    if (ret === '' + undefined) { this.setValue(null); ret = this.valuesStr = '' + this.values[0]; }
+    console.log('this.valuess:', this.values, ', val[0]:', this.values[0], 'ret:', ret);
+    ///
+    const html: HTMLElement = this.vertex ? this.vertex.html() : null;
+    if (!html) { return ret; }
+    ($(html).find('input')[0] as HTMLInputElement).value = ret; // todo: remove
+    return ret;
+  }
   replaceVarsSetup(debug: boolean = false): void {
+    debug = true;
+    console.clear();
     const old = this.valuesStr;
     U.pif(debug, this.values);
-    this.valuesStr = U.replaceAll(this.getValueStr(), '\n', '', debug);
+    const val: string = this.getValueStr();
+    U.pif(debug, 'val:', val, ', this.values:', this.values, ', this:', this);
+    this.valuesStr = val ? U.replaceAll(val, '\n', '', debug) : '';
     if (this.valuesStr && this.valuesStr[0] === '[') {this.valuesStr = this.valuesStr.substr(1, this.valuesStr.length - 2); }
     U.pif(debug, 'valuesSTR: |' + old + '| --> |' + this.valuesStr + '|');
   }

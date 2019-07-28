@@ -46,8 +46,8 @@ export class IReference extends ModelPiece {
     const json: Json = {};
     Json.write(json, eCoreReference.xsitype, 'ecore:EReference');
     Json.write(json, eCoreReference.eType, '#//' + parentClass.name);
-    Json.write(json, eCoreReference.lowerbound, '@0');
-    Json.write(json, eCoreReference.upperbound, '@1');
+    Json.write(json, eCoreReference.lowerbound, '0');
+    Json.write(json, eCoreReference.upperbound, '1');
     Json.write(json, eCoreReference.containment, 'true');
     while (parentClass.isChildNameTaken(name + '_' + namei)) { namei++; }
     Json.write(json, eCoreReference.name, name + '_' + namei);
@@ -118,8 +118,8 @@ export class IReference extends ModelPiece {
     model[eCoreReference.xsitype] = 'ecore:EReference';
     model[eCoreReference.eType] = '#//' + this.target.name;
     model[eCoreReference.name] = this.name;
-    if (this.lowerbound != null) { model[eCoreReference.lowerbound] = this.lowerbound; }
-    if (this.upperbound != null) { model[eCoreReference.upperbound] = this.upperbound; }
+    if (this.lowerbound != null && !isNaN(+this.lowerbound)) { model[eCoreReference.lowerbound] = +this.lowerbound; }
+    if (this.upperbound != null && !isNaN(+this.lowerbound)) { model[eCoreReference.upperbound] = +this.upperbound; }
     if (this.containment != null) { model[eCoreReference.containment] = this.containment; }
     return model; }
 

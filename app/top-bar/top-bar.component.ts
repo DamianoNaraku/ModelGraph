@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import ClickEvent = JQuery.ClickEvent;
-import {AttribETypes, IModel, Json, Model, Options, prjson2xml, Status, U} from '../common/Joiner';
+import {AttribETypes, IModel, Json, MClass, Model, Options, prjson2xml, Status, U} from '../common/Joiner';
 import {FastXmi, FastXmiOptions, InputPopup, ShortAttribETypes} from '../common/util';
 import ChangeEvent = JQuery.ChangeEvent;
 import {EType} from '../Model/MetaMetaModel';
@@ -101,7 +101,17 @@ export class TopBar {
     // console.log('xmljson: ', parser.parse(json));
     savetxt = '' + prjson2xml.json2xml(json, ' ');
     savetxt = TopBar.formatXml(savetxt).trim();
-    U.download((model.name || model.getDefaultPackage().name || 'unnamed') + '.ecore', savetxt); }
+    let name: string;
+    let extension: string;
+    if (model.isM()) {
+      const classRoot: MClass = model.classRoot;
+      name = (model.name || (classRoot ? classRoot.metaParent.name : 'M1_unnamed'));
+      extension = '.' + (Status.status.mm.childrens[0].name).toLowerCase();
+    } else {
+      name = (model.name || model.getDefaultPackage().name || 'M2_unnamed');
+      extension = '.ecore';
+    }
+    U.download(name + extension, savetxt); }
   static formatXml(xml: string): string {
     const reg = /(>)\s*(<)(\/*)/g; // updated Mar 30, 2015
     const wsexp = / *(.*) +\n/g;
