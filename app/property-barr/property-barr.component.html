@@ -1,34 +1,17 @@
 <div id="mmproperty_sidebar">
   <div id="propertySidebarCurrentContent"></div>
   <div id="propertySidebarTemplates">
+    <!-- todo: devi spezzare in due contenitori: per m2 e per m1. sono mischiati. e usa come root (js il templatecontainer del modello attuale.> -->
     <!-- model -->
-    <div id = "mmodelTemplate" class="template">
+    <div class = "model template">
       <div class = "attributeMinimizer minimizer"></div>
-      <div class="">
+      <div>
         <div class="modelContent content">
           <label>URI:
-            <input class = "uri" pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$">
+            <input class = "uri m1disable" pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$">
           </label>
           <label>Namespace:
-            <input class = "namespace" pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$">
-          </label>
-          <label>Name:
-            <input class = "modelName" placeholder="nameless" pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$">
-          </label>
-          <label>Packages:</label>
-          <div class = "packageList"></div>
-        </div>
-      </div>
-    </div>
-    <div id = "modelTemplate" class="template">
-      <div class = "attributeMinimizer minimizer"></div>
-      <div class="">
-        <div class="modelContent content">
-          <label>URI:
-            <input class = "uri" disabled>
-          </label>
-          <label>Namespace:
-            <input class = "namespace" disabled>
+            <input class = "namespace m1disable" pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$">
           </label>
           <label>Name:
             <input class = "modelName" placeholder="nameless" pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$">
@@ -39,52 +22,28 @@
       </div>
     </div>
     <!-- package -->
-    <div id = "packageTemplate" class="template">
+    <div class = "package template">
       <div class = "attributeMinimizer minimizer"></div>
-      <div class="">
+      <div>
         <div class="packageContent content">
           <label>Name:
-            <input class = "packageName" pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$">
+            <input class = "packageName m1disable" pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$">
           </label>
-          <label>Classes:</label>
-          <div class = "classList"></div>
-        </div>
-      </div>
-    </div>
-    <div id = "mpackageTemplate" class="template">
-      <div class = "attributeMinimizer minimizer"></div>
-      <div class="">
-        <div class="packageContent content">
-          <!-- <label>Name:<input class = "packageName"pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$"></label> -->
           <label>Classes:</label>
           <div class = "classList"></div>
         </div>
       </div>
     </div>
     <!-- class -->
-    <div id = "classTemplate" class="template">
+    <div class = "class template">
       <div class = "attributeMinimizer minimizer"></div>
-      <div class="">
+      <div>
         <div class="classContent content">
+          <label class = "m2hide">Is Root<input type="checkbox" class="isRoot"></label>
           <label>Name:
-            <input class = "className" pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$">
+            <input class = "className m1disable" pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$">
           </label>
-          <label>Fields:</label>
-          <div class = "attributeList"></div>
-          <label>References:</label>
-          <div class = "referenceList"></div>
-        </div>
-      </div>
-    </div>
-    <div id = "mclassTemplate" class="template">
-      <div class = "attributeMinimizer minimizer"></div>
-      <div class="">
-        <div class="classContent content">
-          <label>Is Root<input type="checkbox" class="isRoot"></label>
-          <label>Class:
-            <input class = "className" disabled>
-          </label>
-          <label>Fields:</label>
+          <label>Attributes:</label><!-- todo: inserisci $##attributes.length$ etc... pure agli altri. -->
           <div class = "attributeList"></div>
           <label>References:</label>
           <div class = "referenceList"></div>
@@ -92,62 +51,43 @@
       </div>
     </div>
     <!-- attribute -->
-    <div id = "attributeTemplate" class="template">
+    <div class = "attribute template">
       <div class = "attributeMinimizer minimizer"></div>
       <div class="">
         <div class="attributeContent content">
           <label>Type:
-            <select class = "attributeType"></select>
+            <select class = "attributeType m1disable"></select>
           </label>
           <label>Name:
-            <input class = "attributeName" pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$">
+            <input class = "attributeName m1disable" pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$">
           </label>
-        </div>
-      </div>
-    </div>
-    <div id = "mattributeTemplate" class="template model attribute">
-      <div class = "attributeMinimizer minimizer"></div>
-      <div>
-        <div class = "content">
-          <label>Name:
-            <input type="text" class = "attributeName" disabled>
-          </label>
-          <label>Type:
-            <select class = "attributeType"></select>
-          </label>
-          <label>Value:
+          <label class="m2hide">Value:
             <input type="text" class = "attributeValue" placeholder = "[ empty ]">
           </label>
         </div>
       </div>
     </div>
     <!-- reference -->
-    <div id = "referenceTemplate" class="template metamodel reference">
+    <div class = "reference template">
       <div class = "attributeMinimizer minimizer"></div>
       <div class="">
         <div class="content">
           <label>Target Type:
-            <select class = "referenceType"></select>
+            <select class = "referenceType m1disable"></select>
           </label>
           <label>Name:
-            <input class = "referenceName" placeholder="Must be named." pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$">
+            <input class = "referenceName m1disable" placeholder="Must be named." pattern="^[a-zA-Z_$][a-zA-Z_$0-9]*$">
           </label>
           <label>Is containment:
-            <input type="checkbox" class="referenceContainment">
+            <input type="checkbox" class="referenceContainment m1disable">
           </label>
           <label>LowerBound:
-            <input type="number" step="1" min="-1" class="referenceLowerBound" placeholder="-1">
+            <input type="number" step="1" min="-1" class="referenceLowerBound m1disable" placeholder="-1">
           </label>
           <label>UpperBound:
-            <input type="number" step="1" min="-1" class="referenceUpperBound" placeholder="-1">
+            <input type="number" step="1" min="-1" class="referenceUpperBound m1disable" placeholder="-1">
           </label>
         </div>
-      </div>
-    </div>
-    <div id = "mreferenceTemplate" class="template model reference">
-      <div class = "attributeMinimizer minimizer"></div>
-      <div>
-        <div class = "content">Nothing editable here.</div>
       </div>
     </div>
   </div>

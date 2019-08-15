@@ -1,6 +1,4 @@
-import {GraphPoint, IVertex} from '../Vertex/iVertex';
-import {IEdge} from './iEdge';
-import {Dictionary, EdgePointStyle, EdgeStyle, IGraph, Point, Status, U} from '../../common/Joiner';
+import {IEdge, GraphPoint, IVertex, Dictionary, EdgePointStyle, EdgeStyle, IGraph, Point, Status, U} from '../../common/Joiner';
 import ClickEvent = JQuery.ClickEvent;
 import MouseUpEvent = JQuery.MouseUpEvent;
 import MouseMoveEvent = JQuery.MouseMoveEvent;
@@ -65,7 +63,7 @@ export class EdgePoint implements IEdgePoint {
     U.pe(this.edge === undefined, 'edge === undefined on EdgePoint constructor.');
     this.html = U.newSvg<SVGCircleElement>('circle');
     this.id = EdgePoint.ID++;
-    if(e) { e.logic.linkToLogic(this.html); }
+    if (e) { e.logic.linkToLogic(this.html); }
     EdgePoint.all[this.id] = this;
     this.html.dataset.EdgePointID = '' + this.id;
     this.pos = new GraphPoint(0, 0);
@@ -76,12 +74,15 @@ export class EdgePoint implements IEdgePoint {
     this.addEventListeners(); }
 
   static getFromHtml(html: HTMLElement | SVGElement): EdgePoint { return EdgePoint.all[html.dataset.EdgePointID]; }
+
   follow(): void {
     console.log('follow');
     CursorFollowerEP.activeEP = this; }
+
   unfollow(): void {
     console.log('un-follow');
     CursorFollowerEP.activeEP = null; }
+
   addEventListeners(): void {
     const $html = $(this.html);
     // $html.off('click.ep').on('click.ep', (e: ClickEvent) => { EdgePoint.getFromHtml(e.currentTarget).onClick(e); });
@@ -94,7 +95,9 @@ export class EdgePoint implements IEdgePoint {
     $html.off('contextmenu.deleteEdgePoint').on('contextmenu.deleteEdgePoint',
       (e: ContextMenuEvent) => { this.detach(); return false; });
   }
+
   isAttached(): boolean { return this.edge !== null; }
+
   detach(refreshGUI: boolean = true): void {
     if (!this.isAttached()) { return; }
     U.arrayRemoveAll(this.edge.midNodes, this);
@@ -104,13 +107,16 @@ export class EdgePoint implements IEdgePoint {
     this.unfollow(); }
 
   onClick(e: ClickEvent): void { }
+
   onMouseEnter(e: MouseEnterEvent): void {
     // console.log('enter');
     this.refreshGUI(null, true);  }
+
   onMouseLeave(e: MouseLeaveEvent): void {
     // console.log('leave');
     // if (this.isMoving) { this.onMouseMove(e); }
     this.refreshGUI(null, false); }
+
   onMouseDown(e: MouseDownEvent): void {
     this.refreshGUI(true);
     // console.log('leave');
@@ -122,11 +128,12 @@ export class EdgePoint implements IEdgePoint {
     const screenPt: Point = new Point(e.pageX, e.pageY);
     const graphPt: GraphPoint = this.edge.owner.toGraphCoord(screenPt);
     this.moveTo(graphPt, true); }*/
+
   onMouseUp(e: MouseUpEvent): void {
     this.refreshGUI(false);
     // console.log('up');
-    this.unfollow();
-  }
+    this.unfollow(); }
+
   getCenter(fitHorizontal: boolean = false, fitVertical: boolean = false): GraphPoint {
     return this.edge.owner.fitToGrid(this.pos, true, false, fitHorizontal, fitVertical); }
   getStartPoint(fitHorizontal: boolean = true, fitVertical: boolean = true): GraphPoint {
@@ -149,17 +156,16 @@ export class EdgePoint implements IEdgePoint {
     if (oldParent) { oldParent.removeChild(this.html); }
     this.edge.shell.appendChild(this.html);
     this.html.style.display = 'block';
-    this.refreshGUI(null, null, debug);
-  }
-  hide(): void { this.html.style.display = 'none'; }
+    this.refreshGUI(null, null, debug); }
 
+  hide(): void { this.html.style.display = 'none'; }
 
   public refreshGUI(select: boolean = null, highlight: boolean = null, debug: boolean = false): void {
     if (select !== null) { this.isSelected = select; }
     if (highlight !== null) { this.isHighlighted = highlight; }
     if (this.isSelected) { this.styleSelected(); } else
-    if (this.isHighlighted) { this.styleHighlight(); } else { this.styleCommon(debug); }
-  }
+    if (this.isHighlighted) { this.styleHighlight(); } else { this.styleCommon(debug); } }
+
   private styleCommon(debug: boolean = false): void {
     if (!this.isAttached()) { U.pw(debug, 'not attached', this); return; }
     const eps: EdgePointStyle = this.edge.logic.edgeStyleCommon.edgePointStyle;
@@ -168,6 +174,7 @@ export class EdgePoint implements IEdgePoint {
     this.html.setAttributeNS(null, 'stroke-width', '' + eps.strokeWidth);
     this.html.setAttributeNS(null, 'stroke', eps.strokeColor);
     this.html.setAttributeNS(null, 'fill', eps.fillColor); }
+
   private styleHighlight(): void {
     if (!this.isAttached()) { return; }
     const eps: EdgePointStyle = this.edge.logic.edgeStyleHighlight.edgePointStyle;
@@ -175,6 +182,7 @@ export class EdgePoint implements IEdgePoint {
     this.html.setAttributeNS(null, 'stroke-width', '' + eps.strokeWidth);
     this.html.setAttributeNS(null, 'stroke', eps.strokeColor);
     this.html.setAttributeNS(null, 'fill', eps.fillColor); }
+
   private styleSelected(): void {
     if (!this.isAttached()) { return; }
     const eps: EdgePointStyle = this.edge.logic.edgeStyleSelected.edgePointStyle;
@@ -185,20 +193,26 @@ export class EdgePoint implements IEdgePoint {
 }
 
 export class CursorFollowerEP extends EdgePoint {
-  static cursorFollower = new CursorFollowerEP();
+  static cursorFollower: CursorFollowerEP = null;
   static activeEP: EdgePoint = null;
   private graph: IGraph;
-  isFollower: any = true;
+
+  public static get(): CursorFollowerEP {
+    if (!this.cursorFollower) { this.cursorFollower = new CursorFollowerEP(); }
+    return this.cursorFollower; }
+
   constructor() {
     super(null, new GraphPoint(0, 0));
     this.endPointOfVertex = undefined;
-    U.eventiDaAggiungereAlBody('cursor follower');
     this.html.setAttributeNS(null, 'fill', 'purple');
     this.html.setAttributeNS(null, 'stroke', 'purple');
     this.html.setAttributeNS(null, 'r', '5');
+    U.eventiDaAggiungereAlBody('cursor follower');
     const $b = $(document.body);
     $b.off('mousemove.cursorFollowerEdgePoint_Move').on('mousemove.cursorFollowerEdgePoint_Move',
       (e: MouseMoveEvent) => {
+        const debug: boolean = false && false;
+        U.pif(debug, 'mousemove.cursorFollowerEdgePoint_Move()');
         const f: EdgePoint = CursorFollowerEP.activeEP;
         if (!f || !f.isAttached()) { return; }
         const graph = Status.status.getActiveModel().graph;
@@ -208,7 +222,7 @@ export class CursorFollowerEP extends EdgePoint {
       });
     $b.off('click.cursorFollowerEdgePoint_Detach').on('click.cursorFollowerEdgePoint_Detach',
       (e: ClickEvent) => {
-        const f: CursorFollowerEP = CursorFollowerEP.cursorFollower;
+        const f: CursorFollowerEP = CursorFollowerEP.get();
         f.detach(); });
     this.addEventListeners();
   }
@@ -248,6 +262,6 @@ export class CursorFollowerEP extends EdgePoint {
     /*$(this.html).off('click.makeEdgePoint').on('click.makeEdgePoint',
       (e: ClickEvent) => { CursorFollowerEP.cursorFollower.cursorFollowerClick(e); });*/
     $(this.html).off('mouseup.makeEdgePoint').on('mouseup.makeEdgePoint',
-      (e: MouseUpEvent) => { CursorFollowerEP.cursorFollower.onMouseUp(e); });
+      (e: MouseUpEvent) => { CursorFollowerEP.get().onMouseUp(e); });
   }
 }

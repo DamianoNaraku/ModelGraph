@@ -1,4 +1,4 @@
-import {EdgeModes} from './iEdge';
+import {IEdge, GraphPoint, IVertex, U, EdgeModes} from '../../common/Joiner';
 
 export class EdgePointStyle {
   radius: number = null;
@@ -21,4 +21,6 @@ export class EdgeStyle {
     this.style = style;
     this.width = width;
     this.color = color; }
+
+  clone(): EdgeStyle { return new EdgeStyle(this.style, this.width, this.color, this.edgePointStyle); }
 }

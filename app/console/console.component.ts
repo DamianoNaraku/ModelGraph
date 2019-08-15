@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import KeyDownEvent = JQuery.KeyDownEvent;
-import {IClass, IModel, Model, ModelPiece, Status, U} from '../common/Joiner';
-import * as util from 'util';
+import {M2Class, IModel, Model, ModelPiece, Status, U, IClass, ansiUp} from '../common/Joiner';
 import KeyUpEvent = JQuery.KeyUpEvent;
-import {cpus} from 'os';
+import * as util from 'util';
 
+// @ts-ignore
 @Component({
   selector: 'app-console',
   templateUrl: './console.component.html',
@@ -267,8 +267,8 @@ export class MyConsole {
       ' e verrà poi eseguito come nell\'esempio 1.' + nl +
       'Terzo esempio ulteriormente compesso, con due compound command concatenati.' +
       'cc alert($info $$cc [altro codice js]$$$comando2$$$[altro codice js] $$.name$);';
-    return ret;
-  }
+    return ret; }
+
   compoundCommand(str: string, debug: boolean = true): string {
     const prefix = '$';
     const fullPrefix = prefix + '';
@@ -301,7 +301,7 @@ export class MyConsole {
     const nl = this.newline;
     const e = this.exampleFormatting;
     ret = 'Sintassi: ' + nl + this.commandFormatting('raw' + e('Command'));
-      this.descriptionFormatting('Esegue il prossimo comando mostrandone l\'output come testo grezzo invece che come html per individuare' +
+    this.descriptionFormatting('Esegue il prossimo comando mostrandone l\'output come testo grezzo invece che come html per individuare' +
       ' eventuali errori nell\'html impedendo che il browser esegua la correzione automatica, nascondendo il problema.');
     return ret; }
 
@@ -338,13 +338,24 @@ export class MyConsole {
     // info = this.getModelPieceInfoByModel(modelPrio.isMM() ? Status.status.m : Status.status.mm, tokens);
     info = this.getModelPieceInfoByModel(modelPrio.isMM() ? Status.status.m : Status.status.mm, tokens);
     if (info) { return this.stringify(info); }
-    return this.errorFormatting('"' + name + '" is not matching any class, attribute or reference name-path.');
-  }
+    return this.errorFormatting('"' + name + '" is not matching any class, attribute or reference name-path.'); }
+
   stringify(obj: any): string {
-    const str = util.inspect(obj, null, 0);
+    let str: string = util.inspect(obj, false, 0, true);
+    str = ansiUp.ansi_to_html(str);
     return str; }
-  getClassInfoByModel(m: IModel, tokens: string[], debug: boolean = true): IClass {
-    return this.getModelPieceInfoByModel(m, tokens, debug) as IClass; }
+
+  stringify_Old(obj: any): string {
+    const duplicateChecker: any[] = [];
+    return JSON.stringify(obj, (key: string, value: any) => {
+      if (!value) { return value; }
+      if ($.isEmptyObject(value)) { return '{}'; }
+      if (U.isObject(value)) { return '{' + U.getTSClassName(value) + '(' + U.fieldCount(value) + ' fields)}'; }
+      if (U.isArray(value)) { return '[Array(' + value.length + ')]'; }
+      if (duplicateChecker.indexOf(value) === -1) { return '{_CIRCULAR_REFERENCE_}'; }
+      duplicateChecker.push(value);
+      return '' + value; }); }
+
   getModelPieceInfoByModel(m: IModel, tokens: string[], debug: boolean = true): any {
     const toLower = true;
     const classes: IClass[] = m.getAllClasses();

@@ -101,7 +101,6 @@ export class ISidebar {
     const graph: IGraph = modelOfGraph.graph; /*m2*/
     U.pe(!graph, 'invalid graph of model:', modelOfGraph);
     console.log('pre Add empty class');
-    U.pe(!modelPiece.instances, modelPiece);
     if ( modelPiece instanceof IClass /*m3*/) { modelOfGraph.getDefaultPackage().addEmptyClass(modelPiece);
     // } else {
     //  if ( modelPiece instanceof M3Package /*m3*/) { modelOfGraph.addEmptyP(); }

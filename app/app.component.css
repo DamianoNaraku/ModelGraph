@@ -24,6 +24,7 @@
 /*::-webkit-scrollbar {
     display: none;
 }*/
+*:disabled { cursor: not-allowed !important; }
 input[type=checkbox]{ -moz-appearance: checkbox !important; }
 input[type=radio]{ -moz-appearance: radio !important; }
 input:disabled{

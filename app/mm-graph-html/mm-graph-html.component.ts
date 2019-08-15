@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import {Status} from '../app.module';
-import { MatTabChangeEvent } from '@angular/material';
+import {Status, U} from '../common/Joiner';
 
 @Component({
   selector: 'app-mm-graph-html',
@@ -18,8 +17,4 @@ export class MmGraphHtmlComponent implements OnInit {
   ngOnInit() {
     MmGraphHtmlComponent.graphMain();
   }
-  onLinkClick(event: MatTabChangeEvent) {
-    Status.status.getActiveModel().graph.propertyBar.tryUpdatingRaws();
-  }
-
 }

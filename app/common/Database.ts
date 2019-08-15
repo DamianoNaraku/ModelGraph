@@ -1,4 +1,3 @@
-import {Data} from '@angular/router';
 import {U} from './Joiner';
 
 export enum DatabaseMode { browserMemory, Sql, File}

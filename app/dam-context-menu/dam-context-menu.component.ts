@@ -1,5 +1,18 @@
 import { Component, OnInit } from '@angular/core';
-import {IPackage, IVertex, Size, StyleEditor, U, IClass, Point, ModelPiece, IFeature, IReference, IAttribute} from '../common/Joiner';
+import {
+  IPackage,
+  IVertex,
+  Size,
+  StyleEditor,
+  U,
+  M2Class,
+  Point,
+  ModelPiece,
+  IFeature,
+  IReference,
+  IAttribute,
+  IClass
+} from '../common/Joiner';
 import ClickEvent = JQuery.ClickEvent;
 
 @Component({
@@ -7,6 +20,7 @@ import ClickEvent = JQuery.ClickEvent;
   templateUrl: './dam-context-menu.component.html',
   styleUrls: ['./dam-context-menu.component.css']
 })
+
 export class DamContextMenuComponent implements OnInit {
   static contextMenu: DamContextMenuComponent = null;
   private templateContainer: HTMLElement = null;
@@ -23,6 +37,7 @@ export class DamContextMenuComponent implements OnInit {
   }
 
   ngOnInit() { }
+
   show(location: Point, classSelector: string, target: HTMLElement | SVGElement) {
     U.pe(!target, 'target is null.');
     this.clickTarget = target;
@@ -46,7 +61,7 @@ export class DamContextMenuComponent implements OnInit {
     location.x = Math.max(0, location.x );
     location.y = Math.max(0, location.y );
     location.x = Math.min(viewPortSize.w - (templateSize.w), location.x );
-    console.log('vp.w:', viewPortSize.w, ' - t.w:', templateSize.w, ', loc.x', location.x, ', t.size:', templateSize);
+    console.log('vp.w:', viewPortSize.w, ' - t.w:', templateSize.w, ', loc.x', location.x, ', t.size:', templateSize, this.currentlyOpened);
     location.y = Math.min(viewPortSize.h - (templateSize.h), location.y );
     this.currentlyOpened.style.position = 'absolute';
     this.currentlyOpened.style.zIndex = '1000';
@@ -69,12 +84,12 @@ export class DamContextMenuComponent implements OnInit {
     const html = this.currentlyOpened;
     const $html = $(html);
     console.log(this.clickTarget);
-    const v = IVertex.getvertexByHtml(this.clickTarget);
-    const m = ModelPiece.getLogic(this.clickTarget);
+    const v: IVertex = IVertex.getvertexByHtml(this.clickTarget);
+    const m: ModelPiece = ModelPiece.getLogic(this.clickTarget);
     console.log('contextMenu target:', this.clickTarget, 'modelPiece:', m);
     U.pe(!v, 'vertex null:', v);
     $html.find('.Vertex.duplicate').off('click.ctxMenu').on('click.ctxMenu',
-      (e: ClickEvent) => {(m as IClass).duplicate('_Copy', m.parent as IPackage); });
+      (e: ClickEvent) => { m.duplicate('_Copy', m.parent); });
     $html.find('.Vertex.delete').off('click.ctxMenu').on('click.ctxMenu',
       (e: ClickEvent) => { m.delete(); });
     $html.find('.Vertex.minimize').off('click.ctxMenu').on('click.ctxMenu',
@@ -87,7 +102,7 @@ export class DamContextMenuComponent implements OnInit {
       (e: ClickEvent) => { U.pw(true, 'deprecato'); /*StyleEditor.editor.show(m);*/ });
 
     $html.find('.Feature.duplicate').off('click.ctxMenu').on('click.ctxMenu',
-      (e: ClickEvent) => {(m as IAttribute | IReference).duplicate('_Copy', m.parent as IClass); });
+      (e: ClickEvent) => { m.duplicate('_Copy', m.parent); });
     $html.find('.Feature.delete').off('click.ctxMenu').on('click.ctxMenu',
       (e: ClickEvent) => { m.delete(); });
     $html.find('.Feature.minimize').off('click.ctxMenu').on('click.ctxMenu',

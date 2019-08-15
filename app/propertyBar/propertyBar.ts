@@ -3,20 +3,15 @@ import {
   IModel,
   IPackage,
   IAttribute,
-  IClass,
+  M2Class,
   IReference,
   ModelPiece,
   AttribETypes,
   Status,
-  StyleEditor,
-  MAttribute, MReference, MPackage, Model, MClass
+  StyleEditor, ShortAttribETypes, EType,
+  MAttribute, MReference, MPackage, Model, MClass, IClass, MetaModel, M2Reference, M2Attribute, M2Package
 } from '../common/Joiner';
-import {container} from '@angular/core/src/render3';
 import ClickEvent = JQuery.ClickEvent;
-import {ShortAttribETypes} from '../common/util';
-import {selectValueAccessor} from '@angular/forms/src/directives/shared';
-import {EType} from '../Model/MetaMetaModel';
-import {type} from 'os';
 
 export class PropertyBarr {
   model: IModel = null;
@@ -44,26 +39,26 @@ export class PropertyBarr {
 
   static templateMinimizerClick(e: ClickEvent): void {
     const minimizer: HTMLElement = e.currentTarget;
-    let template: HTMLElement = minimizer;
-    while ( !template.classList.contains('template')) {template = template.parentNode as HTMLElement; }
-    template.classList.add('minimized');
-    $(template).off('click.maximizeTemplate').on('click.maximizeTemplate',
+    let templatee: HTMLElement = minimizer;
+    while ( !templatee.classList.contains('template')) { templatee = templatee.parentNode as HTMLElement; }
+    templatee.classList.add('minimized');
+    $(templatee).off('click.maximizeTemplate').on('click.maximizeTemplate',
       (ee: ClickEvent) => { PropertyBarr.templateMaximizerClick(ee); });
     e.stopImmediatePropagation();
     e.stopPropagation();
     e.preventDefault(); }
 
   static templateMaximizerClick(e: ClickEvent): void {
-    const template: HTMLElement = e.currentTarget;
-    template.classList.remove('minimized'); }
+    const templatee: HTMLElement = e.currentTarget;
+    templatee.classList.remove('minimized'); }
   static getcopy(node: HTMLElement, selector: string): HTMLElement { return U.cloneHtml($(node).find(selector)[0]); }
 
-  static makeClassListSelector(m: IModel, selectHtml: HTMLSelectElement, selectedClass: IClass): HTMLSelectElement {
+  static makeClassListSelector(m: MetaModel, selectHtml: HTMLSelectElement, selectedClass: M2Class): HTMLSelectElement {
     // const m: IModel = o.getModelRoot();
-    if (!m) {m = Status.status.mm; }
-    U.pe(m.isM(), 'should not be used for models.');
+    if (!m || !m.isMM()) { m = Status.status.mm; }
+    // U.pe(m.isM(), 'should not be used for models.');
     if (selectHtml === null) { selectHtml = document.createElement('select'); }
-    const classes: IClass[] = m.getAllClasses();
+    const classes: M2Class[] = m.getAllClasses();
     const optgrp: HTMLOptGroupElement = document.createElement('optgroup');
     optgrp.label = 'Classes';
     selectHtml.appendChild(optgrp);
@@ -71,9 +66,9 @@ export class PropertyBarr {
     let i;
     for ( i = 0; i < classes.length; i++) { // todo wrong
       const opt: HTMLOptionElement = document.createElement('option');
-      opt.value = classes[i].fullname;
-      opt.innerHTML = classes[i].fullname;
-      if (selectedClass && classes[i].fullname === selectedClass.fullname) { opt.selected = true; optionFound = true; }
+      opt.value = classes[i].fullname();
+      opt.innerHTML = classes[i].fullname();
+      if (selectedClass && classes[i].fullname() === selectedClass.fullname()) { opt.selected = true; optionFound = true; }
       optgrp.appendChild(opt);
     }
     U.pe(!optionFound, 'reference selected class option not found; optgrp:', optgrp, 'classes:', classes, ', searching:', selectedClass);
@@ -88,14 +83,14 @@ export class PropertyBarr {
     // const extendedAttribETypes = U.getExtendedAttribETypes();
     for (const typestr in EType.shorts) {
       if (!EType.shorts[typestr]) { continue; }
-      const type: EType = EType.shorts[typestr];
+      const etype: EType = EType.shorts[typestr];
       // if (! AttribETypes[type] ) { continue; } // ide requires a filter
       const opt: HTMLOptionElement = document.createElement('option');
-      opt.value = type.short;
-      opt.innerHTML = type.name;
+      opt.value = etype.short;
+      opt.innerHTML = etype.name;
       // if (selectedType) { console.log(type, '===', selectedType, ' ? => ', (selectedType && type === selectedType));
       // } else { console.log('not selecting any type.'); }
-      if (selectedType && type === selectedType) { opt.selected = true; optionFound = true; }
+      if (selectedType && etype === selectedType) { opt.selected = true; optionFound = true; }
       optgrp.appendChild(opt);
     }
     U.pe(selectedType && !optionFound, 'attribute primitive selected class option not found; optgrp:', optgrp,
@@ -110,58 +105,38 @@ export class PropertyBarr {
     const $ret = $(TabRootHtml).find('.propertyBarContainer');
     U.pe($ret.length !== 1, 'pbar container not found:', $ret);
     return $ret; }
-  tryUpdatingRaws() { this.updateRaw(this.selectedModelPiece); }
-  updateRaw(o: ModelPiece): void {
-    if (!o) { return; }
-    this.selectedModelPiece = o;
+
+  updateRaw(o: ModelPiece = null): void {
     const $root = this.get$root();
     const textArea = this.rawTextArea = $root.find('.rawecore')[0] as HTMLTextAreaElement;
     if (!textArea) { return; }
     textArea.value = o.generateModelString(); }
 
-  show(o: ModelPiece): void {
-    this.selectedModelPiece = o;
+  show(o: ModelPiece = null): void {
+    o = this.selectedModelPiece = o || this.selectedModelPiece;
+    if (!o) { return; }
     console.log('PropertyBar.show: ', o);
     this.styleEditor.show(o);
-    this.showCommon(o);
-    if (o instanceof Model) { this.container.append(this.getM(o, this.templateContainer));
-    } else if (o instanceof MPackage) { this.container.append(this.getP_M(o, this.templateContainer));
-    } else if (o instanceof MClass) { this.container.append(this.getC_M(o, this.templateContainer));
-    } else if (o instanceof MAttribute) { this.container.append(this.getA_M(o, this.templateContainer));
-    } else if (o instanceof MReference) { this.container.append(this.getR_M(o, this.templateContainer));
-    } else if (o instanceof IModel) { this.container.append(this.getMM(o, this.templateContainer));
-    } else if (o instanceof IPackage) { this.container.append(this.getP(o, this.templateContainer));
-    } else if (o instanceof IClass) { this.container.append(this.getC(o, this.templateContainer));
-    } else if (o instanceof IAttribute) { this.container.append(this.getA(o, this.templateContainer));
-    } else if (o instanceof IReference) { this.container.append(this.getR(o, this.templateContainer));
+    U.clear(this.container);
+    this.updateRaw(o);
+    if (false && false) {
+    } else if (o instanceof Model) { this.container.append(this.getM_I(o, this.templateContainer));
+    } else if (o instanceof MPackage) { this.container.append(this.getP_I(o, this.templateContainer));
+    } else if (o instanceof MClass) { this.container.append(this.getC_I(o, this.templateContainer));
+    } else if (o instanceof MAttribute) { this.container.append(this.getA_I(o, this.templateContainer));
+    } else if (o instanceof MReference) { this.container.append(this.getR_I(o, this.templateContainer));
+
+    } else if (o instanceof MetaModel) { this.container.append(this.getM_I(o, this.templateContainer));
+    } else if (o instanceof M2Package) { this.container.append(this.getP_I(o, this.templateContainer));
+    } else if (o instanceof M2Class) { this.container.append(this.getC_I(o, this.templateContainer));
+    } else if (o instanceof M2Attribute) { this.container.append(this.getA_I(o, this.templateContainer));
+    } else if (o instanceof M2Reference) { this.container.append(this.getR_I(o, this.templateContainer));
     } else { U.pe(true, 'invalid ModelPiece type instance: ', o); }
     this.addEventListeners();
   }
-  private showM(o: IModel): void {
-    this.container.append(this.getMM(o, this.templateContainer));
-    this.addEventListeners();
-  }
-  private showP(o: IPackage): void {
-    this.container.append(this.getP(o, this.templateContainer));
-    this.addEventListeners();
-  }
-  private showCommon(o: ModelPiece) {
-    this.updateRaw(o);
-    U.clear(this.container); }
-  private showC(o: IClass): void {
-    this.showCommon(o);
-    this.container.append(this.getC(o, this.templateContainer));
-    this.addEventListeners(); }
-  private showR(o: IReference): void {
-    this.showCommon(o);
-    this.container.append(this.getR(o, this.templateContainer));
-    this.addEventListeners(); }
-  private showA(o: IAttribute): void {
-    this.showCommon(o);
-    this.container.append(this.getA(o, this.templateContainer));
-    this.addEventListeners(); }
-  private getMM(o: IModel, templateContainer: HTMLElement): HTMLElement {
-    const html: HTMLElement = PropertyBarr.getcopy(templateContainer, '#mmodelTemplate');
+
+  private getM_I(o: IModel, templateContainer: HTMLElement): HTMLElement {
+    const html: HTMLElement = PropertyBarr.getcopy(templateContainer, '.template.model');
     const $html = $(html);
     const nameHtml = ($html.find('input.modelName')[0] as HTMLInputElement);
     const nsHtml = ($html.find('input.namespace')[0] as HTMLInputElement);
@@ -170,36 +145,21 @@ export class PropertyBarr {
     nsHtml.value = o.namespace();
     uriHtml.value = o.uri();
     $(nameHtml).off('change.pbar').on('change.pbar', (e: Event) => { o.setName(nameHtml.value); });
-    $(uriHtml).off('change.pbar').on('change.pbar', (e: Event) => { o.setUri(uriHtml.value); });
-    $(nsHtml).off('change.pbar').on('change.pbar', (e: Event) => { o.setNamespace(nsHtml.value); });
+    $(uriHtml).off('change.pbar').on('change.pbar', (e: Event) => { o.uri(uriHtml.value); });
+    $(nsHtml).off('change.pbar').on('change.pbar', (e: Event) => { o.namespace(nsHtml.value); });
     const pkgListHtml = ($html.find('.packageList')[0]);
     let i;
-    for (i = 0; i < o.childrens.length; i++) { pkgListHtml.appendChild(this.getP(o.childrens[i] as IPackage, templateContainer)); }
-    return html;
-  }
-  private getM(o: Model, templateContainer: HTMLElement): HTMLElement {
-    const html: HTMLElement = PropertyBarr.getcopy(templateContainer, '#modelTemplate');
+    for (i = 0; i < o.childrens.length; i++) { pkgListHtml.appendChild(this.getP_I(o.childrens[i], templateContainer)); }
+    return html; }
+
+  private getP_I(o: IPackage, templateContainer: HTMLElement): HTMLElement {
+    const html: HTMLElement = PropertyBarr.getcopy(templateContainer, '.template.package');
     const $html = $(html);
-    const nameHtml = ($html.find('input.modelName')[0] as HTMLInputElement);
-    const nsHtml = ($html.find('input.namespace')[0] as HTMLInputElement);
-    const uriHtml = ($html.find('input.uri')[0] as HTMLInputElement);
-    nameHtml.value = o.name ? o.name : '';
-    nsHtml.value = o.namespace();
-    uriHtml.value = o.uri();
-    $(nameHtml).off('change.pbar').on('change.pbar', (e: Event) => { o.setName(nameHtml.value, false); });
-    $(uriHtml).off('change.pbar').on('change.pbar', (e: Event) => { o.setUri(uriHtml.value); });
-    $(nsHtml).off('change.pbar').on('change.pbar', (e: Event) => { o.setNamespace(nsHtml.value); });
-    const pkgListHtml = ($html.find('.packageList')[0]);
-    let i;
-    for (i = 0; i < o.childrens.length; i++) { pkgListHtml.appendChild(this.getP_M(o.childrens[i] as MPackage, templateContainer)); }
-    return html;
-  }
-  private getP(o: IPackage, templateContainer: HTMLElement): HTMLElement {
-    const html: HTMLElement = PropertyBarr.getcopy(templateContainer, '#packageTemplate');
-    const $html = $(html);
+    $html.find((Status.status.isM() ? '.m1' : '.m2') + 'disable').attr('disabled');
+    $html.find((Status.status.isM() ? '.m1' : '.m2') + 'hide').hide();
     const classListHtml = ($html.find('.classList')[0]);
-    let i;
-    for (i = 0; i < o.childrens.length; i++) { classListHtml.appendChild(this.getC(o.childrens[i] as IClass, templateContainer)); }
+    let i: number;
+    for (i = 0; i < o.childrens.length; i++) { classListHtml.appendChild(this.getC_I(o.childrens[i] as M2Class, templateContainer)); }
     // package own properties (sembra ci sia solo il name)
     const nameHtml = ($html.find('input.packageName')[0] as HTMLInputElement);
     nameHtml.value = o.name;
@@ -210,146 +170,144 @@ export class PropertyBarr {
         o.setName(input.value, false);
       });
     return html; }
-  private getP_M(o: MPackage, templateContainer: HTMLElement): HTMLElement {
-    const html: HTMLElement = PropertyBarr.getcopy(templateContainer, '#mpackageTemplate');
+
+  private getC_I(o: IClass, templateContainer: HTMLElement): HTMLElement {
+    const html: HTMLElement = PropertyBarr.getcopy(templateContainer, '.template.class');
     const $html = $(html);
-    const classListHtml = ($html.find('.classList')[0]);
-    let i;
-    for (i = 0; i < o.childrens.length; i++) { classListHtml.appendChild(this.getC_M(o.childrens[i] as MClass, templateContainer)); }
-    return html; }
-  private getC(o: IClass, templateContainer: HTMLElement): HTMLElement {
-    const html: HTMLElement = PropertyBarr.getcopy(templateContainer, '#classTemplate');
-    const $html = $(html);
-    let i;
-    const attribListHtml = ($html.find('.attributeList')[0]);
-    for (i = 0; i < o.attributes.length; i++) { attribListHtml.appendChild(this.getA(o.attributes[i], templateContainer)); }
-    const refListHtml = ($html.find('.referenceList')[0]);
-    for (i = 0; i < o.references.length; i++) { refListHtml.appendChild(this.getR(o.references[i], templateContainer)); }
+    $html.find((Status.status.isM() ? '.m1' : '.m2') + 'disable').attr('disabled');
+    $html.find((Status.status.isM() ? '.m1' : '.m2') + 'hide').hide();
+    let i: number;
+    const attribListHtml: HTMLElement = ($html.find('.attributeList')[0]);
+    const refListHtml: HTMLElement = ($html.find('.referenceList')[0]);
+    let featureHtml: HTMLElement;
+    for (i = 0; i < o.attributes.length; i++) {
+      if (o instanceof M2Class) { featureHtml = this.getA_I( (o as M2Class).attributes[i], templateContainer); }
+      if (o instanceof MClass) { featureHtml = this.getA_I( (o as MClass).attributes[i], templateContainer); }
+      attribListHtml.appendChild(featureHtml); }
+    for (i = 0; i < o.references.length; i++) {
+      if (o instanceof M2Class) { featureHtml = this.getR_I( (o as M2Class).references[i], templateContainer); }
+      if (o instanceof MClass) { featureHtml = this.getR_I( (o as MClass).references[i], templateContainer); }
+      refListHtml.appendChild(featureHtml); }
+
     // class own properties (sembra ci sia solo il name)
     const nameHtml = ($html.find('input.className')[0] as HTMLInputElement);
-    nameHtml.value = o.name;
-    $(nameHtml).off('change.pbar').on('change.pbar',
-      (evt: Event) => {
-        const input: HTMLInputElement = evt.currentTarget as HTMLInputElement;
-        o.setName(input.value, true);
-      });
-    return html; }
-  private getR(o: IReference, templateContainer: HTMLElement): HTMLElement {
-    const model: IModel = o.getModelRoot();
-    if (model.isM()) { return this.getR_M(o, templateContainer); }
-    const html: HTMLElement = PropertyBarr.getcopy(templateContainer, '#referenceTemplate');
-    const $html = $(html);
-    // todo ref own properties
-    const nameHtml = ($html.find('input.referenceName')[0] as HTMLInputElement);
-    nameHtml.value = o.name;
 
-    const htmlUpperBound = ($html.find('input.referenceUpperBound')[0] as HTMLInputElement);
-    if (o.upperbound !== null) { htmlUpperBound.value = '' + o.upperbound; } else { htmlUpperBound.placeholder = '1'; }
-    const htmlLowerBound = ($html.find('input.referenceUpperBound')[0] as HTMLInputElement);
-    if (o.lowerbound !== null) { htmlLowerBound.value = '' + o.lowerbound; } else { htmlLowerBound.placeholder = '1'; }
-    const htmlContainment = ($html.find('input.referenceContainment')[0] as HTMLInputElement);
-    if (o.containment !== null) { htmlContainment.checked = o.containment; } else { htmlContainment.checked = false; }
-    let selectType = null;
-    selectType = $html.find('select.referenceType')[0] as HTMLSelectElement;
-    U.clear(selectType);
-    PropertyBarr.makeClassListSelector(model, selectType, o.target);
-    $(selectType).off('change.pbar').on('change.pbar',
-      (evt: Event) => {
-        const target: HTMLSelectElement = (evt.currentTarget as HTMLSelectElement);
-        o.link(target.value); } );
-    // todo: add events on change
-    $(nameHtml).off('change.pbar').on('change.pbar',
-      (evt: Event) => {
-        const input: HTMLInputElement = evt.currentTarget as HTMLInputElement;
-        o.setName(input.value, true);
-      });
-    $(htmlContainment).off('change.pbar').on('change.pbar',
-      (evt: Event) => {
-        const target: HTMLInputElement = evt.currentTarget as HTMLInputElement;
-        o.setContainment(target.checked);
-        o.refreshGUI();
-      });
-    $(htmlUpperBound).off('change.pbar').on('change.pbar',
-      (evt: Event) => {
-        const target: HTMLInputElement = evt.currentTarget as HTMLInputElement;
-        o.setUpperBound(+target.value);
-        o.refreshGUI();
-      });
-    $(htmlLowerBound).off('change.pbar').on('change.pbar',
-      (evt: Event) => {
-        const target: HTMLInputElement = evt.currentTarget as HTMLInputElement;
-        o.setLowerBound(+target.value);
-        o.refreshGUI();
-      });
-    return html; }
-  private getA(o: IAttribute, templateContainer: HTMLElement): HTMLElement {
-    const html: HTMLElement = PropertyBarr.getcopy(templateContainer, '#attributeTemplate');
-    const $html = $(html);
-    const nameHtml = ($html.find('input.attributeName')[0] as HTMLInputElement);
-    nameHtml.value = o.name;
-    $(nameHtml).off('change.pbar').on('change.pbar',
-      (evt: Event) => {
-        const input: HTMLInputElement = evt.currentTarget as HTMLInputElement;
-        o.setName(input.value, true);
-      });
-    const model: IModel = o.getModelRoot();
-    const selectType = ($html.find('select.attributeType')[0] as HTMLSelectElement);
-    U.clear(selectType);
-    PropertyBarr.makePrimitiveTypeSelector(selectType, o.getType());
-    $(selectType).off('change.pbar').on('change.pbar',
-      (evt: Event) => {
-        const target: HTMLSelectElement = (evt.currentTarget as HTMLSelectElement);
-        o.setType(EType.get(target.value as ShortAttribETypes));
-        o.refreshGUI(); } );
-    return html; }
-  private getC_M(o: MClass, templateContainer: HTMLElement): HTMLElement {
-    const html: HTMLElement = PropertyBarr.getcopy(templateContainer, '#mclassTemplate');
-    const $html = $(html);
-    let i;
-    const attribListHtml: HTMLElement = ($html.find('.attributeList')[0]);
-    for (i = 0; i < o.attributes.length; i++) { attribListHtml.appendChild(this.getA_M(o.attributes[i] as MAttribute, templateContainer)); }
-    const refListHtml: HTMLElement = ($html.find('.referenceList')[0]);
-    for (i = 0; i < o.references.length; i++) { refListHtml.appendChild(this.getR_M(o.references[i], templateContainer)); }
-    // class own properties (sembra ci sia solo il name)
-    const nameHtml: HTMLInputElement = ($html.find('input.className')[0] as HTMLInputElement);
+    // Se M2Class
+    if (o instanceof M2Class) {
+      nameHtml.value = o.name;
+      $(nameHtml).off('change.pbar').on('change.pbar',
+        (evt: Event) => {
+          const input: HTMLInputElement = evt.currentTarget as HTMLInputElement;
+          o.setName(input.value, true);
+        });
+      return html; }
+
+    /// Se MClass
+    const classe: MClass = o as MClass;
     const isRoot: HTMLInputElement = ($html.find('input.isRoot')[0]) as HTMLInputElement;
-    isRoot.disabled = isRoot.checked = o.isRoot();
-    nameHtml.value = o.metaParent.name;
+    isRoot.disabled = isRoot.checked = classe.isRoot();
+    nameHtml.value = classe.metaParent.name;
     nameHtml.disabled = true;
     $(isRoot).off('change.pbar').on('change.pbar',
       (evt: Event) => {
         const input: HTMLInputElement = evt.currentTarget as HTMLInputElement;
         if (!input.checked) { input.checked = true; return; }
-        o.setRoot(input.checked);
-        o.refreshGUI();
+        classe.setRoot(input.checked);
+        classe.refreshGUI();
         this.refreshGUI();
       });
     return html; }
-  private getR_M(o: MReference, templateContainer: HTMLElement): HTMLElement {
-    // const model: IModel = o.getModelRoot();
-    // if (model.isMM()) { return this.getR_M(o, templateContainer); }
-    const html: HTMLElement = PropertyBarr.getcopy(templateContainer, '#mreferenceTemplate');
-    // const $html = $(html);
-    return html; }
-  private getA_M(o: MAttribute, templateContainer: HTMLElement): HTMLElement {
-    const html: HTMLElement = PropertyBarr.getcopy(templateContainer, '#mattributeTemplate');
+
+  private getR_I(o: IReference, templateContainer: HTMLElement): HTMLElement {
+    const metamodel: MetaModel = o.getm2();
+    const html: HTMLElement = PropertyBarr.getcopy(templateContainer, '.template.reference');
     const $html = $(html);
-    const nameHtml = ($html.find('input.attributeName')[0] as HTMLInputElement);
-    const typeHtml = ($html.find('select.attributeType')[0] as HTMLSelectElement);
-    const valueHtml = ($html.find('.attributeValue')[0] as HTMLInputElement);
+    $html.find((Status.status.isM() ? '.m1' : '.m2') + 'disable').attr('disabled');
+    $html.find((Status.status.isM() ? '.m1' : '.m2') + 'hide').hide();
+    // todo ref own properties
+    const nameHtml = ($html.find('input.referenceName')[0] as HTMLInputElement);
+    nameHtml.value = o.name;
+
+    const htmlUpperBound = ($html.find('input.referenceUpperBound')[0] as HTMLInputElement);
+    if (o.getUpperbound() !== null) { htmlUpperBound.value = '' + o.getUpperbound(); } else { htmlUpperBound.placeholder = '1'; }
+    const htmlLowerBound = ($html.find('input.referenceUpperBound')[0] as HTMLInputElement);
+    if (o.getLowerbound() !== null) { htmlLowerBound.value = '' + o.getLowerbound(); } else { htmlLowerBound.placeholder = '1'; }
+    const htmlContainment = ($html.find('input.referenceContainment')[0] as HTMLInputElement);
+    htmlContainment.checked = o.isContainment();
+    const selectType = $html.find('select.referenceType')[0] as HTMLSelectElement;
+    U.clear(selectType);
+    PropertyBarr.makeClassListSelector(metamodel, selectType, o.getM2Target());
+
+    if (o instanceof MReference) { return html; }
+    const ref: M2Reference = o as M2Reference;
+    $(selectType).off('change.pbar').on('change.pbar',
+      (evt: Event) => {
+        const target: HTMLSelectElement = (evt.currentTarget as HTMLSelectElement);
+        ref.link(target.value); } );
+    // todo: add events on change
+    $(nameHtml).off('change.pbar').on('change.pbar',
+      (evt: Event) => {
+        const input: HTMLInputElement = evt.currentTarget as HTMLInputElement;
+        ref.setName(input.value, true);
+      });
+    $(htmlContainment).off('change.pbar').on('change.pbar',
+      (evt: Event) => {
+        const target: HTMLInputElement = evt.currentTarget as HTMLInputElement;
+        ref.setContainment(target.checked);
+        ref.refreshGUI();
+      });
+    $(htmlUpperBound).off('change.pbar').on('change.pbar',
+      (evt: Event) => {
+        const target: HTMLInputElement = evt.currentTarget as HTMLInputElement;
+        ref.setUpperBound(+target.value);
+        ref.refreshGUI();
+      });
+    $(htmlLowerBound).off('change.pbar').on('change.pbar',
+      (evt: Event) => {
+        const target: HTMLInputElement = evt.currentTarget as HTMLInputElement;
+        ref.setLowerBound(+target.value);
+        ref.refreshGUI();
+      });
+    return html; }
+
+  private getA_I(o: IAttribute, templateContainer: HTMLElement): HTMLElement {
+    const html: HTMLElement = PropertyBarr.getcopy(templateContainer, '.attribute.template');
+    const $html = $(html);
+    $html.find((Status.status.isM() ? '.m1' : '.m2') + 'disable').attr('disabled');
+    $html.find((Status.status.isM() ? '.m1' : '.m2') + 'hide').hide();
+    const nameHtml: HTMLInputElement = ($html.find('input.attributeName')[0] as HTMLInputElement);
+    const typeHtml: HTMLSelectElement = ($html.find('select.attributeType')[0] as HTMLSelectElement);
+    U.clear(typeHtml);
     PropertyBarr.makePrimitiveTypeSelector(typeHtml, o.getType());
-    nameHtml.value = o.metaParent.name;
+    // Se M2Attribute
+    if (o instanceof M2Attribute) {
+      nameHtml.value = o.name;
+      $(nameHtml).off('change.pbar').on('change.pbar',
+        (evt: Event) => {
+          const input: HTMLInputElement = evt.currentTarget as HTMLInputElement;
+          o.setName(input.value, true);
+        });
+      $(typeHtml).off('change.pbar').on('change.pbar',
+        (evt: Event) => {
+          const target: HTMLSelectElement = (evt.currentTarget as HTMLSelectElement);
+          o.setType(EType.get(target.value as ShortAttribETypes));
+          o.refreshGUI(); } );
+      return html; }
+
+    // Se MAttribute
+    const attr: MAttribute = o as MAttribute;
+    const valueHtml: HTMLInputElement = ($html.find('.attributeValue')[0] as HTMLInputElement);
+    nameHtml.value = attr.metaParent.name;
     nameHtml.disabled = typeHtml.disabled = true;
-    valueHtml.value = o.getValueStr();
-    // $(typeHtml).off('change.pbar').on('change.pbar', (e: Event) => { o.refreshGUI(); });
+    U.pe(!valueHtml, attr, $html, templateContainer);
+    valueHtml.value = attr.getValueStr();
     $(valueHtml).off('change.pbar').on('change.pbar',
       (evt: Event) => {
         const input: HTMLInputElement = evt.currentTarget as HTMLInputElement;
-        o.setValueStr(input.value);
-        o.refreshGUI();
+        attr.setValueStr(input.value);
+        attr.refreshGUI();
       });
-    return html;
-  }
+    return html; }
 
   refreshGUI() { this.show(this.selectedModelPiece); }
 }

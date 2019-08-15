@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "../out-tsc/app",
     "allowSyntheticDefaultImports": true, // my add
+    "experimentalDecorators": true, // my add
     "types": []
   },
   "exclude": [

@@ -2,19 +2,21 @@ import {
   AttribETypes,
   EType,
   IAttribute,
-  IClass,
+  M2Class,
   IFeature,
   IReference,
   Json,
   MClass,
   ModelPiece,
-  ShortAttribETypes,
-  U
+  ShortAttribETypes, M2Attribute,
+  U, StringSimilarity, ModelNone, M3Attribute, IVertex, IField, MetaModel, Model, Status
 } from '../common/Joiner';
 
 
 export class MAttribute extends IAttribute {
-  metaParent: ModelPiece;
+  parent: MClass;
+  metaParent: M2Attribute;
+  // instances: ModelNone[];
   values: any[];
   valuesStr: string;
 
@@ -37,78 +39,66 @@ export class MAttribute extends IAttribute {
           break;
         case ShortAttribETypes.EString: newVal = (arr[i] === null || arr[i] === undefined ? null : '' + arr[i]); break;
         case ShortAttribETypes.EInt: case ShortAttribETypes.EByte: case ShortAttribETypes.EShort: case ShortAttribETypes.ELong:
-           let tentativo: number = parseInt('' + arr[i], 10);
-           tentativo = !isNaN(+tentativo) ? (+tentativo) : newType.defaultValue;
-           tentativo = Math.min(newType.maxValue, Math.max(newType.minValue, tentativo));
-           break;
+          let tentativo: number = parseInt('' + arr[i], 10);
+          tentativo = !isNaN(+tentativo) ? (+tentativo) : newType.defaultValue;
+          tentativo = Math.min(newType.maxValue, Math.max(newType.minValue, tentativo));
+          break;
       }
 
       arr[i] = newVal;
     }
   }
-  static SplitAtNotRepeatingChar(str: string, char: string): string[] {
-    const ret: string[] = [];
-    U.pe(char.length !== 1, 'currently only chars are supported.');
-    let i: number;
-    const indexes: number[] = [];
-    let startIndex = 0;
-    let endIndex = null;
-    for (i = 0; i < str.length; i++) {
-      const prev = i === 0 ? null : str[i - 1];
-      const current = str[i];
-      const next = i === str.length ? null : str[i + 1];
-      if (current === char && prev !== current && next !== current) {
-        indexes.push(i);
-        endIndex = i;
-        const match = str.substring(startIndex, endIndex);
-        ret.push(match);
-        startIndex = endIndex + 1;
-      }
-    }
-    return ret;
-  }
 
-  static generateEmptyAttribute(): Json { return {}; }
+  constructor(parent: MClass, json: Json, meta: M2Attribute) {
+    super(parent, meta);
+    this.parse(json, true); }
 
-  modify(json: Json, destructive: boolean) {
+  getModelRoot(): Model { return super.getModelRoot() as Model; }
+
+  parse(json: Json, destructive: boolean): void {
+    // if (!json) { json = }
     this.setValue(json as any[]);
     if (!this.validate()) {
       this.setValue(null);
       U.pw(true, 'marked attribute (' + this.metaParent.name + ') with type ', this.getType(), 'values:', this.values, 'this:', this);
-      return true;
       this.mark(true, 'errorValue');
     } else { this.mark(false, 'errorValue'); }
   }
-  comformability(meta: IAttribute): number {
-    throw new Error('MAttribute.conformability(): to do');
-  }
 
-  delete(): void {
-  }
+  getType(): EType { return (this.metaParent ? this.metaParent.type : null); }
+
+  getInfo(toLower: boolean = false): any {
+    const info: any = super.getInfo();
+    const set = (k: string, v: any) => {
+      k = toLower ? k.toLowerCase() : k;
+      while (info[k]) { k = Status.status.XMLinlineMarker + k; }
+      info[k] = v; };
+    const unset = (k: string) => { delete info[toLower ? k.toLowerCase() : k]; };
+    set('values', this.values);
+    unset('name');
+    return info; }
+
+  conformability(meta: IAttribute, debug: boolean = true): number {
+    let conformability = 0;
+    // todo: questo check è totalmente sbagliato, this.getType non può riuscire senza un metaParent assegnato
+    conformability += 0.5 * StringSimilarity.compareTwoStrings(this.getType().short, meta.getType().short);
+    conformability += 0.5 * StringSimilarity.compareTwoStrings(this.name, meta.name);
+    U.pif(debug, 'ATTRIBUTE.comform(', this.name, {0: this}, ', ', meta.name, {0: meta}, ') = ', conformability);
+    return conformability; }
 
   duplicate(nameAppend: string = null, newParent: MClass = null): MAttribute {
-    const ret: MAttribute = new MAttribute(null, null, null);
+    const ret: MAttribute = new MAttribute(newParent, null, this.metaParent);
     ret.copy(this, nameAppend, newParent);
     return ret; }
 
-  copy(other: MAttribute, nameAppend: string = '_Copy', newParent: IClass = null): void {
+  copy(other: MAttribute, nameAppend: string = '_Copy', newParent: MClass = null): void {
     super.copy(other, nameAppend, newParent);
-    this.metaParent = other.metaParent;
     this.setValueStr(other.getValueStr()); }
 
   generateModel(): Json {
     if (this.values.length === 0) { return null; }
     if (this.values.length === 1) { return this.values[0]; }
-    return this.values;
-  }
-
-  generateModelString(): string { return super.generateModelString(); }
-
-  refreshGUI(): void { super.refreshGUI(); }
-
-  refreshInstancesGUI(): void { throw new Error('pointless operation in Model entities'); }
-
-  remove(): ModelPiece | IFeature | IReference | IAttribute { return super.remove(); }
+    return this.values; }
 
   validate(): boolean {
     switch (this.getType().long) {
@@ -135,54 +125,55 @@ export class MAttribute extends IAttribute {
       case 'input': this.setValueStr((html as HTMLInputElement).value); break;
       case 'select': U.pe(true, 'non dovrebbero esserci campi select nel vertice di un MAttribute.'); break;
     }
-    try { this.parent.refreshGUI(); } catch (e){} finally {}
+    try { this.parent.refreshGUI(); } catch (e) {} finally {}
   }
 
   setValueStr(valStr: string) {
-    if ((this.metaParent as IAttribute).upperbound === 1) {
+    if (this.metaParent.upperbound === 1) {
       // this.setValue(JSON.parse( '"' + U.replaceAll(valStr, '"', '\\"') + '"'));
       this.setValue([ valStr ]);
       return; }
     try { this.setValue(JSON.parse(valStr)); } catch (e) {
       U.pw(true, 'This attribute have upperbound > 1 and the input is not a valid JSON string: ' + valStr);
-      return; }
+      return; } finally {}
   }
-  setValue(values: any[] = null) {
-    // U.pw(true, 'setvalue: |' + values + '| = |', values, '|');
+  setValue(values: any[] = null, debug: boolean = false) {
     const values0 = values;
-    const type: EType = (this.metaParent as IAttribute).type;
+    const type: EType = this.getType();
     const defaultv: any = type.defaultValue;
     if (values === null || values === undefined || $.isEmptyObject(values) || values === [{}]) {
       values = defaultv; }
     if (!Array.isArray(values)) { values = [values]; }
-    // console.clear();
-    // console.log('setvalue: |', values0, '| --> ', values, 'defaultv:', defaultv, 'type:', type);
+    U.pif(debug, 'setvalue: |', values0, '| --> ', values, 'defaultv:', defaultv, 'type:', type);
     this.values = values;
     U.pe('' + values === '' + undefined, 'undef:', values, this);
     // this.replaceVarsSetup();
     this.refreshGUI(); }
-  getValueStr(): string {
-    let ret: any = this.values;
-    if ((this.metaParent as IAttribute).upperbound === 1) { ret = this.values.length ? this.values[0] : ''; }
-    if (ret === '' + ret) { ret = '' + ret; }
-    ret = Array.isArray(ret) ? JSON.stringify(ret) : '' + ret;
-    if (ret === '' + undefined) { this.setValue(null); ret = this.valuesStr = '' + this.values[0]; }
-    console.log('this.valuess:', this.values, ', val[0]:', this.values[0], 'ret:', ret);
+
+  getValueStr(debug: boolean = false): string {
+    let ret: any;
+    if (this.metaParent.upperbound === 1) {
+      ret = this.values.length ? this.values[0] : '';
+    } else { ret = this.values; }
+    let retStr: string = Array.isArray(ret) ? JSON.stringify(ret) : '' + ret;
+    if (retStr === '' + undefined) { this.setValue(null); retStr = this.valuesStr = '' + this.values[0]; }
+    U.pif(debug, 'this.values:', this.values, ', val[0]:', this.values[0], 'retStr:', retStr);
     ///
-    const html: HTMLElement = this.vertex ? this.vertex.html() : null;
-    if (!html) { return ret; }
-    ($(html).find('input')[0] as HTMLInputElement).value = ret; // todo: remove
-    return ret;
-  }
+    const field: IField = this.getField();
+    const html: HTMLElement | SVGElement = field ? field.getHtml() : null;
+    if (!html) { return retStr; }
+    ($(html).find('input')[0] as HTMLInputElement).value = retStr; // todo: delete
+    return retStr; }
+
   replaceVarsSetup(debug: boolean = false): void {
-    debug = true;
-    console.clear();
+    super.replaceVarsSetup();
     const old = this.valuesStr;
     U.pif(debug, this.values);
     const val: string = this.getValueStr();
     U.pif(debug, 'val:', val, ', this.values:', this.values, ', this:', this);
     this.valuesStr = val ? U.replaceAll(val, '\n', '', debug) : '';
     if (this.valuesStr && this.valuesStr[0] === '[') {this.valuesStr = this.valuesStr.substr(1, this.valuesStr.length - 2); }
-    U.pif(debug, 'valuesSTR: |' + old + '| --> |' + this.valuesStr + '|');
-  }
+    U.pif(debug, 'valuesSTR: |' + old + '| --> |' + this.valuesStr + '|'); }
+
 }
+

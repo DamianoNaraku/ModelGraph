@@ -11,29 +11,37 @@ import {
   ModelPiece,
   ISidebar,
   IGraph,
-  IClass,
+  M2Class,
   IReference,
   Status,
   DetectZoom,
   Model,
-  eCoreAttribute,
-  eCoreClass,
-  eCorePackage,
-  eCoreReference,
-  eCoreRoot,
+  ECoreAttribute,
+  ECoreClass,
+  ECorePackage,
+  ECoreReference,
+  ECoreRoot,
   Point,
   GraphPoint,
   IModel,
   Size,
   StringSimilarity,
-  EdgeStyle,
-  Dictionary, GraphSize, MPackage, MReference, MAttribute
+  EdgeStyle, MFeature, M2Attribute, M3Class, IClass,
+  Dictionary, GraphSize, MPackage, MReference, MAttribute, ModelNone, M2Reference, M2Feature
 } from '../common/Joiner';
 
 export class MClass extends IClass {
+  metaParent: M2Class;
+  // instances: ModelNone[];
+  parent: MPackage;
+  childrens: MFeature[];
+  attributes: MAttribute[];
+  references: MReference[];
+
+  referencesIN: MReference[] = null; // external pointers to this class.
   // id: number;
   // instances: ModelPiece[];
-  // metaParent: IClass;
+  // metaParent: M2Class;
   // parent: MPackage;
   // childrens: ModelPiece[];
   /*attributes: MAttribute[];
@@ -46,44 +54,31 @@ export class MClass extends IClass {
     while (++i < array.length) { if (name === array[i].metaParent.name) { return i; } }
     return -1; }
 
-  constructor(pkg: MPackage, json: Json, metaVersion: IClass) {
-    super(pkg, null, metaVersion);
+  constructor(pkg: MPackage, json: Json, metaVersion: M2Class) {
+    super(pkg, metaVersion);
     if (!pkg && !json && !metaVersion) { return; } // empty constructor for .duplicate();
     U.pe(!metaVersion, 'null metaparent?');
-    this.modify(json, true);
+    this.parse(json, true);
   }
+
+  getModelRoot(): Model { return super.getModelRoot() as Model; }
 
   isRoot(): boolean { return this === Status.status.m.classRoot; }
   setRoot(value: boolean): void {
-    U.pe(!value, 'should only be used to set root. to remove a root choose another one and call setRoot on it.');
+    U.pe(!value, 'should only be used to set root. to delete a root choose another one and call setRoot on it.');
     this.getModelRoot().classRoot = this;
   }
 
-  addAttribute(): void {
-    throw new Error('M.addAttribute() todo');
-  }
 
-  addReference(): void {
-    throw new Error('M.addReference() todo');
-  }
-
-
-  comformability(meta: IClass, outObj?: any): number {
+  conformability(meta: M2Class, outObj?: any): number {
     throw new Error('M.conformability%() todo');
-  }
-
-  delete(): void {
-    throw new Error('M.delete() todo');
   }
 
   duplicate(nameAppend: string = null, newParent: IPackage | ModelPiece = null): MClass {
     throw new Error('M.duplicate() todo');
   }
 
-  fieldChanged(e: JQuery.ChangeEvent): any {
-    U.pe(true, 'MClass.fieldchanged(), ma non dovrebbero esserci campi modificabili.');
-  }
-
+  linkToMetaParent(meta: M2Class): void { return super.linkToMetaParent(meta); }
   generateModel(root: boolean = false): Json {
     /*
        { "-name": "tizio", "attrib2": value2, ...}
@@ -116,32 +111,27 @@ export class MClass extends IClass {
         const key: string = (U.isPrimitive(value) ? inlineMarker : '') + child.metaParent.name;
         json[key] = value; }
     }
-    return json;
-  }
-  generateModelString(): string { return JSON.stringify(this.generateModel(), null, 4); }
+    return json; }
 
-  getInfo(toLower?: boolean): any {
-  }
-
-  modify(json: Json, destructive: boolean = true): void {
-    const attributes: IAttribute[] = (this.metaParent as IClass).attributes;
-    const references: IAttribute[] = (this.metaParent as IClass).attributes;
-    const childrens: ModelPiece[] = (this.metaParent as IClass).childrens;
+  parse(json: Json, destructive: boolean = true): void {
+    const attributes: M2Attribute[] = (this.metaParent).attributes;
+    const references: M2Reference[] = (this.metaParent).references;
+    // const childrens: M2Feature[] = (this.metaParent).childrens;
     let i = -1;
     if (destructive) {
       this.attributes = [];
       this.references = [];
       this.childrens = [];
-      while (++i < childrens.length) {
-        if (childrens[i] instanceof IAttribute) {
-          const attr: MAttribute = new MAttribute(this, null, childrens[i] as IAttribute);
-          this.childrens.push(attr);
-          this.attributes.push(attr); }
-        if (childrens[i] instanceof IReference) {
-          const ref: MReference = new MReference(this, null, childrens[i] as IReference);
-          this.childrens.push(ref);
-          this.references.push(ref); }
-        }
+      while (++i < attributes.length) {
+        const attr: MAttribute = new MAttribute(this, null, attributes[i]);
+        U.ArrayAdd(this.childrens, attr);
+        U.ArrayAdd(this.attributes, attr);
+      }
+      i = -1;
+      while (++i < references.length) {
+        const ref: MReference = new MReference(this, null, references[i]);
+        U.ArrayAdd(this.childrens, ref);
+        U.ArrayAdd(this.references, ref); }
     }
     /*{                                                           <--- classRoot
         "-xmlns:xmi": "http://www.omg.org/XMI",
@@ -165,10 +155,10 @@ export class MClass extends IClass {
           if (key.indexOf(inlineMarker) === 0) { key = key.substr(inlineMarker.length); }
           if (key.indexOf('xmlns:') === 0) {
             key = key.substr('xmlns:'.length);
-            this.getModelRoot().setNamespace(key);
+            this.getModelRoot().namespace(key);
             U.pw(false, 'setns?', key, this, this.metaParent); continue; }
-          const metaAttr: IAttribute = (this.metaParent as IClass).getAttribute(key);
-          const metaRef: IReference = (this.metaParent as IClass).getReference(key);
+          const metaAttr: M2Attribute = this.metaParent.getAttribute(key);
+          const metaRef: M2Reference = this.metaParent.getReference(key);
           if (metaAttr) {
             const cindex: number = this.getChildrenIndex_ByMetaParent(metaAttr);
             const aindex: number = this.getAttributeIndex_ByMetaParent(metaAttr);
@@ -185,7 +175,7 @@ export class MClass extends IClass {
           break;
       }
     }
-
+    this.refreshGUI_Alone();
   }
   modify_Old(json: Json, destructive: boolean = true): void {
     /*{                                                                                           <-- :classroot
@@ -211,20 +201,20 @@ export class MClass extends IClass {
           if (key.indexOf(inlineMarker) === 0) { key = key.substr(inlineMarker.length); }
           if (key.indexOf('xmlns:') === 0) {
             key = key.substr('xmlns:'.length);
-            this.getModelRoot().setNamespace(key);
+            this.getModelRoot().namespace(key);
             U.pw(false, 'setns?', key, this, this.metaParent); continue; }
-          const metaAttr: IAttribute = (this.metaParent as IClass).getAttribute(key);
-          const metaRef: IReference = (this.metaParent as IClass).getReference(key);
+          const metaAttr: M2Attribute = this.metaParent.getAttribute(key);
+          const metaRef: M2Reference = this.metaParent.getReference(key);
           let newA: MAttribute;
           let newR: MReference;
           if (metaAttr) {
             newA = new MAttribute(this, value, metaAttr);
-            this.childrens.push(newA);
-            this.attributes.push(newA);
+            U.ArrayAdd(this.childrens, newA);
+            U.ArrayAdd(this.attributes, newA);
           } else if (metaRef) {
             newR = new MReference(this, value, metaRef);
-            this.childrens.push(newR);
-            this.references.push(newR);
+            U.ArrayAdd(this.childrens, newR);
+            U.ArrayAdd(this.references, newR);
           } else {
             U.pe(true, 'model attribute-or-reference type not found. class:', this, ', json:', json,
               'key/name:', key, ', Iclass:', this.metaParent); }
@@ -238,4 +228,5 @@ export class MClass extends IClass {
   getChildrenIndex_ByMetaParent(meta: ModelPiece): number { return MClass.getArrayIndex_ByMetaParentName(meta.name, this.childrens); }
   getAttributeIndex_ByMetaParent(meta: IAttribute): number { return MClass.getArrayIndex_ByMetaParentName(meta.name, this.attributes); }
   getReferenceIndex_ByMetaParent(meta: IReference): number { return MClass.getArrayIndex_ByMetaParentName(meta.name, this.references); }
+
 }

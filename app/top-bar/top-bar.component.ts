@@ -1,11 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import ClickEvent = JQuery.ClickEvent;
-import {AttribETypes, IModel, Json, MClass, Model, Options, prjson2xml, Status, U} from '../common/Joiner';
-import {FastXmi, FastXmiOptions, InputPopup, ShortAttribETypes} from '../common/util';
+import {AttribETypes, IModel, Json,
+  MClass, MetaModel, Model, Options, prjson2xml, Status, U, EType,
+  ShortAttribETypes, InputPopup} from '../common/Joiner';
 import ChangeEvent = JQuery.ChangeEvent;
-import {EType} from '../Model/MetaMetaModel';
-import {json2xml, Options as XMLJSOptions} from 'xml-js';
-import JS2XML = XMLJSOptions.JS2XML;
+import ClickEvent = JQuery.ClickEvent;
 
 // @ts-ignore
 @Component({
@@ -40,7 +38,7 @@ export class TopBar {
 
 
   static load_empty(e: JQuery.ClickEvent, prefix: string) {
-    const empty: string = prefix === 'm' ? Model.emptyModel : IModel.emptyModel;
+    const empty: string = prefix === 'm' ? Model.emptyModel : MetaModel.emptyModel;
     TopBar.load(empty, prefix);
   }
 
@@ -104,7 +102,7 @@ export class TopBar {
     let name: string;
     let extension: string;
     if (model.isM()) {
-      const classRoot: MClass = model.classRoot;
+      const classRoot: MClass = (model as Model).classRoot;
       name = (model.name || (classRoot ? classRoot.metaParent.name : 'M1_unnamed'));
       extension = '.' + (Status.status.mm.childrens[0].name).toLowerCase();
     } else {
@@ -117,7 +115,7 @@ export class TopBar {
     const wsexp = / *(.*) +\n/g;
     const contexp = /(<.+>)(.+\n)/g;
     xml = xml.replace(reg, '$1\n$2$3').replace(wsexp, '$1\n').replace(contexp, '$1\n$2');
-    const pad = 0;
+    const pad: string = '' || '\t';
     let formatted = '';
     const lines = xml.split('\n');
     let indent = 0;
@@ -163,7 +161,7 @@ export class TopBar {
       indent += transitions[fromTo];
       let j: number;
       for (j = 0; j < indent; j++) {
-        padding += '\t';
+        padding += pad;
       }
       if (fromTo === 'opening->closing') {
         formatted = formatted.substr(0, formatted.length - 1) + ln + '\n'; // substr removes line break (\n) from prev loop
@@ -172,8 +170,8 @@ export class TopBar {
       }
     }
 
-    return formatted;
-  };
+    return formatted; }
+
   updateRecents(): void {
     let tmp: string;
     tmp = localStorage.getItem('MM_SaveList');
@@ -206,11 +204,11 @@ export class TopBar {
       }
     }
     this.$html.find('.recentsave').off('click.load').on('click.load', (e: Event) => {
-      let html: HTMLElement = e.currentTarget as HTMLElement;
+      const html: HTMLElement = e.currentTarget as HTMLElement;
       // html = $(html).find('.recentsave')[0];
       // console.log(html, e.currentTarget);
-      this.loadRecent(html.innerText, html.classList.contains('metamodel')); });
-  }
+      this.loadRecent(html.innerText, html.classList.contains('metamodel')); }); }
+
   loadRecent(name: string, isMetaModel: boolean): void {
     const prefix: string = isMetaModel ? 'MM' : 'M';
     const tmp: string = localStorage.getItem(prefix + '_' + name);
@@ -218,6 +216,7 @@ export class TopBar {
     localStorage.setItem('LastOpened' + prefix, tmp);
     U.refreshPage();
   }
+
   addEventListeners() {
     const $t = this.$topbar;
     $t.find('.TypeMapping').off('click.btn').on('click.btn', (e: ClickEvent) => { TopBar.topbar.showTypeMap(); });

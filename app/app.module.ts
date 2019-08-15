@@ -7,7 +7,7 @@ import { MminputComponent } from './mminput/mminput.component';
 import { MmsidebarComponent } from './mmsidebar/mmsidebar.component';
 import { MsidebarComponent } from './msidebar/msidebar.component';
 import { IsidebarComponent} from './isidebar/isidebar.component';
-import {TopBar, TopBarComponent} from './top-bar/top-bar.component';
+import { TopBar, TopBarComponent } from './top-bar/top-bar.component';
 import { GraphTabHtmlComponent } from './graph-tab-html/graph-tab-html.component';
 import { MmGraphHtmlComponent } from './mm-graph-html/mm-graph-html.component';
 import {
@@ -22,17 +22,14 @@ import {
   U,
   DetectZoom,
   Dictionary,
-  IClass,
-  GraphPoint, Options, MyConsole
+  M2Class,
+  GraphPoint, Options, MyConsole, EType, MetaMetaModel, ShortAttribETypes, ECoreRoot
 } from './common/Joiner';
-import {EType, MetaMetaModel} from './Model/MetaMetaModel';
 import { PropertyBarrComponent } from './property-barr/property-barr.component';
 import { MGraphHtmlComponent } from './m-graph-html/m-graph-html.component';
 import { DamContextMenuComponent } from './dam-context-menu/dam-context-menu.component';
 import { StyleEditorComponent } from './style-editor/style-editor.component';
-import {ShortAttribETypes} from './common/util';
 import { ConsoleComponent } from './console/console.component';
-import {EcoreLayer} from './Model/ecorelayer';
 // @ts-ignore
 // @ts-ignore
 // @ts-ignore
@@ -83,7 +80,16 @@ export class Status {
   debug = false;
   loadedLogic = false;
   loadedGUI = false;
-  XMLinlineMarker: string = '@';
+  XMLinlineMarker: string = '' + '@';
+  // todo: consenti di customizzare il marker, (in m3options?)
+
+  refreshModeAll: boolean = true || true;
+  refreshModelAndInstances: boolean = false && false;
+  refreshModelAndParent: boolean = false && false;
+  refreshInstancesToo: boolean = false && false;
+  refreshModel: boolean = false && false;
+  refreshMetaParentToo: boolean = false && false;
+  refreshParentToo: boolean = false && false;
   // modelMatTab: MatTabGroup = null;
   /*showMMGrid = true;
   showMGrid = true;
@@ -139,7 +145,8 @@ const M2InputXml: string = '<?xml version="1.0" encoding="UTF-8"?>\n' +
   '<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n' +
   '    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="pkg" nsURI="http://www.pkg.uri.com" nsPrefix="pkg.prefix">\n' +
   '  <eClassifiers xsi:type="ecore:EClass" name="player">\n' +
-  '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EChar"/>\n' +
+  '   <eStructuralFeatures xsi:type="ecore:EAttribute" name="name"' +
+  '       eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EChar"/>\n' +
   '  </eClassifiers>\n' +
   '  <eClassifiers xsi:type="ecore:EClass" name="league">\n' +
   '    <eStructuralFeatures xsi:type="ecore:EReference" name="playerlist" eType="#//player"/>\n' +
@@ -148,7 +155,12 @@ const M2InputXml: string = '<?xml version="1.0" encoding="UTF-8"?>\n' +
 function main() {
   U.tabSetup();
   U.resizableBorderSetup();
-  window['' + 'help'] = ['setBackup (backup <= save)', 'backupSave (save <= backup)', 'destroy (the backup)', 'discardSave (stop autosave)'];
+  ECoreRoot.initializeAllECoreEnums();
+  window['' + 'help'] = [
+    'setBackup (backup <= save)',
+    'backupSave (save <= backup)',
+    'destroy (the backup)',
+    'discardSave (stop autosave)'];
   window['' + 'destroy'] = () => {
     localStorage.setItem('LastOpenedMM', null);
     localStorage.setItem('LastOpenedM', null);
@@ -220,13 +232,13 @@ function main() {
   console.log('loading MM:', MetaModelinputStr);
   console.log('loading M:', ModelInputStr);
   // inputStr = atob(inputStr);
-  Status.status.mmm = new MetaMetaModel(JSON.parse(MetaMetaModelStr));
+  Status.status.mmm = new MetaMetaModel(null);
   useless = new TopBar();
-  Status.status.mm = new MetaModel(JSON.parse(MetaModelinputStr), Status.status.mm);
+  Status.status.mm = new MetaModel(JSON.parse(MetaModelinputStr), Status.status.mmm);
   Status.status.mm.fixReferences();
   Status.status.m = new Model(JSON.parse(ModelInputStr), Status.status.mm);
-  console.log('model:', Status.status.m);
-  // Status.status.m.linkToMetaParent(Status.status.mm);
+  console.log('m3:', Status.status.mmm, 'm2:', Status.status.mm, 'm1:', Status.status.m);
+  // Status.status.m.LinkToMetaParent(Status.status.mm);
   Status.status.m.fixReferences();
   Status.status.loadedLogic = true;
   useless = new ISidebar(Status.status.mmm, document.getElementById('metamodel_sidebar'));
@@ -236,10 +248,9 @@ function main() {
   Status.status.loadedGUI = true;
   Status.status.mm.graph.propertyBar.show(Status.status.mm);
   Status.status.m.graph.propertyBar.show(Status.status.m);
-  console.clear();
-  IClass.updateAllMMClassSelectors();
+  M2Class.updateAllMMClassSelectors();
   EType.fixPrimitiveTypeSelectors();
-  // IClass.updateAllMClassSelectors();
+  // M2Class.updateAllMClassSelectors();
   // Imposto un autosave raramente (minuti) giusto nel caso di crash improvvisi o disconnessioni
   // per evitare di perdere oltre X minuti di lavoro.
   // In condizioni normali non è necessario perchè il salvataggio è effettuato al cambio di pagina asincronamente
@@ -320,7 +331,7 @@ const inputStrJsonMM: string = '{\n' +
   '    ]\n' +
   '  }\n' +
   '}';
-const inputStrJsonM_OLD = '{\n' +
+const inputStrJsonMOLD = '{\n' +
   '  "ecore:EPackage": {\n' +
   '    "@xmlns:xmi": "http://www.omg.org/XMI",\n' +
   '    "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",\n' +
@@ -343,6 +354,6 @@ const inputStrJsonM = '{\n' +
   '    ]\n' +
   '  }\n' +
   '}';
-const MetaMetaModelStr = inputStrJsonMMM;
-let MetaModelinputStr = inputStrJsonMM;
-let ModelInputStr = inputStrJsonM;
+const MetaMetaModelStr: string = MetaMetaModel.emptyMetaMetaModel;
+let MetaModelinputStr: string = inputStrJsonMM;
+let ModelInputStr: string = inputStrJsonM;

@@ -29,7 +29,7 @@
         <h2 class="vertexStyle separator">Own Html:</h2>
         <button class="helpButton vertex" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
-      <div contenteditable="true" class="vertexStyle own html" placeholder="Html of $##name$ (m2 class)."></div>
+      <div contenteditable="true" class="vertexStyle own html" placeholder="Html for $##name$ (m2 class)."></div>
       <div class="separatorShell">
         <h2 class="vertexStyle separator">Preview:</h2>
         <button class="helpButton vertex" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
@@ -53,7 +53,7 @@
         <h2 class="attributeStyle separator">Own Html:</h2>
         <button class="helpButton field" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
-      <div contenteditable="true" class="attributeStyle own html" placeholder="Html of $##name$ (m2 attribute)."></div>
+      <div contenteditable="true" class="attributeStyle own html" placeholder="Html for $##name$ (m2 attribute)."></div>
       <div class="separatorShell">
         <h2 class="attributeStyle separator">Preview:</h2>
         <button class="helpButton field" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
@@ -74,16 +74,28 @@
 
     <div class="Template reference">
       <div class="separatorShell top">
-        <h2 class="referenceStyle separator">Html:</h2>
-        <button class="helpButton reference" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
+        <h2 class="referenceStyle separator">Own Html:</h2>
+        <button class="helpButton field" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
-      <div contenteditable="true" class="referenceStyle html" placeholder="Html of field (reference). Not filled means invisible."></div>
+      <div contenteditable="true" class="referenceStyle own html" placeholder="Html for $##name$ (m2 reference)."></div>
       <div class="separatorShell">
         <h2 class="referenceStyle separator">Preview:</h2>
-        <button class="helpButton reference" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
+        <button class="helpButton field" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
-      <div class="referenceStyle preview"></div>
+      <div class="referenceStyle own preview"></div>
+
+      <div class="separatorShell top">
+        <h2 class="referenceStyle separator">Instances Html:</h2>
+        <button class="helpButton field" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
+      </div>
+      <div contenteditable="true" class="referenceStyle instances html" placeholder="Html for instances of $##name$ (m1 reference)."></div>
+      <div class="separatorShell">
+        <h2 class="referenceStyle separator">Preview:</h2>
+        <button class="helpButton field" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
+      </div>
+      <div class="referenceStyle instances preview"></div>
     </div>
+
     <div class="Template edge">
       <h1>Edge style</h1>
       <table><tbody>

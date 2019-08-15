@@ -1,6 +1,7 @@
 import {Component, OnInit} from '@angular/core';
-import {IAttribute, IClass, IEdge, IModel, IPackage, IReference, ModelPiece, PropertyBarr, Status, U} from '../common/Joiner';
-import {EdgeModes} from '../mGraph/Edge/iEdge';
+import {IAttribute, M2Class, IEdge, IModel, IPackage, IReference, ModelPiece, PropertyBarr, Status, U, IClass,
+  EdgeModes
+} from '../common/Joiner';
 import ChangeEvent = JQuery.ChangeEvent;
 import BlurEvent = JQuery.BlurEvent;
 import KeyDownEvent = JQuery.KeyDownEvent;
@@ -109,9 +110,9 @@ export class StyleEditor {
       m.graph.ShowGrid(input.checked);
     });
   }
-  showP(m: IPackage) {
-    U.pe(true, 'styleShoP(', m, '): todo.');
-  }
+
+  showP(m: IPackage) { U.pe(true, 'styles of Package(', m, '): unexpected.'); }
+
   showC(m: IClass) {
     console.log('styleShowC(', m, ')');
     const model: IModel = m.getModelRoot();
@@ -125,14 +126,19 @@ export class StyleEditor {
     const htmlInputI: HTMLElement = $html.find('.vertexStyle.instances.html')[0] as HTMLElement;
     const htmlPreviewI: HTMLElement = $html.find('.vertexStyle.instances.preview')[0] as HTMLElement;
     htmlInput.setAttribute('placeholder', U.replaceVarsString(m, htmlInput.getAttribute('placeholder')));
-    htmlInputI.setAttribute('placeholder', U.replaceVarsString(m, htmlInputI.getAttribute('placeholder')));
-    htmlInput.innerText = (m.customStyle ? m.customStyle : IClass.GetDefaultStyle(model)).outerHTML;
-    htmlInputI.innerText = m.styleOfInstances ? m.styleOfInstances.outerHTML : IClass.GetDefaultStyle(Status.status.m).outerHTML;
+    // todo: rimpiazza le chiamate statiche con una dinamica che se fallisce a prendere style personalizzato restituisce quello statico.
+    htmlInput.innerText = (m.getStyle().firstChild as HTMLElement).outerHTML;
+
+    if (model.isMM()) {
+      htmlInputI.setAttribute('placeholder', U.replaceVarsString(m, htmlInputI.getAttribute('placeholder')));
+      htmlInputI.innerText =
+        m.styleOfInstances ? m.styleOfInstances.outerHTML : ModelPiece.GetStyle(Status.status.m, 'Class').outerHTML;
+    }
     if (model.isM()) {
       const lastElementIndex = U.getIndex(htmlPreview);
       const toHide: ChildNode[] = U.toArray(htmlPreview.parentNode.childNodes).slice(lastElementIndex + 1);
-      $(toHide).hide();
-    }
+      $(toHide).hide(); }
+
     U.pe(!showAsEdge, 'wrong PropertyBar.show() call', m, 'html:', html);
     showAsEdge.checked = false;
     if (m.references.length < 2) {
@@ -177,6 +183,7 @@ export class StyleEditor {
       .off('blur.set').on('blur.set', onStyleChangeI)
       .off('keydown.set').on('keydown.set', (e: KeyDownEvent) => { if (e.key === 'Esc') { this.showC(m); } } ).trigger('change');
   }
+
   showA(m: IAttribute) {
     console.log('styleShowA(', m, ')');
     const model: IModel = m.getModelRoot();
@@ -185,13 +192,15 @@ export class StyleEditor {
     const htmlInput: HTMLTextAreaElement | HTMLDivElement =
       $html.find('.own.attributeStyle.html')[0] as HTMLTextAreaElement | HTMLDivElement;
     const htmlPreview: HTMLElement = $html.find('.attributeStyle.own.preview')[0] as HTMLElement;
-    const htmlInputI: HTMLElement = $html.find('.attributeStyle.instances.html')[0] as HTMLElement;
     const htmlPreviewI: HTMLElement = $html.find('.attributeStyle.instances.preview')[0] as HTMLElement;
+    const htmlInputI: HTMLElement = $html.find('.attributeStyle.instances.html')[0] as HTMLElement;
     htmlInput.setAttribute('placeholder', U.replaceVarsString(m, htmlInput.getAttribute('placeholder')));
-    htmlInputI.setAttribute('placeholder', U.replaceVarsString(m, htmlInputI.getAttribute('placeholder')));
-    htmlInput.innerText = (m.customStyle ? m.customStyle : IAttribute.GetDefaultStyle(m.getType().short, model)).outerHTML;
-    htmlInputI.innerText =
-      m.styleOfInstances ? m.styleOfInstances.outerHTML : IAttribute.GetDefaultStyle(m.getType().short, Status.status.m).outerHTML;
+    htmlInput.innerText = m.getStyle().outerHTML;
+    if (model.isMM()) {
+      htmlInputI.setAttribute('placeholder', U.replaceVarsString(m, htmlInputI.getAttribute('placeholder')));
+      htmlInputI.innerText =
+        m.styleOfInstances ? m.styleOfInstances.outerHTML : ModelPiece.GetStyle(Status.status.m, 'Attribute').outerHTML;
+    }
     if (model.isM()) {
       const lastElementIndex = U.getIndex(htmlPreview);
       const toHide: ChildNode[] = U.toArray(htmlPreview.parentNode.childNodes).slice(lastElementIndex + 1);
@@ -231,16 +240,57 @@ export class StyleEditor {
 
   showR(m: IReference) {
     console.log('styleShowR(', m, ')');
+    const model: IModel = m.getModelRoot();
     const html: HTMLElement = this.getCopyOfTemplate(m, '.reference');
     const $html = $(html);
-    const htmlInput: HTMLTextAreaElement = $html.find('.vertexStyle.html')[0] as HTMLTextAreaElement;
-    const htmlPreview: HTMLInputElement = $html.find('.vertexStyle.preview')[0] as HTMLInputElement;
-    $(htmlInput).off('change.set').on('change.set', (e: ChangeEvent) => {
-      const input: HTMLTextAreaElement = e.currentTarget;
-      m.setDefaultStyle(input.value);
-      U.clear(htmlPreview);
-      // todo? preview. o la vedo solo su grafo?
-    });
+    const htmlInput: HTMLTextAreaElement = $html.find('.referenceStyle.own.html')[0] as HTMLTextAreaElement;
+    const htmlInputI: HTMLTextAreaElement = $html.find('.referenceStyle.instances.html')[0] as HTMLTextAreaElement;
+    const htmlPreview: HTMLInputElement = $html.find('.referenceStyle.own.preview')[0] as HTMLInputElement;
+    const htmlPreviewI: HTMLInputElement = $html.find('.referenceStyle.instances.preview')[0] as HTMLInputElement;
+
+    htmlInput.innerText = m.getStyle().outerHTML;
+    htmlInput.setAttribute('placeholder', U.replaceVarsString(m, htmlInput.getAttribute('placeholder')));
+    if (model.isMM()) {
+      htmlInputI.setAttribute('placeholder', U.replaceVarsString(m, htmlInputI.getAttribute('placeholder')));
+      htmlInputI.innerText =
+        m.styleOfInstances ? m.styleOfInstances.outerHTML : ModelPiece.GetStyle(Status.status.m, 'Reference').outerHTML;
+    }
+    if (model.isM()) {
+      const lastElementIndex = U.getIndex(htmlPreview);
+      const toHide: ChildNode[] = U.toArray(htmlPreview.parentNode.childNodes).slice(lastElementIndex + 1);
+      $(toHide).hide();
+    }
+    // todo: devi consentire di modificare anche defaultStyle (m3)
+    // event listeners:
+    const onStyleChange = (e: ChangeEvent | BlurEvent | KeyDownEvent) => {
+      if (! U.isValidHtml(htmlInput.innerText)) {
+        htmlPreview.innerHTML = 'The html input is invalid, validate it at <a href="//validator.w3.org/">https://validator.w3.org/</a>';
+        return; }
+      htmlPreview.innerHTML = htmlInput.innerText;
+      m.customStyle = U.toHtml(htmlInput.innerText);
+      console.log('stile salvato su:', m, 'newHtml:', m.customStyle);
+      if ((e as any).isTrigger) { return; }
+      m.refreshGUI(); };
+
+    const onStyleChangeI = (e: ChangeEvent | BlurEvent | KeyDownEvent) => {
+      if (! U.isValidHtml(htmlInputI.innerText)) {
+        htmlPreviewI.innerHTML = 'The html input is invalid, validate it at <a href="//validator.w3.org/">https://validator.w3.org/</a>';
+        return; }
+      htmlPreviewI.innerHTML = htmlInputI.innerText;
+      m.styleOfInstances = U.toHtml(htmlInputI.innerText);
+      console.log('stile salvato su:', m, 'newHtml:', m.customStyle);
+      if ((e as any).isTrigger) { return; }
+      m.refreshInstancesGUI(); };
+
+    $(htmlInput).off('paste.set').on('paste.set', StyleEditor.onPaste)
+      .off('change.set').on('change.set', onStyleChange)
+      .off('blur.set').on('blur.set', onStyleChange)
+      .off('keydown.set').on('keydown.set', (e: KeyDownEvent) => { if (e.key === 'Esc') { this.showR(m); } } ).trigger('change');
+    $(htmlInputI).off('paste.set').on('paste.set', StyleEditor.onPaste)
+      .off('change.set').on('change.set', onStyleChangeI)
+      .off('blur.set').on('blur.set', onStyleChangeI)
+      .off('keydown.set').on('keydown.set', (e: KeyDownEvent) => { if (e.key === 'Esc') { this.showR(m); } } ).trigger('change');
+
   }
 
   public showE(m: IClass | IReference) {

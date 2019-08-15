@@ -1,7 +1,6 @@
 import {Component, OnInit, ViewChild, ViewEncapsulation} from '@angular/core';
 import {MatTab, MatTabChangeEvent, MatTabGroup} from '@angular/material';
-import {U} from '../common/util';
-import {IModel, Status} from '../common/Joiner';
+import {U, IModel, Status} from '../common/Joiner';
 
 @Component({
   encapsulation: ViewEncapsulation.None,
@@ -43,8 +42,7 @@ export class GraphTabHtmlComponent implements OnInit {
     const model: IModel = Status.status.getActiveModel();
     if (!model && GraphTabHtmlComponent.timesCanFailDuringInit-- > 0) { return; }
     let i;
-    const pkgs = model.getAllPackages();
-    for (i = 0; i < pkgs.length; i++) { pkgs[i].refreshGUI(); }
+    // for (i = 0; i < model.childrens.length; i++) { model.childrens[i].refreshGUI(); }
     const classes = model.getAllClasses();
     for (i = 0; i < classes.length; i++) { classes[i].refreshGUI(); }
   }

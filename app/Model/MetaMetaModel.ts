@@ -1,5 +1,17 @@
-import {AttribETypes, Dictionary, IAttribute, IModel, Json, ModelPiece, Status, U} from '../common/Joiner';
-import {ShortAttribETypes} from '../common/util';
+import {
+  AttribETypes,
+  Dictionary,
+  IAttribute, IClass,
+  IModel,
+  IPackage, IVertex,
+  Json, M3Class,
+  M3Package, M3Reference, MClass,
+  MetaModel,
+  ModelNone,
+  ModelPiece,
+  Status,
+  U, ShortAttribETypes
+} from '../common/Joiner';
 
 export class EType {
   static shorts: Dictionary<ShortAttribETypes, EType> = {};
@@ -103,16 +115,37 @@ export class EType {
 }
 
 export class MetaMetaModel extends IModel {
-  static emptyMetaMetaModel: string = 'empty Meta-MetaModel: todo'; // todo
+  static emptyMetaMetaModel: string = '' + 'empty Meta-MetaModel: todo'; // todo
 
-  constructor(json: Json) { super(json, null); this.modify(json, true); }
+  childrens: M3Package[] = [];
+  metaParent: MetaMetaModel = null;
+  instances: MetaModel[] = [];
 
-  modify(json: Json, destructive: boolean) { super.modify(json, destructive); }
-  // parse(deep: boolean) { super.parse(deep); }
-  mark(bool: boolean): boolean {return super.mark(bool); }
-  validate(): boolean { return super.validate(); }
-  conformsTo(m: IModel): boolean { return super.conformsTo(m); }
-  draw(): void { return super.draw(); }
+  constructor(json?: Json) { super(null); this.parse(json, true); }
 
+  conformability(metaparent: MetaMetaModel, outObj: any = null, debug: boolean = false): number { return 1; }
+
+  getAllClasses(): M3Class[] { return super.getAllClasses() as M3Class[]; }
+  getAllReferences(): M3Reference[] { return super.getAllReferences() as M3Reference[]; }
+  getClass(fullname: string, throwErr: boolean = true, debug: boolean = true): M3Class {
+    return super.getClass(fullname, throwErr, debug) as M3Class; }
+
+  getDefaultPackage(): M3Package {
+    if (this.childrens.length !== 0) { return this.childrens[0]; }
+    U.ArrayAdd(this.childrens, new M3Package(this, null));
+    return this.childrens[0]; }
+
+  generateModel(): Json { return undefined; }
+
+  getPrefix(): string { return 'm3'; }
+  isM1(): boolean { return false; }
+  isM2(): boolean { return false; }
+  isM3(): boolean { return true; }
+
+  parse(json: Json, destructive?: boolean): void {
+    this.name = 'Meta-Metamodel';
+    const useless = new M3Package(this, null); }
+
+  refreshGUI_Alone(debug: boolean = true): void { }
 
 }

@@ -4,7 +4,7 @@ import {
   IField,
   IEdge,
   IVertex,
-  IClass,
+  M2Class,
   IAttribute,
   AttribETypes,
   IFeature,
@@ -13,34 +13,16 @@ import {
   ISidebar,
   IGraph,
   IModel,
-  Status, IReference, StringSimilarity, EdgeStyle, IPackage, Model, Dictionary, MClass
+  Status, IReference, StringSimilarity, EdgeStyle, IPackage, Model, Dictionary, MClass, ModelNone, M2Package, IClass, M3Attribute, M3Class
 } from '../common/Joiner';
-import {eCoreClass, eCorePackage} from '../common/util';
-import {GraphPoint} from '../mGraph/Vertex/iVertex';
-import {isNullOrUndefined} from 'util';
 
 
 export class MPackage extends IPackage {
-  protected json: Json = null;
-  metaParent: ModelPiece = null;
-  instances: ModelPiece[] = [];
-  parent: ModelPiece = null;
-  childrens: ModelPiece[] = [];
+  metaParent: M2Package = null;
+  // instances: ModelNone[] = [];
+  parent: Model = null;
+  childrens: MClass[] = [];
   name: string = null;
-  midname: string = null;
-  fullname: string = null;
-  html: HTMLElement | SVGElement = null;
-  styleOfInstances: HTMLElement | SVGElement = null;
-  customStyle: HTMLElement | SVGElement;
-  uri: string;
-
-  // edge: IEdge;
-  edgeStyleCommon: EdgeStyle;
-  edgeStyleHighlight: EdgeStyle;
-  edgeStyleSelected: EdgeStyle;
-  markHtml: SVGRectElement;
-  marks: Dictionary<string, SVGRectElement>;
-  vertex: IVertex;
 
   constructor(model: Model, json: Json, metaparent: IPackage = null) {
     super(model, json, metaparent);
@@ -49,10 +31,19 @@ export class MPackage extends IPackage {
     // return;
     // this.setName(name);
     // this.setJson(json);
-    // this.modify(json, true);
+    // this.parse(json, true);
   }
 
-  generateModel(): Json { return (this.parent as Model).generateModel(); }
+  getClass(name: string, caseSensitive: boolean = false, throwErr: boolean = true, debug: boolean = true): MClass {
+    return super.getClass(name, caseSensitive, throwErr, debug) as MClass; }
+
+  addEmptyClass(metaVersion: M2Class): MClass {
+    const c: MClass = new MClass(this, null, metaVersion);
+    console.log('addEmptyClass(); package:', this, '; metaVersion: ', metaVersion, 'classe:', c);
+    U.ArrayAdd(this.childrens, c);
+    return c; }
+
+  generateModel(): Json { return this.parent.generateModel(); }
   /*
   generateModel(rootClass: MClass): Json {
     const key: string = U.toDottedURI(this.uri) + ':' + rootClass.name;
@@ -73,10 +64,10 @@ export class MPackage extends IPackage {
   getInfo(toLower?: boolean): any {
   }
 
-  linkToMetaParent(meta: IPackage): void {
+  LinkToMetaParent(meta: IPackage): void {
   }
 */
-  modify(json: Json, destructive: boolean, uri: string = null, name: string = null): void {
+  parse(json: Json, destructive: boolean = true, uri: string = null, name: string = null): void {
     /* e se c'è un riferimento circolare?
       <league (rootclass)>
         <players (attribute)>

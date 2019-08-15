@@ -3,7 +3,7 @@ import {
   EdgePointStyle,
   EdgeStyle, GraphSize, EdgeModes,
   IAttribute,
-  IClass,
+  M2Class,
   IEdge,
   IFeature,
   IModel,
@@ -11,8 +11,9 @@ import {
   IReference,
   IVertex,
   Json, Model, Status,
-  U, eCoreClass
+  U, ECoreClass
 } from '../common/Joiner';
+
 export class EcoreEModel {}
 export class EcoreEPackage {}
 export class EcoreEAttribute { debug1: 0; }
@@ -172,18 +173,18 @@ public static test2() {
   private static PackageToEcore(p: IPackage): EcoreEPackage {
     const classifiers = [];
     let i = -1;
-    while (++i < p.childrens.length) { classifiers.push(EcoreLayer.ClassToEcore(p.childrens[i] as IClass)); }
+    while (++i < p.childrens.length) { classifiers.push(EcoreLayer.ClassToEcore(p.childrens[i] as M2Class)); }
     const pkg: EcoreEPackage = {name: p.name,
       nsPrefix: 'test_prefix',
       nsURI: 'http://test.js/',
       eClassifiers: classifiers };
     return pkg; }
-  static ClassToEcore(m: IClass): EcoreEClass {
+  static ClassToEcore(m: M2Class): EcoreEClass {
     const structuralFeatures: any[] = [];
     let i = -1;
     while (++i < m.attributes.length) { structuralFeatures.push(EcoreLayer.AttributeToEcore(m.attributes[i])); }
     i = -1;
-    /// todo: post processing di tutte le classi, genera un dizionario IClass -> ecoreClass e tramite quello fai una fixereferences()
+    /// todo: post processing di tutte le classi, genera un dizionario M2Class -> ecoreClass e tramite quello fai una fixereferences()
     while (++i < m.references.length) { structuralFeatures.push(EcoreLayer.ReferenceToEcore(m.references[i], null)); }
     structuralFeatures.push();
     const classe: EcoreEClass = Ecore.EClass.create({

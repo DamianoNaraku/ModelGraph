@@ -4,7 +4,7 @@ import {
   IEdge,
   IVertex,
   IPackage,
-  IClass,
+  M2Class,
   IAttribute,
   AttribETypes,
   IFeature,
@@ -13,10 +13,9 @@ import {
   IModel,
   Status,
   Size,
-  IReference,
-  PropertyBarr, Dictionary
+  IReference, GraphPoint, GraphSize,
+  PropertyBarr, Dictionary, IClass
 } from '../common/Joiner';
-import {GraphPoint, GraphSize} from './Vertex/iVertex';
 import MouseDownEvent = JQuery.MouseDownEvent;
 import MouseUpEvent = JQuery.MouseUpEvent;
 import MouseMoveEvent = JQuery.MouseMoveEvent;
@@ -36,7 +35,7 @@ export class IGraph {
   propertyBar: PropertyBarr = null;
   zoom: Point = null;
   grid: GraphPoint = null;
-  gridDisplay: boolean = false;
+  gridDisplay: boolean = false && false;
   edgeContainer: SVGGElement;
   vertexContainer: SVGGElement;
 
@@ -80,8 +79,9 @@ export class IGraph {
     const arr: IClass[] = this.model.getAllClasses();
     const classEdges: IClass[] = [];
     for (i = 0; i < arr.length; i++) {
-      if (arr[i].shouldBeDisplayedAsEdge()) { classEdges.push(arr[i]); }
-      this.vertex.push(arr[i].generateVertex(null));
+      if (arr[i].shouldBeDisplayedAsEdge()) {
+        classEdges.push(arr[i]);
+      } else { this.vertex.push(arr[i].generateVertex(null)); }
     }
     // vertex disegnati, ora disegno gli edges.
     for (i = 0; i < classEdges.length; i++) {  this.edges.concat(classEdges[i].generateEdge()); }
@@ -89,8 +89,8 @@ export class IGraph {
     for (i = 0; i < arrReferences.length; i++) { this.edges.concat(arrReferences[i].generateEdge()); }
     this.propertyBar = new PropertyBarr(this.model);
     this.addGraphEventListeners();
-    this.ShowGrid();
-  }
+    this.ShowGrid(); }
+
   fitToGrid(pt0: GraphPoint, clone: boolean = true, debug: boolean = false, fitHorizontal = true, fitVertical = true): GraphPoint {
     const pt: GraphPoint = clone ? pt0.clone() : pt0;
     U.pe(!this.grid, 'grid not initialized.');
@@ -271,6 +271,11 @@ export class IGraph {
 
   }
 
+  addVertex(v: IVertex): void {
+    v.owner = this;
+    U.ArrayAdd(this.vertex, v);
+    // todo: aggiungi edges tra i vertici. in matrix edgeMatrix[vertex][vertex] = edge
+  }
 }
 
 export class Point {

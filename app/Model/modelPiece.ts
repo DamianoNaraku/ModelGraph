@@ -3,7 +3,7 @@ import {
   EdgePointStyle,
   EdgeStyle, GraphSize, EdgeModes,
   IAttribute,
-  IClass,
+  M2Class,
   IEdge,
   IFeature,
   IModel,
@@ -11,7 +11,7 @@ import {
   IReference,
   IVertex,
   Json, Model, Status,
-  U
+  U, EType, IClass, MClass, MetaModel, MetaMetaModel
 } from '../common/Joiner';
 import ClickEvent = JQuery.ClickEvent;
 import MouseMoveEvent = JQuery.MouseMoveEvent;
@@ -21,255 +21,293 @@ import MouseUpEvent = JQuery.MouseUpEvent;
 export abstract class ModelPiece {
   private static idToLogic = {};
   private static idMax = 0;
-  protected json: Json = null;
   id: number = null;
-  metaParent: ModelPiece = null;
-  instances: ModelPiece[] = [];
   parent: ModelPiece = null;
   childrens: ModelPiece[] = [];
+  metaParent: ModelPiece = null;
+  instances: ModelPiece[] = [];
   name: string = null;
-  midname: string = null;
-  fullname: string = null;
-  vertex: IVertex = null;
-  edge: IEdge = null;
-  edges: IEdge[] = [];
-  edgeStyleCommon: EdgeStyle = null;
-  edgeStyleHighlight: EdgeStyle = null;
-  edgeStyleSelected: EdgeStyle = null;
-  uri_var: string = null;
-  // styleRaw: HTMLElement | SVGElement = null;
-  // style: HTMLElement | SVGElement = null;
-  // htmlRaw: HTMLElement | SVGForeignObjectElement = null;
-  html: HTMLElement | SVGElement = null;
   styleOfInstances: HTMLElement | SVGElement = null;
   customStyle: HTMLElement | SVGElement;
-  markHtml: SVGRectElement = null;
-  marks: Dictionary<string, SVGRectElement> = {};
 
-  // todo: remove() vs delete() ? ho implementato tutte e 2.
-  static Remove(obj: ModelPiece | IFeature | IReference | IAttribute): ModelPiece | IFeature | IReference | IAttribute {
-    const oldi = obj.getChildIndex();
-    const childArr = Json.getChildrens(obj.parent.json) as any[];
-    console.log('ModelPiece.remove(), json:', obj.parent.json, 'childArr:', childArr);
-    let i;
-    for (i = oldi; i + 1 < childArr.length; i++) {
-      childArr[i] = childArr[i + 1]; // delete in the model.
-      childArr[i] = childArr[i + 1]; // fill parent.children[] hole
-      // this.parent.classes[i].childindex = i; // fix child index
-    }
-    childArr[i] = undefined; // dopo lo shift devo cancellare l'ultimo (che è una copia del penultimo)
-    // this.styleEditor.remove(); // rimuove dalla toolbar
-    return obj; }
+  static GetStyle(model: IModel, tsClass: string, checkCustomizedFirst: boolean = true): HTMLElement | SVGElement {
+    let rootSelector: string;
+    if (model.isM()) { rootSelector = '.MDefaultStyles';
+    } else if (model.isMM()) { rootSelector = '.MMDefaultStyles';
+    } else { U.pe(true, 'm3 objects should not call getStyle()'); }
 
-  static GetChildIndex(obj: ModelPiece): number {
-    const childArr = Json.getChildrens(obj.parent.json) as any[];
-    // console.log('getChildIndex() parent.Json: ', obj.parent.json, 'childArr: ', childArr);
-    for (let i = 0; i < childArr.length; i++) {
-      // console.log('cond: ', childArr[i] === obj.json, 'childarr[' + i + ']: ', childArr[i], ' === obj.json: ', obj.json);
-      if (childArr[i] === obj.json) { return i; }
-    }
-    U.pe(true, 'childindex not found. iModelPiece.getChildIndex(); parent:', obj.parent, 'childArr:', childArr, 'this: ', obj);
-  }
-  static Mark(obj: ModelPiece | IFeature | IReference | IAttribute, bool: boolean): void {return; }
-  static Validate(obj: ModelPiece | IFeature | IReference | IAttribute): boolean {
-    return true; // todo:
-  }
-  static getModelRoot(thiss: ModelPiece | IFeature | IReference | IAttribute): IModel {
-    let p: ModelPiece = thiss;
-    let i = 0;
-    while (p.parent && p !== p.parent && i++ < 6) { p = p.parent; }
-    const model: IModel = p as IModel;
-    U.pe(!model || !(p instanceof IModel), 'failed to get model root:', thiss, 'm lastParent:', p);
-    return model; }
+    let $html: JQuery<HTMLElement | SVGElement>;
+    const $root: JQuery<HTMLElement | SVGElement> = $((checkCustomizedFirst ? '.customized' : '.immutable') + rootSelector);
+
+    switch (tsClass) {
+      default: U.pe(true, 'unrecognized TS Class: ' + tsClass); return null;
+      case 'Class': $html = $root.find('.Template.Class'); break;
+      case 'Attribute': $html = $root.find('.Template.Attribute'); break;
+      case 'Reference': $html = $root.find('.Template.Reference'); break; }
+    U.pw(checkCustomizedFirst && $html.length > 1,
+      'found more than one match for custom global style, should there be only 0 or 1.', $html, $root, this);
+    if (checkCustomizedFirst && $html.length === 0) { return ModelPiece.GetStyle(model, tsClass, false); }
+    /*console.log('class?' + (this instanceof IClass), $root.find('.Template'), $root.find('.Class'),
+      $root.find('.Template.Class'));
+    console.log('condition:', !customizeds, ' && ', $html.length !== -1);*/
+    U.pe(!checkCustomizedFirst && $html.length !== 1,
+      'expected exactly 1 match for the un-customized global style, found instead ' + $html.length + ':', $html, $root, this);
+    const ret: HTMLElement | SVGElement = U.cloneHtml($html[0], true);
+    ret.classList.remove('Template');
+    ret.classList.remove('Customized');
+    return ret; }
 
   static get(e: JQuery.ChangeEvent | ClickEvent | MouseMoveEvent | MouseDownEvent | MouseUpEvent): ModelPiece {
     return ModelPiece.getLogic(e.target); }
+
   static getLogic(html: HTMLElement | SVGElement): ModelPiece {
     if (!html) { return null; }
     while ( html && (!html.dataset || !html.dataset.modelPieceID)) { html = html.parentNode as HTMLElement | SVGElement; }
-    return html ? ModelPiece.getByID(+html.dataset.modelPieceID) : null; }
+    const ret: ModelPiece = html ? ModelPiece.getByID(+html.dataset.modelPieceID) : null;
+    // U.pe(!(ret instanceof T), 'got logic with unexpected class type:', this);
+    return ret; }
 
   static getByID(id: number): ModelPiece { return ModelPiece.idToLogic[id]; }
-  static LinkToLogic<T extends HTMLElement | SVGElement>(modelpiece: ModelPiece | IAttribute | IReference, html: T) {
-    if (modelpiece.id === null || modelpiece.id === undefined) { U.p('undefined id:', modelpiece); return; }
-    // U.pe(modelpiece.id === null || modelpiece.id === undefined, 'undefined id.', modelpiece);
-    html.dataset.modelPieceID = '' + modelpiece.id; }
-
-  /*
-    wrong: how do i detect class root iModel?
-    static isPkg(thiss: ModelPiece): boolean { return ( thiss.name === thiss.fullname ); }
-    static isClass(thiss: ModelPiece): boolean { return ( ! ModelPiece.isPkg(thiss) && thiss.name === thiss.midname ); }
-    static isFeature(thiss: ModelPiece): boolean { return ( ! ModelPiece.isPkg(thiss) && !ModelPiece.isClass(thiss) ); }*/
-
-
-
-  static setJson(thiss: ModelPiece, j: Json): Json {
-    U.pe(!j, 'json assigned to ', j);
-    return thiss.json = j; }
 
   static getPrintableTypeName(eType: string): string {
     const pos = eType.lastIndexOf('#//');
     return eType.substring(pos + 3); }
 
+
   constructor(parent: ModelPiece, metaVersion: ModelPiece) {
-    this.parent = parent == null ? this : parent;
-    // if (!metaVersion) { metaVersion = this; }
+    this.assignID();
+    this.parent = parent;
     this.metaParent = metaVersion;
     this.instances = [];
-    if (this.metaParent) {
-      try { this.metaParent.instances.push(this); this.metaParent.refreshGUI(); this.metaParent.refreshInstancesGUI();
-      } catch (e) {} finally {}
-    }
-    this.loadEdgeStyles();
-    this.assignID(); }
+    this.childrens = [];
+    if (this.parent) { U.ArrayAdd(this.parent.childrens, this); }
+    U.pe(this.metaParent && !this.metaParent.instances, '', this.metaParent);
+    if (this.metaParent) { U.ArrayAdd(this.metaParent.instances, this); }
+  }
 
-  loadEdgeStyles(): void {
-    this.edgeStyleCommon = new EdgeStyle(EdgeModes.angular23Auto, 2, '#ffffff',
-      new EdgePointStyle(5, 1, '#ffffff', '#0000ff'));
-    this.edgeStyleHighlight = new EdgeStyle(null, 4, '#ffffff',
-      new EdgePointStyle(5, 1, '#ffffff', '#ff0000' ));
-    this.edgeStyleSelected = new EdgeStyle(null, 3, '#ffffff',
-      new EdgePointStyle(7, 4, '#ffffff', '#ff0000' ));
-  }
-  isChildNameTaken(s: string) {
-    let i;
-    for (i = 0; i < this.childrens.length; i++) { if (s === this.childrens[i].name) { return true; } }
-    return false;
-  }
-  getParentInheritedStyle(): HTMLElement | SVGElement { return this.metaParent.styleOfInstances; }
   assignID(): number {
     this.id = ModelPiece.idMax++;
     ModelPiece.idToLogic[this.id] = this;
     return this.id; }
-  linkToLogic<T extends HTMLElement | SVGElement>(html: T) { return ModelPiece.LinkToLogic(this, html); }
-  setName(value: string, refreshGUI: boolean = false) {
-    value = '' + value.trim();
-    U.pe(!value, 'wrong name:');
-    // if(this.json) { Json.write(this.json, 'name', value); }
-    this.name = value; }
-  setJson(j: Json): Json { return ModelPiece.setJson(this, j); }
-  getJson(): Json { return this.json = this.generateModel(); }
-  // abstract modify(json: Json, destructive: boolean);
-  modify(json: Json, destructive: boolean) { // todo: rendilo astratto.
-    this.setJson(json);
-    this.setName(Json.read<string>(this.json, 'name')); }
-  remove(): ModelPiece | IFeature | IReference | IAttribute {return ModelPiece.Remove(this); }
-  abstract refreshGUI(): void;
+
+  linkToLogic<T extends HTMLElement | SVGElement>(html: T): void {
+    if (this.id === null || this.id === undefined) { U.pw(true, 'undefined id:', this); return; }
+    html.dataset.modelPieceID = '' + this.id; }
+
+  getm2(): MetaModel {
+    const root: IModel = this.getModelRoot();
+    if (root instanceof Model) { return root.metaParent; }
+    if (root instanceof MetaModel) { return root; }
+    if (root instanceof MetaMetaModel) { return root.instances[0]; }
+    U.pe(true, 'failed to get root.'); }
+
+  getModelRoot(): IModel {
+    let p: ModelPiece = this;
+    let i = 0;
+    while (p.parent && p !== p.parent && i++ < 6) { p = p.parent; }
+    U.pe(!p  || !(p instanceof IModel), 'failed to get model root:', this, 'm lastParent:', p);
+    return p as IModel; }
+
+  isChildNameTaken(s: string): boolean {
+    let i;
+    for (i = 0; i < this.childrens.length; i++) { if (s === this.childrens[i].name) { return true; } }
+    return false; }
+
+  shouldBeDisplayedAsEdge(set: boolean = null): boolean {
+    if (set !== null) {
+      U.pe( !(this instanceof IClass), 'shouldBeDisplayedAsEdge(' + set + ') should only be set on M2Class instances');
+      (this as any as IClass).shouldBeDisplayedAsEdgeVar = set;
+      M2Class.updateAllMMClassSelectors(null, false);
+      return set; }
+    if (this instanceof IModel) { return false; }
+    if (this instanceof IPackage) { return false; }
+    if (this instanceof IClass) { return (this as IClass).shouldBeDisplayedAsEdgeVar; }
+    if (this instanceof IAttribute) { return false; }
+    if (this instanceof IReference) { return true; }
+    U.pe(true, 'unrecognized class:', this);
+  }
+
+  refreshGUI(debug: boolean = false): void {
+    if (!Status.status.loadedLogic) { return; }
+    let model: IModel = this.getModelRoot();
+    const thingsToRefresh: ModelPiece[] = [this];
+    let i: number;
+
+    if (Status.status.refreshModeAll) {
+      U.ArrayAdd(thingsToRefresh, Status.status.mmm);
+      U.ArrayAdd(thingsToRefresh, Status.status.mm);
+      U.ArrayAdd(thingsToRefresh, Status.status.m); }
+    if (Status.status.refreshModelAndInstances && model) {
+      U.ArrayAdd(thingsToRefresh, model);
+      for (i = 0; model.instances && i < model.instances.length; i++) { U.ArrayAdd(thingsToRefresh, model.instances[i]); }
+      return; }
+    if (Status.status.refreshModelAndParent && model && model.metaParent) {
+      model = model.metaParent;
+      U.ArrayAdd(thingsToRefresh, model);
+      for (i = 0; model.instances && i < model.instances.length; i++) { U.ArrayAdd(thingsToRefresh, model.instances[i]); }
+      return; }
+    if (Status.status.refreshInstancesToo) {
+      for (i = 0; this.instances && i < this.instances.length; i++) { U.ArrayAdd(thingsToRefresh, this.instances[i]); } }
+    if (Status.status.refreshModel && model) { U.ArrayAdd(thingsToRefresh, model); }
+    if (Status.status.refreshMetaParentToo && this.metaParent) { U.ArrayAdd(thingsToRefresh, this.metaParent); }
+    if (Status.status.refreshParentToo && this.parent) { U.ArrayAdd(thingsToRefresh, this.parent); }
+
+    for (i = 0; i < thingsToRefresh.length; i++) {
+      const mp: ModelPiece = thingsToRefresh[i];
+      if (mp) { mp.refreshGUI_Alone(debug); }
+    }
+  }
+
   refreshInstancesGUI(): void {
     let i = 0;
     while (i < this.instances.length) {
-      try { this.instances[i++].refreshGUI(); } catch (e) {} finally {}
+      try { this.instances[i++].refreshGUI_Alone(false); } catch (e) {} finally {}
     }
   }
-  getChildIndex(): number {return ModelPiece.GetChildIndex(this); }
-  mark(bool: boolean, key: string, color: string = 'red', radiusX: number = 10, radiusY: number = 10,
+
+  mark(markb: boolean, key: string, color: string = 'red', radiusX: number = 10, radiusY: number = 10,
        width: number = 5, backColor: string = 'none', extraOffset: GraphSize = null): void {
-    if (color === null) { color = 'yellow'; }
-    if (radiusX === null) { radiusX = 10; }
-    if (radiusY === null) { radiusY = 10; }
-    if (backColor === null) { backColor = 'none'; }
-    if (width === null) { width = 5; }
-    let mark: SVGRectElement = this.marks[key];
-    // mark off
-    if (mark && false) {
-      if (mark.parentNode) { mark.parentNode.removeChild(mark); }
-      delete this.marks[key]; }
-    if (!bool) { return; }
-    // mark on
-    if (!this.html) { return; }
-    // if (mark) { return; }
-    if (!extraOffset) { const same = 5; extraOffset = new GraphSize(same, same, same, same); }
-    mark = this.marks[key] = U.newSvg<SVGRectElement>('rect');
-    const size: GraphSize = this.vertex.getSize();
-    console.log('extraoffset:', extraOffset, 'size:', size);
-    size.x -= extraOffset.x;
-    size.y -= extraOffset.y;
-    size.w += extraOffset.x + extraOffset.w;
-    size.h += extraOffset.y + extraOffset.h;
-    mark.setAttributeNS(null, 'x', '' + size.x);
-    mark.setAttributeNS(null, 'y', '' + size.y);
-    mark.setAttributeNS(null, 'width', '' + (size.w));
-    mark.setAttributeNS(null, 'height', '' + (size.h));
-    mark.setAttributeNS(null, 'rx', '' + (radiusX));
-    mark.setAttributeNS(null, 'ry', '' + (radiusY));
-    mark.setAttributeNS(null, 'stroke', '' + (color));
-    mark.setAttributeNS(null, 'stroke-width', '' + (width));
-    mark.setAttributeNS(null, 'fill', '' + (backColor));
-    this.getModelRoot().graph.vertexContainer.prepend(mark); }
-  validate(): boolean {return ModelPiece.Validate(this); }
-  abstract generateModel(): Json;
+    const vertex: IVertex = this.getVertex();
+    // const edge: IEdge[] = (this as any as IReference | IClass).getEdges();
+    if (vertex && vertex.isDrawn()) { vertex.mark(markb, key, color, radiusX, radiusY, width, backColor, extraOffset); }
+    let edges: IEdge[] = null;
+    if (this instanceof IClass && this.shouldBeDisplayedAsEdge()) { edges = (this as IClass).getEdges(); }
+    if (this instanceof IReference) { edges = (this as IReference).getEdges(); }
+    let i: number;
+    for (i = 0; edges && i < edges.length; i++) { edges[i].mark(markb, key, color); }
+  }
   generateModelString(): string { return JSON.stringify(this.generateModel(), null, 4); }
 
+  abstract refreshGUI_Alone(debug?: boolean): void;
+  abstract fullname(): string;
+  abstract midname(): string;
+  abstract parse(json: Json, destructive?: boolean): void;
+  abstract getVertex(): IVertex;
+  abstract generateModel(): Json;
+  abstract duplicate(nameAppend?: string, newParent?: ModelPiece): ModelPiece;
+  abstract conformability(metaparent: ModelPiece, outObj?: any/*.refPermutation, .attrPermutation*/, debug?: boolean): number;
 
-  getNamespaced(): string {
-    const str: string = this.getModelRoot().namespace();
-    if (this instanceof Model) { return str; }
-    return str + ':' + (this.metaParent ? this.metaParent.name : this.name); }
+  setName(value: string, refreshGUI: boolean = false): string {
+    const valueOld: string = this.name;
+    value = '' + value.trim();
+    if (value === valueOld) { return valueOld; }
+    if (!value) { U.pw(true, 'name cannot be empty.'); return valueOld; }
+    const regexp: RegExp = /[a-zA-Z_$][a-zA-Z_$0-9]*/;
+    if (!regexp.test(value)) { U.pw(true, 'a valid name must be match this regular expression: ' + regexp.compile().toString()); }
 
-  shouldBeDisplayedAsEdge(set: boolean = null): boolean {
-    // todo
-    return set && false; }
+    while (this.parent && this.parent.isChildNameTaken(value)) {
+      // if (value === valueOld) { value += '_2'; }
+      value = U.increaseEndingNumber(value, false, false);
+    }
+    this.name = value;
+    const model: IModel = this.getModelRoot();
+    let i: number;
+    for (i = 0; i < model.instances.length; i++) { model.instances[i].sidebar.fullnameChanged(valueOld, this.name); }
+    return this.name; }
 
-  /*getModelRoot(): IModel {
-    let root: ModelPiece = this;
-    while (root.parent !== root) { root = root.parent; }
-    return root as IModel; }*/
-  getModelRoot(): IModel { return ModelPiece.getModelRoot(this); }
+  fieldChanged(e: JQuery.ChangeEvent): void { U.pe(true, U.getTSClassName(this) + '.fieldChanged() should never be called.'); }
 
-  abstract duplicate(nameAppend: string, newParent: ModelPiece): ModelPiece;
-  abstract delete(): void;
+  copy(other: ModelPiece, nameAppend: string = '_Copy', newParent: IClass = null): void {
+    this.setName(other.name + nameAppend);
+    this.styleOfInstances = other.styleOfInstances;
+    this.customStyle = other.customStyle;
+    this.parent = newParent ? newParent : other.parent;
+    if (this.parent) { U.ArrayAdd(this.parent.childrens, this); }
+    let i: number;
+    this.childrens = [];
+    for (i = 0; i < other.childrens.length; i++) { this.childrens.push(other.childrens[i].duplicate('', this)); }
+    this.metaParent = other.metaParent;
+    if (this.metaParent) { U.ArrayAdd(this.metaParent.instances, this); }
+    this.instances = [];
+    this.refreshGUI(); }
 
-//  setName(value: string) { return ModelPiece.setName(this, value); }
-  // abstract generateVertex(): IVertex;
-  // abstract generateEdge(): IEdge;
-
-  abstract fieldChanged(e: JQuery.ChangeEvent): void;
-
-  getStartPointHtml(): HTMLElement | SVGElement {
-    const $start = $(this.html).find('.StartPoint');
-    if ($start.length > 0) { return $start[0]; }
-    return (this.html.tagName.toLowerCase() === 'foreignobject') ? this.html.firstChild as HTMLElement | SVGElement : this.html;
+  delete(): void {
+    if (this.parent) {
+      U.arrayRemoveAll(this.parent.childrens, this);
+      this.parent = null; }
+    if (this.metaParent) {
+      U.arrayRemoveAll(this.metaParent.instances, this);
+      this.metaParent = null; }
+    let i: number;
+    for (i = 0; this.childrens && i < this.childrens.length; i++) { this.childrens[i].delete(); }
+    for (i = 0; this.instances && i < this.instances.length; i++) { this.instances[i].delete(); }
   }
-  getEndPointHtml(): HTMLElement | SVGElement {
-    const $start = $(this.html).find('.EndPoint');
-    if ($start.length > 0) { return $start[0]; }
-    return (this.html.tagName.toLowerCase() === 'foreignobject') ? this.html.firstChild as HTMLElement | SVGElement : this.html; }
 
-  getStyle(): HTMLElement | SVGElement {
-    const debug: boolean = true;
+  validate(): boolean {
+    const names: Dictionary<string, ModelPiece> = {};
+    let i: number;
+    if (!U.isValidName(name)) { this.mark(true, 'Invalid name'); return false; }
+    for (i = 0; i < this.childrens.length; i++) {
+      const child: ModelPiece = this.childrens[i];
+      const name: string = child.name;
+      if (names.hasOwnProperty(name)) { child.mark(true, 'Duplicate children name'); return false; }
+      child.validate();
+      names[name] = child; }
+    return true; }
+
+  setStyle_SelfLevel_1(html: HTMLElement | SVGElement): void { this.customStyle = html; }
+  setStyle_InstancesLevel_2(html: HTMLElement | SVGElement): void { this.styleOfInstances = html; }
+  setStyle_GlobalLevel_3(html: HTMLElement | SVGElement): void {
+    const oldCustomStyle: HTMLElement | SVGElement = this.getGlobalLevelStyle(true);
+    if (oldCustomStyle) { oldCustomStyle.parentNode.removeChild(oldCustomStyle); }
+    const model: IModel = this.getModelRoot();
+    let rootSelector: string;
+    if (model.isM()) { rootSelector = '.MDefaultStyles';
+    } else if (model.isMM()) { rootSelector = '.MMDefaultStyles';
+    } else { U.pe(true, 'm3 objects should not call getStyle()'); }
+    let selectorClass: string = '' + '_ERROR_';
+    if (false && false) {
+    } else if (this instanceof IClass) { selectorClass = ('Class');
+    } else if (this instanceof IReference) { selectorClass = ('Reference');
+    } else if (this instanceof IAttribute) { selectorClass = ('Attribute'); }
+
+    let $root: JQuery<HTMLElement | SVGElement>;
+    $root = $('.customized' + rootSelector);
+    const container: HTMLElement | SVGElement = $root[0];
+    html.classList.add('Template', selectorClass, (this instanceof IClass ? 'Vertex' : ''));
+    container.appendChild(html); }
+
+  private getGlobalLevelStyle(checkCustomizedFirst: boolean): HTMLElement | SVGElement {
+    let tsClass: string;
+    if (false && false ) {
+    } else if (this instanceof IClass) { tsClass = 'Class';
+    } else if (this instanceof IAttribute) { tsClass = 'Attribute';
+    } else if (this instanceof IReference) { tsClass = 'Reference';
+    } else { tsClass = 'ERROR: ' + U.getTSClassName(this); }
+    return ModelPiece.GetStyle(this.getModelRoot(), tsClass, checkCustomizedFirst); }
+
+  getStyle(debug: boolean = true): HTMLElement | SVGElement {
     // prima precedenza: stile personale.
-    // U.pif(true, 'getStyle().super().customStyle = ', this.customStyle, this);
-    if (this.customStyle && (this.customStyle + '' as any) !== this.customStyle) { return this.customStyle; }
-    // U.pif(true, 'getStyle().super().parent.instanceStyle = ', this.metaParent.styleOfInstances, this);
+    if (this.customStyle) { return this.customStyle; }
     // seconda precedenza: stile del meta-parent.
-    if (this.metaParent && this.metaParent.styleOfInstances && !U.isString(this.metaParent.styleOfInstances)) {
-      return this.metaParent.styleOfInstances; }
-    return null; }
-  abstract processTemplate(htmlRaw: HTMLElement | SVGElement): HTMLElement | SVGElement;
+    const metap1 = this.metaParent;
+    if (metap1 && metap1.styleOfInstances) { return metap1.styleOfInstances; }
+    // terzo e quarto livello: search for customized third-override-css-like global styles; or immutable fourth global styles.
+    return this.getGlobalLevelStyle(true); }
 
-  getInfo(toLower: boolean = true): any {
+  getInfo(toLower: boolean = false): any {
+    let i: number;
     const info: any = {};
     const instancesInfo: any = {};
     const childrenInfo: any = {};
     const model: IModel = this.getModelRoot();
-    info['' + 'tsClass'] = (model.isMM() ? 'm' : '') + 'mModelPiece';
-    if (this.fullname) { info['' + 'fullname'] = this.fullname; }
-    info['' + 'this'] = this;
-    info['' + 'instance'] = instancesInfo;
-    info['' + 'childrens'] = childrenInfo;
-    let i = -1;
-    const set = (baseJson: any, k: string, v: any) => { while (baseJson[k]) { k = '_' + k; } baseJson[k] = v; };
-    while (++i < this.childrens.length) {
+    const set = (baseJson: any, k: string, v: any) => {
+      k = toLower ? k.toLowerCase() : k;
+      while (baseJson[k]) { k = '_' + k; } baseJson[k] = v; };
+    set(info, 'tsClass', U.getTSClassName(this));
+    set(info, 'rawThis', this);
+    if (!(this instanceof IModel)) { set(info, 'parent', this.parent); }
+    if (!(this instanceof IFeature)) { set(info, 'childrens', childrenInfo); }
+    if (model.isMM()) { set(info, 'instance', instancesInfo);
+    } else { set(info, 'metaParent', this.metaParent); }
+    for (i = 0; this.childrens && i < this.childrens.length; i++) {
       const child = this.childrens[i];
       if (model.isMM()) {
         set(info, child.name.toLowerCase(), child);
       } else { set(childrenInfo, '' + i, child); }
     }
-    i = -1;
-    while (++i < this.instances.length) {
-      const child = this.instances[i];
-      set(instancesInfo, '' + i, child);
-    }
-    return info;
-  }
+    for (i = 0; this.instances && i < this.instances.length; i++) { set(instancesInfo, '' + i, this.instances[i]); }
+    return info; }
+
 }
+export abstract class ModelNone extends ModelPiece {}

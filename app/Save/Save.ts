@@ -5,16 +5,16 @@ import {
   EdgeStyle,
   GraphPoint, GraphSize,
   IAttribute,
-  IClass, IEdge,
+  M2Class, IEdge,
   IModel,
   IReference, Json, ModelPiece,
   Point,
-  Status,
-  U,
+  Status, InputPopup, ShortAttribETypes,
+  U, IClass, MetaModel, M2Attribute, M2Reference, Model,
 } from '../common/Joiner';
-import {MatTabGroup} from '@angular/material';
-import {InputPopup, ShortAttribETypes} from '../common/util';
+
 import ClickEvent = JQuery.ClickEvent;
+
 export class StatusOptions {
   typeAliasDictionary: Dictionary<ShortAttribETypes, string> = {};
   aliasTypeDictionary: Dictionary<string, ShortAttribETypes> = {};
@@ -46,7 +46,7 @@ export class EdgeOptions {
   selected: EdgeStyle = null;
   midPoints: EdgePointOption[] = [];
 
-  /*loadEdgeOptions(m: IClass | IReference): void {
+  /*loadEdgeOptions(m: M2Class | IReference): void {
     let i = -1;
     const e = m.edge;
     U.pe(!e, 'se l\'edge è null ora, lo dev\'essere stato anche prima, ma in tal caso le edgeoptions non dovevano essere state prodotte.');
@@ -79,18 +79,18 @@ export class ClassOptions extends ModelPieceOptions {
   size: GraphSize = null;
   // pos: GraphPoint = null;
 
-  static FindTargetingClass(fullnameTarget: string, m: IModel) {
-    const classes: IClass[] = m.getAllClasses();
+  static FindTargetingClass(fullnameTarget: string, m: MetaModel) {
+    const classes: M2Class[] = m.getAllClasses();
     let i = -1;
     while (++i < classes.length) {
-      if (classes[i].fullname === fullnameTarget) { return classes[i]; }
+      if (classes[i].fullname() === fullnameTarget) { return classes[i]; }
     }
     U.pe(true, 'target of classOption not found.', ' classname:', fullnameTarget, ', Model:', m);
     return null;
   }
-  // findTargetingClass(m: IModel): IClass { return ClassOptions.FindTargetingClass(this.fullnameTarget, m); }
+  // findTargetingClass(m: IModel): M2Class { return ClassOptions.FindTargetingClass(this.fullnameTarget, m); }
 /*
-  loadClassOptions(classe: IClass): void {
+  loadClassOptions(classe: M2Class): void {
     const oclasse: ClassOptions = this;
     let oattribute: AttributeOptions;
     let oreference: ReferenceOptions;
@@ -122,15 +122,15 @@ export class ClassOptions extends ModelPieceOptions {
 */
 }
 export class AttributeOptions extends ModelPieceOptions {
-  static findTargeting(fullnameTarget: string, classe: IClass): IAttribute {
+  static findTargeting(fullnameTarget: string, classe: M2Class): IAttribute {
     let i = -1;
     while (++i < classe.attributes.length) {
-      const attribute: IAttribute = classe.attributes[i];
-      if (fullnameTarget === attribute.fullname) { return attribute; }
+      const attribute: M2Attribute = classe.attributes[i];
+      if (fullnameTarget === attribute.fullname()) { return attribute; }
     }
     U.pe(true, 'AttributeOptions targeting failed. fullnameTarget:', fullnameTarget, ', classe:', classe);
     return null; }
-  // findTargetingAttribute(classe: IClass): IAttribute { return AttributeOptions.findTargeting(this.fullnameTarget, classe); }
+  // findTargetingAttribute(classe: M2Class): IAttribute { return AttributeOptions.findTargeting(this.fullnameTarget, classe); }
 }
 export class ReferenceOptions extends ModelPieceOptions {
   edgeOptions: EdgeOptions[];
@@ -139,15 +139,15 @@ export class ReferenceOptions extends ModelPieceOptions {
     this.edgeOptions = [];
   }
 
-  static findTarget(fullnameTarget: string, m: IClass): IReference {
+  static findTarget(fullnameTarget: string, m: M2Class): M2Reference {
     let i = -1;
     while (++i < m.references.length) {
-      const reference: IReference = m.references[i];
-      if (fullnameTarget === reference.fullname) { return reference; }
+      const reference: M2Reference = m.references[i];
+      if (fullnameTarget === reference.fullname()) { return reference; }
     }
     U.pe(true, 'referenceOptions targeting failed. fullnameTarget:', fullnameTarget, ', classe:', m);
     return null; }
-  // findTargetingReference(classe: IClass): IReference { return ReferenceOptions.findTarget(this.fullnameTarget, classe); }
+  // findTargetingReference(classe: M2Class): IReference { return ReferenceOptions.findTarget(this.fullnameTarget, classe); }
 }
 export class EdgePointOption {
   pos: GraphPoint;
@@ -197,12 +197,15 @@ export class Options {
     console.log('load(options:', o, 'status:', s, ')');
     Options.LoadV1Model(o.mm, s.mm);
     console.log('load mm done.');
-    Options.LoadV1Model(o.m, s.m);
+    Options.LoadV1ModelM(o.m, s.m);
     console.log('load m done.');
     s.mm.refreshGUI();
-    s.m.refreshGUI();
+    s.m.refreshGUI(); }
+
+  private static LoadV1ModelM(o: ModelOptions, m: Model): void {
+    U.pw(true, 'load m1: todo.');
   }
-  private static LoadV1Model(o: ModelOptions, m: IModel): void {
+  private static LoadV1Model(o: ModelOptions, m: MetaModel): void {
     m.graph.grid = new GraphPoint(o.graph.grid.x, o.graph.grid.y);
     m.graph.zoom = new Point(o.graph.zoom.x, o.graph.zoom.y);
     m.graph.scroll = new GraphPoint(o.graph.scroll.x, o.graph.scroll.y);
@@ -212,8 +215,8 @@ export class Options {
       Options.LoadV1Class(o.class[i], m);
     }
   }
-  private static LoadV1Class(o: ClassOptions, root: IModel): void {
-    const m: IClass = ClassOptions.FindTargetingClass(o.fullnameTarget, root);
+  private static LoadV1Class(o: ClassOptions, root: MetaModel): void {
+    const m: M2Class = ClassOptions.FindTargetingClass(o.fullnameTarget, root);
     if (m.vertex) { m.vertex.setSize(new GraphSize(o.size.x, o.size.y, o.size.w, o.size.h)); }
     m.shouldBeDisplayedAsEdge(o.displayAsEdge);
     let namepos: number = o.fullnameTarget.lastIndexOf('.');
@@ -244,7 +247,7 @@ export class Options {
     }
 
   }
-  private static LoadV1EdgeOptions(eo: EdgeOptions[], r: IReference | IClass): void {
+  private static LoadV1EdgeOptions(eo: EdgeOptions[], r: IReference | M2Class): void {
     if (!eo || eo.length === 0) { return; }
     console.log('eo:', eo);
     r.edgeStyleCommon.style = eo[0].common.style;
@@ -323,12 +326,12 @@ export class Options {
       Object['' + 'assign'](mo.class[i], moj.class[i]);
       // todo: this is hell: dovrei usare assign solo sui primitivi.
       Object['' + 'assign'](mo.class[i].size, moj.class[i].size);
-      // console.log(!mo.class[i].fullnameTarget, mo.class[i].fullnameTarget, 'target:', mo.class[i], 'source:', moj.class[i]);
+      // console.log(!mo.class[i].fullnameTarget, mo.class[i].fullnameTarget, 'm2target:', mo.class[i], 'source:', moj.class[i]);
       console.log('autosaveRoot_String:', (localStorage.getItem('modelGraphSave_GUI_Damiano')));
       console.log('autosaveRoot:_JSON', JSON.parse(localStorage.getItem('modelGraphSave_GUI_Damiano')));
-      U.pe(!moj.class[i].fullnameTarget, 'source is wrong (savefile wrong). target:', mo.class[i],
+      U.pe(!moj.class[i].fullnameTarget, 'source is wrong (savefile wrong). m2target:', mo.class[i],
         'source:', moj.class[i], 'moj:', moj, 'jj:', jj);
-      U.pe(!mo.class[i].fullnameTarget, 'target is wrong (load wrong). target:', mo.class[i], 'source:', moj.class[i]);
+      U.pe(!mo.class[i].fullnameTarget, 'm2target is wrong (load wrong). m2target:', mo.class[i], 'source:', moj.class[i]);
       Options.fromJsonAssignEdgeOptions(mo.class[i].edgeOptions, moj.class[i].edgeOptions);
       // alert('assignEdgeOptions done');
       let k = -1;
@@ -391,7 +394,7 @@ export class Options {
     return ret; }
   private static MakeClassOption(classe: IClass) {
     const co: ClassOptions = new ClassOptions();
-    co.fullnameTarget = classe.fullname;
+    co.fullnameTarget = classe.fullname();
     co.instancesStyle = classe.styleOfInstances ? classe.styleOfInstances.outerHTML : null;
     co.ownStyle = classe.customStyle ? classe.customStyle.outerHTML : null;
     co.displayAsEdge = classe.shouldBeDisplayedAsEdge();
@@ -402,7 +405,7 @@ export class Options {
     while (++j < attributes.length) {
       const attribute: IAttribute = attributes[j];
       const ca: AttributeOptions = new AttributeOptions();
-      ca.fullnameTarget = attribute.fullname;
+      ca.fullnameTarget = attribute.fullname();
       ca.ownStyle = attribute.customStyle ? attribute.customStyle.outerHTML : null;
       ca.instancesStyle = attribute.styleOfInstances ? attribute.styleOfInstances.outerHTML : null;
       co.attributes.push(ca);
@@ -412,7 +415,7 @@ export class Options {
     while (++j < references.length) {
       const reference: IReference = references[j];
       const cr: ReferenceOptions = new ReferenceOptions();
-      cr.fullnameTarget = reference.fullname;
+      cr.fullnameTarget = reference.fullname();
       cr.ownStyle = reference.customStyle ? reference.customStyle.outerHTML : null;
       cr.instancesStyle = reference.styleOfInstances ? reference.styleOfInstances.outerHTML : null;
       cr.edgeOptions = reference.edges ? Options.MakeEdgeOptions(reference) : null;
@@ -495,7 +498,7 @@ export class Options {
     s.m.graph.zoom         = this.m.graph.zoom;
     // s.m.graph.setZoom(this.m.graph.zoom);
     s.m.graph.scroll       = this.m.graph.scroll;
-    let classe: IClass;
+    let classe: M2Class;
     let oclasse: ClassOptions;
     let i: number;
 

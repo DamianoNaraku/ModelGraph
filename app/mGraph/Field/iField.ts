@@ -4,7 +4,7 @@ import {
   IEdge,
   IVertex,
   IPackage,
-  IClass,
+  M2Class,
   IAttribute,
   AttribETypes,
   IFeature,
@@ -18,6 +18,10 @@ import {
 export class IField {
   owner: IVertex;
   logic: IFeature;
+  private html: HTMLElement | SVGElement;
   constructor(logic: IFeature) { this.logic = logic; }
 
+  getHtml(): HTMLElement | SVGElement { return this.html; }
+
+  refreshGUI(debug: boolean = true): void { }
 }
