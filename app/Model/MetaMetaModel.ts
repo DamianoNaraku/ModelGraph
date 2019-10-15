@@ -1,16 +1,17 @@
 import {
   AttribETypes,
   Dictionary,
-  IAttribute, IClass,
+  IAttribute,
   IModel,
-  IPackage, IVertex,
-  Json, M3Class,
-  M3Package, M3Reference, MClass,
+  Json,
+  M3Class,
+  M3Package,
+  M3Reference,
   MetaModel,
-  ModelNone,
-  ModelPiece,
+  ModelPiece, PropertyBarr,
+  ShortAttribETypes,
   Status,
-  U, ShortAttribETypes
+  U
 } from '../common/Joiner';
 
 export class EType {
@@ -34,6 +35,7 @@ export class EType {
   static staticInit(): Dictionary<ShortAttribETypes, EType> {
     EType.shorts = {};
     let noWarning: EType;
+    noWarning = new EType(AttribETypes.void, ShortAttribETypes.void, undefined);
     noWarning = new EType(AttribETypes.EDate, ShortAttribETypes.EDate, ' ');
     noWarning = new EType(AttribETypes.EChar, ShortAttribETypes.EChar, ' ');
     noWarning = new EType(AttribETypes.EString, ShortAttribETypes.EString, '');
@@ -45,9 +47,11 @@ export class EType {
     noWarning = new EType(AttribETypes.EFloat, ShortAttribETypes.EFloat, 0, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY);
     noWarning = new EType(AttribETypes.EDouble, ShortAttribETypes.EDouble, 0,  Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY);
     return EType.shorts; }
-  static getFromLongString(m3longstring: string): EType {
-    switch (m3longstring) {
-      default: U.pe(true, 'unrecognized type: ', m3longstring, 'estring=', AttribETypes.EString); break;
+
+  static getFromLongString(ecorelongstring: string): EType {
+    switch (ecorelongstring) {
+      default: U.pe(true, 'Etype.Get() unrecognized type: ', ecorelongstring, '; string: ', AttribETypes.EString); break;
+      case AttribETypes.void: return EType.get(ShortAttribETypes.void);
       case AttribETypes.EChar: return EType.get(ShortAttribETypes.EChar);
       case AttribETypes.EString: return EType.get(ShortAttribETypes.EString);
       case AttribETypes.EBoolean: return EType.get(ShortAttribETypes.EBoolean);
@@ -56,20 +60,14 @@ export class EType {
       case AttribETypes.EInt: return EType.get(ShortAttribETypes.EInt);
       case AttribETypes.ELong: return EType.get(ShortAttribETypes.ELong);
       case AttribETypes.EFloat: return EType.get(ShortAttribETypes.EFloat);
-      case AttribETypes.EDouble: return EType.get(ShortAttribETypes.EDate);
-    }
+      case AttribETypes.EDouble: return EType.get(ShortAttribETypes.EDouble);
+      case AttribETypes.EDate: return EType.get(ShortAttribETypes.EDate); }
     return null; }
 
   static get(a: ShortAttribETypes): EType { return EType.shorts[a]; }
   static getAlias(a: ShortAttribETypes): string {
     const str = Status.status.typeAliasDictionary[a];
     return !str ? '' + a : Status.status.typeAliasDictionary[a]; }
-
-  static updateAllTypeSelectors(): void {
-    const $selectors = $('select.TypeSelector');
-    let i = 0;
-    while (i < $selectors.length) { EType.updateTypeSelector($selectors[i++] as HTMLSelectElement); }
-  }
 
   static fixPrimitiveTypeSelectors(root: Element = null): void {
     if (!root) { root = document.body; }
@@ -81,7 +79,8 @@ export class EType {
       // if (select.selectedIndex !== 0 || select.options[0].getAttribute('selected')) { continue; }
       const attr: IAttribute = ModelPiece.getLogic(select) as IAttribute;
       if (!(attr instanceof IAttribute)) { continue; }
-      EType.updateTypeSelector(select, attr.getType());
+      PropertyBarr.makePrimitiveTypeSelector(select, attr.getType());
+      // EType.updateTypeSelector(select, attr.getType());
     }
   }
   static updateTypeSelector(selector: HTMLSelectElement, selectedType: EType = null): HTMLSelectElement {
@@ -112,6 +111,7 @@ export class EType {
     Status.status.mm.graph.propertyBar.refreshGUI();
     Status.status.m.graph.propertyBar.refreshGUI();
   }
+
 }
 
 export class MetaMetaModel extends IModel {
@@ -137,7 +137,8 @@ export class MetaMetaModel extends IModel {
 
   generateModel(): Json { return undefined; }
 
-  getPrefix(): string { return 'm3'; }
+  getPrefix(): string { return 'mmm'; }
+  getPrefixNum(): string { return 'm3'; }
   isM1(): boolean { return false; }
   isM2(): boolean { return false; }
   isM3(): boolean { return true; }

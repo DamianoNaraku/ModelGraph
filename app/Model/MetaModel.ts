@@ -58,7 +58,10 @@ export class MetaModel extends IModel {
   fixReferences(): void {
     const arr: M2Reference[] = this.getAllReferences();
     let i = -1;
-    while (++i < arr.length) { arr[i].link(); } }
+    while (++i < arr.length) {
+      arr[i].linkClass();
+      U.pe(!arr[i].classType, arr[i], Status.status.loadedLogic);
+    } }
 
   parse(json: Json, destructive: boolean = true): void {
     if (destructive) { this.childrens = []; }
@@ -91,7 +94,8 @@ export class MetaModel extends IModel {
 
   conformability(metaparent: MetaMetaModel, outObj?: any, debug?: boolean): number { return 1; }
 
-  getPrefix(): string { return 'm2'; }
+  getPrefix(): string { return 'mm'; }
+  getPrefixNum(): string { return 'm2'; }
   isM1(): boolean { return false; }
   isM2(): boolean { return true; }
   isM3(): boolean { return false; }

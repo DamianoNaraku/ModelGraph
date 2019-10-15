@@ -4,7 +4,7 @@
     "outDir": "../out-tsc/app",
     "allowSyntheticDefaultImports": true, // my add
     "experimentalDecorators": true, // my add
-    "types": []
+    "types": ["jquery", "jquery-ui", "jqueryui"]
   },
   "exclude": [
     "test.ts",

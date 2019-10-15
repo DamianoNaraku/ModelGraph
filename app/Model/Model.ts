@@ -97,6 +97,7 @@ export class Model extends IModel {
 
 
   getPrefix(): string { return 'm'; }
+  getPrefixNum(): string { return 'm1'; }
   isM1(): boolean { return true; }
   isM2(): boolean { return false; }
   isM3(): boolean { return false; }

@@ -11,12 +11,58 @@ import {
   IReference,
   IVertex,
   Json, Model, Status,
-  U, EType, IClass, MClass, MetaModel, MetaMetaModel
+  U, EType, IClass, MClass, MetaModel, MetaMetaModel, EOperation, EParameter
 } from '../common/Joiner';
+
 import ClickEvent = JQuery.ClickEvent;
 import MouseMoveEvent = JQuery.MouseMoveEvent;
 import MouseDownEvent = JQuery.MouseDownEvent;
 import MouseUpEvent = JQuery.MouseUpEvent;
+
+export class Info {
+  static forConsole(obj: any): any {}
+
+  static setraw(baseJson: object, k: string, v: any, toLower: boolean = true): string { return Info.set(baseJson, k, v, '', toLower); }
+  static setc(baseJson: object, k: string, v: any, toLower: boolean = true): string { return Info.set(baseJson, k, v, '@', toLower); }
+  static seti(baseJson: object, k: string, v: any, toLower: boolean = true): string  { return Info.set(baseJson, k, v, '#', toLower); }
+  static set(baseJson: object, k: string, v: any, prefixc: string = '_', toLower: boolean = true): string {
+    k = toLower ? k.toLowerCase() : k;
+    let prefix = prefixc;
+    // U.pw(baseJson[prefix + k], 'setinfo() name altready set: ', k, baseJson);
+    while (baseJson[prefix + k]) { prefix += prefixc === '' ? '*' : prefixc; }
+    baseJson[prefix + k] = v;
+    // if (prefix === '') { baseJson[prefixc + k] = v; }
+    return prefix + k; }
+
+  static unsetraw(baseJson: object, k: string, toLower: boolean = true): void { return Info.unset(baseJson, k, '', toLower); }
+  static unsetc(baseJson: object, k: string, toLower: boolean = true): void { return Info.unset(baseJson, k, '@', toLower); }
+  static unseti(baseJson: object, k: string, toLower: boolean = true): void { return Info.unset(baseJson, k, '#', toLower); }
+  static unset(baseJson: object, k: string, prefixc: string = '_', toLower: boolean = true): void {
+    k = prefixc + (toLower ? k.toLowerCase() : k);
+    delete baseJson[k]; }
+
+  static renameraw(o: object, k1: string, k2: string, toLower: boolean = true): void { return Info.rename(o, k1, k2, '', toLower); }
+  static renamec(o: object, k1: string, k2: string, toLower: boolean = true): void { return Info.rename(o, k1, k2, '@', toLower); }
+  static renamei(o: object, k1: string, k2: string, toLower: boolean = true): void  { return Info.rename(o, k1, k2, '#', toLower); }
+  static rename(baseJson: object, k1: string, k2: string, prefixc: string = '_', toLower: boolean = true): void {
+    k1 = prefixc + (toLower ? k1.toLowerCase() : k2);
+    k2 = prefixc + (toLower ? k1.toLowerCase() : k2);
+    const old: any = baseJson[k1];
+    delete baseJson[k1];
+    baseJson[k2] = old; }
+
+  static merge(info: Info, targetinfo: Info, prefixc: string = '->'): void {
+    let key: string;
+    if (!targetinfo) { return; }
+    for (key in targetinfo) {
+      if (!targetinfo.hasOwnProperty(key)) { continue; }
+      if (!prefixc) { switch (key[0]) {
+        default: prefixc = ''; break;
+        case '#': case '_': case '@': prefixc = key[0]; break; } }
+      // console.log('Info.set(' + info + ', ' + key + ', ' + targetinfo[key] + ', ' + prefixc);
+      Info.set(info, key, targetinfo[key], prefixc); }
+  }
+}
 
 export abstract class ModelPiece {
   private static idToLogic = {};
@@ -43,7 +89,9 @@ export abstract class ModelPiece {
       default: U.pe(true, 'unrecognized TS Class: ' + tsClass); return null;
       case 'Class': $html = $root.find('.Template.Class'); break;
       case 'Attribute': $html = $root.find('.Template.Attribute'); break;
-      case 'Reference': $html = $root.find('.Template.Reference'); break; }
+      case 'Reference': $html = $root.find('.Template.Reference'); break;
+      case 'EOperation': $html = $root.find('.Template.Operation'); break;
+      case 'EParameter': $html = $root.find('.Template.Parameter'); break; }
     U.pw(checkCustomizedFirst && $html.length > 1,
       'found more than one match for custom global style, should there be only 0 or 1.', $html, $root, this);
     if (checkCustomizedFirst && $html.length === 0) { return ModelPiece.GetStyle(model, tsClass, false); }
@@ -69,11 +117,6 @@ export abstract class ModelPiece {
 
   static getByID(id: number): ModelPiece { return ModelPiece.idToLogic[id]; }
 
-  static getPrintableTypeName(eType: string): string {
-    const pos = eType.lastIndexOf('#//');
-    return eType.substring(pos + 3); }
-
-
   constructor(parent: ModelPiece, metaVersion: ModelPiece) {
     this.assignID();
     this.parent = parent;
@@ -89,6 +132,8 @@ export abstract class ModelPiece {
     this.id = ModelPiece.idMax++;
     ModelPiece.idToLogic[this.id] = this;
     return this.id; }
+
+  replaceVarsSetup(): void { return; }
 
   linkToLogic<T extends HTMLElement | SVGElement>(html: T): void {
     if (this.id === null || this.id === undefined) { U.pw(true, 'undefined id:', this); return; }
@@ -106,7 +151,7 @@ export abstract class ModelPiece {
     let i = 0;
     while (p.parent && p !== p.parent && i++ < 6) { p = p.parent; }
     U.pe(!p  || !(p instanceof IModel), 'failed to get model root:', this, 'm lastParent:', p);
-    return p as IModel; }
+    return p as any as IModel; }
 
   isChildNameTaken(s: string): boolean {
     let i;
@@ -160,6 +205,7 @@ export abstract class ModelPiece {
 
   refreshInstancesGUI(): void {
     let i = 0;
+    U.pe(!this.instances, '', this);
     while (i < this.instances.length) {
       try { this.instances[i++].refreshGUI_Alone(false); } catch (e) {} finally {}
     }
@@ -187,27 +233,43 @@ export abstract class ModelPiece {
   abstract duplicate(nameAppend?: string, newParent?: ModelPiece): ModelPiece;
   abstract conformability(metaparent: ModelPiece, outObj?: any/*.refPermutation, .attrPermutation*/, debug?: boolean): number;
 
-  setName(value: string, refreshGUI: boolean = false): string {
+  setName(value: string, refreshGUI: boolean = false, warnDuplicateFix: boolean = true): string {
     const valueOld: string = this.name;
-    value = '' + value.trim();
+    const valueInputError = value;
+    value = value ? '' + value.trim() : null;
+    if (!value || value === '') { U.pw(true, 'name cannot be empty.'); return valueOld; }
     if (value === valueOld) { return valueOld; }
-    if (!value) { U.pw(true, 'name cannot be empty.'); return valueOld; }
-    const regexp: RegExp = /[a-zA-Z_$][a-zA-Z_$0-9]*/;
-    if (!regexp.test(value)) { U.pw(true, 'a valid name must be match this regular expression: ' + regexp.compile().toString()); }
+    const regexp: RegExp = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
+    console.log('setName.valid ? ' + regexp.test(value) + ' |' + value + '|');
+    if (!regexp.test(value)) {
+      value = value.replace(/([^a-zA-Z_$0-9])/g, '');
+      let remainder: string = value;
+      let firstChar: string = '' || '';
+      while (remainder.length > 0 && firstChar === '') {
+        firstChar = remainder[0].replace('[^a-zA-Z_$]', '');
+        remainder = remainder.substring(1); }
+      value = firstChar + remainder;
+      U.pw(true, 'a valid name must be match this regular expression: ' + regexp.compile().toString()
+        + '; trying autofix: |' + valueInputError + '| --> + |' + value + '|');
+      return this.setName(value, true || refreshGUI); }
 
+    let nameFixed: boolean = false && false;
     while (this.parent && this.parent.isChildNameTaken(value)) {
-      // if (value === valueOld) { value += '_2'; }
-      value = U.increaseEndingNumber(value, false, false);
-    }
+      nameFixed = true;
+      value = U.increaseEndingNumber(value, false, false); }
+    U.pe(nameFixed && (valueInputError === value), 'increaseEningNumber failed:', value, this, this.parent ? this.parent.childrens : null);
+    U.pw(nameFixed && warnDuplicateFix, 'that name is already used in this context, trying autofix: |'
+      + valueInputError + '| --> + |' + value + '|');
     this.name = value;
-    const model: IModel = this.getModelRoot();
+    const model: IModel = this.parent ? this.getModelRoot() : null;
     let i: number;
-    for (i = 0; i < model.instances.length; i++) { model.instances[i].sidebar.fullnameChanged(valueOld, this.name); }
+    for (i = 0; model && i < model.instances.length; i++) { model.instances[i].sidebar.fullnameChanged(valueOld, this.name); }
+    if (refreshGUI) { this.refreshGUI(); }
     return this.name; }
 
   fieldChanged(e: JQuery.ChangeEvent): void { U.pe(true, U.getTSClassName(this) + '.fieldChanged() should never be called.'); }
 
-  copy(other: ModelPiece, nameAppend: string = '_Copy', newParent: IClass = null): void {
+  copy(other: ModelPiece, nameAppend: string = '_Copy', newParent: ModelPiece = null): void {
     this.setName(other.name + nameAppend);
     this.styleOfInstances = other.styleOfInstances;
     this.customStyle = other.customStyle;
@@ -231,6 +293,7 @@ export abstract class ModelPiece {
     let i: number;
     for (i = 0; this.childrens && i < this.childrens.length; i++) { this.childrens[i].delete(); }
     for (i = 0; this.instances && i < this.instances.length; i++) { this.instances[i].delete(); }
+    setTimeout(() => this.getVertex().refreshGUI(), 1);
   }
 
   validate(): boolean {
@@ -273,40 +336,43 @@ export abstract class ModelPiece {
     } else if (this instanceof IClass) { tsClass = 'Class';
     } else if (this instanceof IAttribute) { tsClass = 'Attribute';
     } else if (this instanceof IReference) { tsClass = 'Reference';
+    } else if (this instanceof EOperation) { tsClass = 'EOperation';
+    } else if (this instanceof EParameter) { tsClass = 'EParameter';
     } else { tsClass = 'ERROR: ' + U.getTSClassName(this); }
     return ModelPiece.GetStyle(this.getModelRoot(), tsClass, checkCustomizedFirst); }
 
   getStyle(debug: boolean = true): HTMLElement | SVGElement {
     // prima precedenza: stile personale.
-    if (this.customStyle) { return this.customStyle; }
+    let ret: HTMLElement | SVGElement;
+    if (this.customStyle) { ret = this.customStyle; ret.id = '' + this.id; return ret; }
     // seconda precedenza: stile del meta-parent.
     const metap1 = this.metaParent;
-    if (metap1 && metap1.styleOfInstances) { return metap1.styleOfInstances; }
+    if (metap1 && metap1.styleOfInstances) { ret = metap1.styleOfInstances; ret.id = '' + this.id; return ret; }
     // terzo e quarto livello: search for customized third-override-css-like global styles; or immutable fourth global styles.
-    return this.getGlobalLevelStyle(true); }
+    ret = this.getGlobalLevelStyle(true);
+    ret.id = '' + this.id;
+    return ret; }
 
-  getInfo(toLower: boolean = false): any {
+  getInfo(toLower: boolean = false): Info {
     let i: number;
-    const info: any = {};
+    const info: any = new Info();
     const instancesInfo: any = {};
     const childrenInfo: any = {};
     const model: IModel = this.getModelRoot();
-    const set = (baseJson: any, k: string, v: any) => {
-      k = toLower ? k.toLowerCase() : k;
-      while (baseJson[k]) { k = '_' + k; } baseJson[k] = v; };
-    set(info, 'tsClass', U.getTSClassName(this));
-    set(info, 'rawThis', this);
-    if (!(this instanceof IModel)) { set(info, 'parent', this.parent); }
-    if (!(this instanceof IFeature)) { set(info, 'childrens', childrenInfo); }
-    if (model.isMM()) { set(info, 'instance', instancesInfo);
-    } else { set(info, 'metaParent', this.metaParent); }
+    Info.set(info, 'tsClass', U.getTSClassName(this));
+    Info.set(info, 'this', this);
+    if (!(this instanceof IModel)) { Info.set(info, 'parent', this.parent); }
+    if (!(this instanceof IFeature)) { Info.set(info, 'childrens', childrenInfo); }
+    if (model.isMM()) {
+      Info.set(info, 'instance', instancesInfo);
+      Info.set(info, 'name', this.name);
+    } else { Info.set(info, 'metaParent', this.metaParent); }
     for (i = 0; this.childrens && i < this.childrens.length; i++) {
       const child = this.childrens[i];
-      if (model.isMM()) {
-        set(info, child.name.toLowerCase(), child);
-      } else { set(childrenInfo, '' + i, child); }
-    }
-    for (i = 0; this.instances && i < this.instances.length; i++) { set(instancesInfo, '' + i, this.instances[i]); }
+      const name = model.isM1() && child.metaParent ? child.metaParent.name : child.name;
+      Info.setc(info, name.toLowerCase(), child);
+      Info.setraw(childrenInfo, name.toLowerCase(), child); }
+    for (i = 0; this.instances && i < this.instances.length; i++) { Info.seti(instancesInfo,  '' + i, this.instances[i]); }
     return info; }
 
 }

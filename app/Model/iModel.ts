@@ -167,6 +167,7 @@ export abstract class IModel extends ModelPiece {
   }
 
   abstract getPrefix(): string;
+  abstract getPrefixNum(): string;
 
   addClass(parent: IPackage = null, meta: IClass = null): IClass {
     if (!parent) { parent = this.getDefaultPackage(); }
@@ -196,6 +197,7 @@ export class ECoreRoot {
     ECorePackage.namee = Status.status.XMLinlineMarker + 'name';
 
     ECoreClass.eStructuralFeatures = 'eStructuralFeatures';
+    ECoreClass.eOperations = 'eOperations';
     ECoreClass.xsitype = Status.status.XMLinlineMarker + 'xsi:type'; // "ecore:EClass"
     ECoreClass.namee = Status.status.XMLinlineMarker + 'name';
 
@@ -209,6 +211,24 @@ export class ECoreRoot {
     ECoreAttribute.xsitype = Status.status.XMLinlineMarker + 'xsi:type'; // "ecore:EAttribute",
     ECoreAttribute.eType = Status.status.XMLinlineMarker + 'eType'; // "ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
     ECoreAttribute.namee = Status.status.XMLinlineMarker + 'name';
+
+
+    ECoreOperation.eParameters = 'eParameters';
+    ECoreOperation.namee = Status.status.XMLinlineMarker + 'name'; // "EExceptionNameCustom",
+    ECoreOperation.ordered = Status.status.XMLinlineMarker + 'ordered'; // "false",
+    ECoreOperation.unique = Status.status.XMLinlineMarker + 'unique'; // "false",
+    ECoreOperation.lowerBound = Status.status.XMLinlineMarker + 'lowerBound'; // "5", ma che senso ha su una funzione?? è il return?
+    ECoreOperation.upperBound = Status.status.XMLinlineMarker + 'upperBound';
+    ECoreOperation.eType = Status.status.XMLinlineMarker + 'eType'; // "#//Classname",
+    ECoreOperation.eexceptions = Status.status.XMLinlineMarker + 'eExceptions';
+    // "#//ClassnameException1 #//ClassNameException2 (also custom classes) ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt
+
+    ECoreParameter.namee = Status.status.XMLinlineMarker + 'name';
+    ECoreParameter.ordered = Status.status.XMLinlineMarker + 'ordered'; // "false";
+    ECoreParameter.unique = Status.status.XMLinlineMarker + 'unique'; // "false"
+    ECoreParameter.lowerBound = Status.status.XMLinlineMarker + 'lowerBound'; // "1"
+    ECoreParameter.upperBound = Status.status.XMLinlineMarker + 'upperBound'; // "2"
+    ECoreParameter.eType = Status.status.XMLinlineMarker + 'eType'; // "ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDoubl
 
     XMIModel.type = Status.status.XMLinlineMarker + 'type';
     XMIModel.namee = Status.status.XMLinlineMarker + 'name'; }
@@ -227,7 +247,9 @@ export class ECorePackage {
 export class ECoreClass {
   static eStructuralFeatures: string;
   static xsitype: string;
-  static namee: string; }
+  static namee: string;
+  static eOperations: string;
+}
 
 export class ECoreReference {
   static xsitype: string;
@@ -242,6 +264,25 @@ export class ECoreAttribute {
   static eType: string;
   static namee: string;
 }
+
+export class ECoreOperation {
+  static eType: string;
+  static eexceptions: string;
+  static upperBound: string;
+  static lowerBound: string;
+  static unique: string;
+  static ordered: string;
+  static namee: string;
+  static eParameters: string; }
+
+export class ECoreParameter {
+  static namee: string;
+  static ordered: string;
+  static unique: string;
+  static lowerBound: string;
+  static upperBound: string;
+  static eType: string;
+  }
 
 export class XMIModel {
   static type: string;

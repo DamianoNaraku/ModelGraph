@@ -1,15 +1,15 @@
 import {IModel, Json, TopBar, U, InputPopup} from '../common/Joiner';
 import ChangeEvent = JQuery.ChangeEvent;
-enum saveEntries {
+export enum saveEntries {
   saveList = '_SaveList',
   lastOpened = '_LastOpened', }
 export class LocalStorage {
   prefix: string = '' + '';
-  print = true;
+  print = false;
 
   constructor(model?: IModel, style: boolean = false) {
     this.prefix = style ? 'Style_' : '';
-    if (model) { this.prefix = model.getPrefix() + '_'; }
+    if (model) { this.prefix = model.getPrefixNum() + '_'; }
   }
 
   private setObj(key: string, val: Json): void { return this.set(key, JSON.stringify(val)); }
@@ -39,7 +39,7 @@ export class LocalStorage {
 
   getLast(): Json { return this.get(this.prefix + saveEntries.lastOpened); }
 
-  p(arg1: any, ...restArgs: any[]): void { U.pif(this.print, arg1, restArgs); }
+  p(arg1: any, ...restArgs: any[]): void { U.pif(this.print, arg1, ...restArgs); }
 
   getKeyList(limit: number = 10): string[] {
     const ret: string[] = this.get<string[]>(saveEntries.saveList);
@@ -68,7 +68,7 @@ export class LocalStorage {
   }
 
   private save_OnChange(e: Event, popup: InputPopup, model: IModel): void {
-    console.log('onchange');
+    this.p('onchange');
     const input: HTMLInputElement = e.currentTarget as HTMLInputElement;
     let error: boolean = false && false;
     try { model.setName(input.value); } catch (e) { error = false; } finally {}
@@ -82,7 +82,7 @@ export class LocalStorage {
   save(model: IModel, isAutosave: boolean, saveAs: boolean = false): void {
     // const prefix: string = model.getPrefix();
     const ecoreJSONStr: string = model.generateModelString();
-    console.log('save ' + this.prefix + 'Model[' + model.name + '] = ', ecoreJSONStr);
+    this.p('save ' + this.prefix + 'Model[' + model.name + '] = ', ecoreJSONStr);
     this.set(saveEntries.lastOpened, ecoreJSONStr);
     let popup: InputPopup;
     const oninput = (e: Event) => { this.save_OnInput(e, popup, model, model.name, ecoreJSONStr); };
@@ -108,7 +108,7 @@ export class LocalStorage {
   }
 
   autosave(turn: boolean, permanent: boolean = false) {
-
+    // todo: ?
   }
 }
 export class LocalStorageM {

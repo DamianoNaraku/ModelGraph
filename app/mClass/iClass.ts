@@ -37,9 +37,8 @@ import {
   M3Reference,
   M3Attribute,
   M3Feature,
-  ModelNone,
   EdgeModes,
-  EdgePointStyle
+  EdgePointStyle, EOperation
 } from '../common/Joiner';
 
 export abstract class IClass extends ModelPiece {
@@ -82,6 +81,10 @@ export abstract class IClass extends ModelPiece {
 
   generateEdge(): IEdge[] { U.pe(true, 'IClass.generateEdge() todo.'); return null; }
 
+  canBeLinkedTo(target: IClass): boolean {
+    if (!this.shouldBeDisplayedAsEdge()) { return false; }
+    return false; }
+
   getEdges(): IEdge[] { return this.edges; }
 
   delete(): void {
@@ -105,11 +108,12 @@ export abstract class IClass extends ModelPiece {
       return; }
     this.getVertex().refreshGUI();
     EType.fixPrimitiveTypeSelectors(this.vertex.getHtml());
-    M2Class.updateAllMMClassSelectors(this.vertex.getHtml(), false); }
+    M2Class.updateAllMMClassSelectors(this.vertex.getHtml(), false, false); // update self selectors
+  }
 
   getReferencePointingHere(): IReference[] { return this.referencesIN; }
   getStyle(): SVGForeignObjectElement {
-    const html =  U.removeemptynodes(super.getStyle(), true);
+    const html: HTMLElement | SVGElement = super.getStyle(); // U.removeemptynodes(super.getStyle(), true);
     const container: SVGForeignObjectElement = U.newSvg<SVGForeignObjectElement>('foreignObject');
     const size: Size = new Size(0, 0, 0, 0);
     // todo: devi specificarlo che x, y, width, height sono attributi speciali assegnabili agli HTMLElement non-svg e vengono trasmessi.
@@ -144,13 +148,18 @@ export abstract class IClass extends ModelPiece {
       if ((caseSensitive ? s1 : s1.toLowerCase()) === name) { return this.references[i]; } }
     return null; }
 
-  generateVertex(position: GraphPoint): IVertex {
+  generateVertex(position: GraphPoint = null): IVertex {
     if (!position) { position = new GraphPoint(0, 0); }
     const v: IVertex = this.vertex = new IVertex(this);
     v.constructorClass(this);
     v.draw();
     v.moveTo(position);
     return v; }
+
+  setName(value: string, refreshGUI: boolean = false): string {
+    super.setName(value, refreshGUI);
+    M2Class.updateAllMMClassSelectors(null, false);
+    return this.name; }
 
   /*generateEdge(): IEdge[] {
     const e: IEdge = null;
@@ -179,7 +188,7 @@ export abstract class IClass extends ModelPiece {
   getVertex(): IVertex {
     const displayAsEdge: boolean = this.shouldBeDisplayedAsEdge();
     // U.pw(displayAsEdge, 'getvertex called on a class that should not have a vertex.', this);
-    if (!displayAsEdge && this.vertex === null && Status.status.loadedLogic) { this.generateVertex(null); }
+    if (!displayAsEdge && this.vertex === null && Status.status.loadedLogic) { this.generateVertex(); }
     return this.vertex; }
   /*getEdge(): IEdge[] {
     U.pe(!this.shouldBeDisplayedAsEdge(), 'err');
@@ -208,7 +217,7 @@ export abstract class IClass extends ModelPiece {
     const refLenArray: number[] = [];
     let i;
     let j;
-    // find best references permutation compability
+    // find best references permutation compabilityF
     i = -1;
     while (++i < meta.references.length) { refLenArray.push(i); }
     const refPermut: number[][] = U.permute(refLenArray);
@@ -278,6 +287,12 @@ export abstract class IClass extends ModelPiece {
       ' = ', nameComformability + ' + ' + bestAttPermutationValue + ' + ', bestRefPermutationValue);
     return ret; }
 
+  getOperations(): EOperation[] {
+    if (this instanceof M3Class) { return []; }
+    if (this instanceof M2Class) { return this.operations; }
+    if (this instanceof MClass) { return this.metaParent.operations; }
+    U.pe(true, 'unexpected class:' + U.getTSClassName(this) + ': ', this);
+  }
 }
 export class M3Class extends IClass {
   parent: M3Package;

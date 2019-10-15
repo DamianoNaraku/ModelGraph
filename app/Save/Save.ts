@@ -169,6 +169,7 @@ export class Options {
     Status.status.mm.save(isAutosave, null);
     Status.status.m.save(isAutosave, null);
     console.log('autosave fully finished.'); }
+
   static Load(s: Status) {
     Options.LoadFromBrowserMemory(s); }
   static LoadFromBrowserMemory(s, key: string = null): void {
@@ -326,12 +327,12 @@ export class Options {
       Object['' + 'assign'](mo.class[i], moj.class[i]);
       // todo: this is hell: dovrei usare assign solo sui primitivi.
       Object['' + 'assign'](mo.class[i].size, moj.class[i].size);
-      // console.log(!mo.class[i].fullnameTarget, mo.class[i].fullnameTarget, 'm2target:', mo.class[i], 'source:', moj.class[i]);
+      // console.log(!mo.class[i].fullnameTarget, mo.class[i].fullnameTarget, 'classType:', mo.class[i], 'source:', moj.class[i]);
       console.log('autosaveRoot_String:', (localStorage.getItem('modelGraphSave_GUI_Damiano')));
       console.log('autosaveRoot:_JSON', JSON.parse(localStorage.getItem('modelGraphSave_GUI_Damiano')));
-      U.pe(!moj.class[i].fullnameTarget, 'source is wrong (savefile wrong). m2target:', mo.class[i],
+      U.pe(!moj.class[i].fullnameTarget, 'source is wrong (savefile wrong). classType:', mo.class[i],
         'source:', moj.class[i], 'moj:', moj, 'jj:', jj);
-      U.pe(!mo.class[i].fullnameTarget, 'm2target is wrong (load wrong). m2target:', mo.class[i], 'source:', moj.class[i]);
+      U.pe(!mo.class[i].fullnameTarget, 'classType is wrong (load wrong). classType:', mo.class[i], 'source:', moj.class[i]);
       Options.fromJsonAssignEdgeOptions(mo.class[i].edgeOptions, moj.class[i].edgeOptions);
       // alert('assignEdgeOptions done');
       let k = -1;

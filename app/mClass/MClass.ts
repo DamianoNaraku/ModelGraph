@@ -27,7 +27,7 @@ import {
   Size,
   StringSimilarity,
   EdgeStyle, MFeature, M2Attribute, M3Class, IClass,
-  Dictionary, GraphSize, MPackage, MReference, MAttribute, ModelNone, M2Reference, M2Feature
+  Dictionary, GraphSize, MPackage, MReference, MAttribute, M2Reference, M2Feature
 } from '../common/Joiner';
 
 export class MClass extends IClass {
@@ -122,6 +122,7 @@ export class MClass extends IClass {
       this.attributes = [];
       this.references = [];
       this.childrens = [];
+      this.referencesIN = [];
       while (++i < attributes.length) {
         const attr: MAttribute = new MAttribute(this, null, attributes[i]);
         U.ArrayAdd(this.childrens, attr);

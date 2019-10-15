@@ -2,10 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Untitled</title>
+  <title>Model Graph</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- avoid aching for debug: START -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <!-- avoid aching for debug: END -->
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <!-- error: looks like the node managed folder is messing up with direct references.
+   probably the source (uncompiled) folder is inaccessible.
+  <link href="./app/common/jquery-ui-1.12.1/jquery-ui.css" rel="stylesheet">
+  <link href="./app/common/jquery-ui-1.12.1/jquery-ui.structure.css" rel="stylesheet">
+  <link href="./app/common/jquery-ui-1.12.1/jquery-ui.theme.css" rel="stylesheet"> -->
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.structure.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/theme.min.css" rel="stylesheet">
+
 </head>
 <body>
   <app-console></app-console>
@@ -14,5 +29,123 @@
   <app-root></app-root>
   <app-mminput></app-mminput>
   <app-dam-context-menu></app-dam-context-menu>
+  <!--
+  <script src="./app/common/jquery-ui-1.12.1/jquery-ui.js" rel="script"></script>
+  <script src="./app/common/jquery-ui-1.12.1/jquery-ui.structure.js" rel="script"></script>-->
+<sandbox style="display:none">
+
+<!--        "@name": "WallHeight"
+            "@name": "WallWidth"                <-- delete
+            "@name": "FoundationHeightMin"
+            "@name": "FoundationHeightMax"
+            "@name": "FoundationWidth"
+            "@name": "TerrainSpecificWeight"
+            "@name": "WallGamma"
+            "@name": "TerrainGamma"
+            "@name": "TerrainFriction"
+
+            "@name": "WallTopWidth"
+            "@name": "WallBotWidth"
+            "@name": "WallTopX"                    <-- delete and replace with " PSI? la lettera tridente greco"
+            "@name": "FoundationX_GUIONLY"
+            "@name": "WallTopY_GUIONLY"
+            "@name": "WallBotX"               -->
+  <div class="Class Vertex vertexShell" data-autosize="1" style="height:auto; width:200px; background-color:skyblue; overflow: auto;">
+    <div class="ClassRules" style="display: none;"></div>
+    <div class="VertexHeader" style="height:20px; width:100%; text-align:center; display:flex;">
+      <div style="text-align:center; order:2; flex-grow:1; flex-shrink:1; flex-basis:10px; color:red; margin:auto; padding-left:4px;">($##metaParent.name$)</div>
+    </div>
+
+    <div class="air filler" style="height:20px; width:100%; text-align:center; display:flex;"></div>
+    <img class="measurable terrenoBackground" style="width:100%; height:200px;" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR1cDp8W0WOHeJLxKwhOHj-JZs0LzhP6sLhDyMhLcEGGKMqScBj&s"
+         _dstyle="'clip-path:polygon(calc($##@WallTopX.values.0$px + $##@WallTopWidth.values.0$px / 2) 0,
+         100% 0,
+         100% 100%, 0 100%,
+         0 calc($##@WallHeight.values.0$px - 12px - 20px),
+         calc($##@WallBotX.values.0$px + $##@WallBotWidth.values.0$px / 2) calc($##@WallHeight.values.0$px - 12px - 20px));'"
+         d_axis="none" comment="-20px is the air filler, removable along that element."
+         r_handles="none">
+    <div class="measurable wall shadow" style="position:absolute; top:0%; left:0%; width:100%; height:100%; background:darkgray;"
+         _dstyle="'clip-path:polygon(
+        $##@WallTopX.values.0$px $##@WallTopY_GUIONLY.values.0$px,
+        calc($##@WallTopX.values.0$px + $##@WallTopWidth.values.0$px) $##@WallTopY_GUIONLY.values.0$px,
+        calc($##@WallBotX.values.0$px + $##@WallBotWidth.values.0$px) calc($##@WallTopY_GUIONLY.values.0$px + $##@WallHeight.values.0$px),
+        calc($##@WallBotX.values.0$px) calc($##@WallTopY_GUIONLY.values.0$px + $##@WallHeight.values.0$px) );'"
+         d_axis="none"
+         r_handles="none"></div>
+    <div class="measurable muro top" style="position:absolute; border:solid gray; border-width:2px 2px 0 2px; max-height:10px; min-height:10px; background:darkgray;"
+         _dstyle="'top:$##@WallTopY_GUIONLY.values.0$px; left:$##@WallTopX.values.0$px; width:$##@WallTopWidth.values.0$px;'"
+         DISABLED_ruleY="$##@WallTopY_GUIONLY.values$ = positionAbsY"
+         _ruleX="$##@WallTopX.values$ = positionAbsX"
+         _ruleW="$##@WallTopWidth.values$ = width"
+         _chainFinal1="#$##id$ .ClassRules"
+         _chain0="#$##id$ .terrenoBackground->_dstyle"
+         _chain1="#$##id$ .wall.shadow->_dstyle"
+         d_axis="x"
+         r_handles="w, e"
+         r_autoHide="true"
+         r_containment="parent"
+         r_ghost="true"
+    ></div>
+    <div class="measurable muro bot" style="position:absolute; border:solid gray; border-width:0 2px 2px 2px; max-height:10px; min-height:10px; background:darkgray;"
+         _dstyle="'top:calc($##@WallTopY_GUIONLY.values.0$px + $##@WallHeight.values.0$px - 10px); left:$##@WallBotX.values.0$px; width:$##@WallBotWidth.values.0$px;'"
+         DISABLED_ruleY="$##@WallHeight.values$ = height - $##@WallTopY_GUIONLY.values.0$ + 10"
+         _ruleX="$##@WallBotX.values$ = positionAbsX - $##@FoundationX_GUIONLY.values.0$"
+         _ruleW="$##@WallBotWidth.values$ = width"
+         _chainFinal1="#$##id$ .ClassRules"
+         _chain0="#$##id$ .terrenoBackground->_dstyle"
+         _chain1="#$##id$ .wall.shadow->_dstyle"
+         d_axis="x"
+         r_handles="w, e"
+         r_autoHide="true"
+         r_containment="parent"
+         r_ghost="true"
+    ></div>
+    <div class="measurable base top" style="position:absolute; border:solid gray; border-width:0 4px 0 4px; background:darkgray;"
+         _dstyle="'top:calc($##@WallTopY_GUIONLY.values.0$px + $##@WallHeight.values.0$px);
+         left:$##@FoundationX_GUIONLY.values.0$px; width:$##@FoundationWidth.values.0$px;
+         height:calc($##@FoundationHeightMin.values.0$px);'"
+         DISABLED_ruleX="$##@FoundationX_GUIONLY.values$ = positionAbsX"
+         _ruleY="$##@WallHeight.values$ = positionAbsY - $##@WallTopY_GUIONLY.values.0$"
+         _ruleW="$##@FoundationWidth.values$ = width"
+         _ruleH="$##@FoundationHeightMin.values$ = height"
+         _chainFinal1="#$##id$ .ClassRules"
+         _chain0="#$##id$ .terrenoBackground->_dstyle"
+         _chain1="#$##id$ .muro.bot->_dstyle"
+         _chain2="#$##id$ .muro.top->_dstyle"
+         _chain3="#$##id$ .wall.shadow->_dstyle"
+         _chain4="#$##id$ .base.bot->_dstyle"
+         d_axis="y"
+         r_handles="s, n, e"
+         r_autoHide="true"
+         r_containment="parent"
+         r_ghost="true"
+    ></div>
+    <div class="measurable base bot" style="position:absolute; border:solid gray; border-width:0 4px 0 0; background:darkgray; clip-path:polygon(0 0, 100% 0, 100% 100%, 100% 100%);"
+         _dstyle="'top: calc($##@WallTopY_GUIONLY.values.0$px + $##@WallHeight.values.0$px + $##@FoundationHeightMin.values.0$px);
+         left: $##@FoundationX_GUIONLY.values.0$px; width: $##@FoundationWidth.values.0$px; height: calc($##@FoundationHeightMax.values.0$px - $##@FoundationHeightMin.values.0$px);'"
+         _ruleH="$##@FoundationHeightMax.values$ = $##@FoundationHeightMin.values.0$ + height"
+         _chain0="#$##id$ .terrenoBackground->_dstyle"
+         d_axis="none"
+         r_handles="s"
+         r_autoHide="true"
+         r_containment="parent"
+         r_ghost="true"
+    ></div>
+
+    <div id="$##id$_Output" style="position:absolute; right:0; top:20px; color: black;">
+      <div id="$##id$_exportRib"></div>
+      <div id="$##id$_exportSli"></div>
+      <div id="$##id$_exportSpr"></div>
+    </div>
+    <style>
+      #$##id$_Output > *[val>="0"]{
+        color: green;}
+      #$##id$_Output > *[val<="0"]{
+        color: red;
+      }</style>
+  </div>
+
+</sandbox>
 </body>
 </html>

@@ -3,16 +3,15 @@ import { MatTabGroup, MatTabsModule } from '@angular/material';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {NgModule, NO_ERRORS_SCHEMA} from '@angular/core';
 import { AppComponent } from './app.component';
-import { MminputComponent } from './mminput/mminput.component';
-import { MmsidebarComponent } from './mmsidebar/mmsidebar.component';
-import { MsidebarComponent } from './msidebar/msidebar.component';
-import { IsidebarComponent} from './isidebar/isidebar.component';
-import { TopBar, TopBarComponent } from './top-bar/top-bar.component';
-import { GraphTabHtmlComponent } from './graph-tab-html/graph-tab-html.component';
-import { MmGraphHtmlComponent } from './mm-graph-html/mm-graph-html.component';
+import { MminputComponent } from './guiElements/mminput/mminput.component';
+import { MmsidebarComponent } from './guiElements/mmsidebar/mmsidebar.component';
+import { MsidebarComponent } from './guiElements/msidebar/msidebar.component';
+import { IsidebarComponent} from './guiElements/isidebar/isidebar.component';
+import { TopBar, TopBarComponent } from './guiElements/top-bar/top-bar.component';
+import { GraphTabHtmlComponent } from './guiElements/graph-tab-html/graph-tab-html.component';
+import { MmGraphHtmlComponent } from './guiElements/mm-graph-html/mm-graph-html.component';
 import {
   IGraph,
-  $,
   IModel,
   MetaModel,
   Model,
@@ -25,11 +24,13 @@ import {
   M2Class,
   GraphPoint, Options, MyConsole, EType, MetaMetaModel, ShortAttribETypes, ECoreRoot
 } from './common/Joiner';
-import { PropertyBarrComponent } from './property-barr/property-barr.component';
-import { MGraphHtmlComponent } from './m-graph-html/m-graph-html.component';
-import { DamContextMenuComponent } from './dam-context-menu/dam-context-menu.component';
-import { StyleEditorComponent } from './style-editor/style-editor.component';
-import { ConsoleComponent } from './console/console.component';
+import { PropertyBarrComponent } from './guiElements/property-barr/property-barr.component';
+import { MGraphHtmlComponent } from './guiElements/m-graph-html/m-graph-html.component';
+import { DamContextMenuComponent } from './guiElements/dam-context-menu/dam-context-menu.component';
+import { StyleEditorComponent } from './guiElements/style-editor/style-editor.component';
+import { ConsoleComponent } from './guiElements/console/console.component';
+import KeyDownEvent = JQuery.KeyDownEvent;
+import {saveEntries} from './Database/LocalStorage';
 // @ts-ignore
 // @ts-ignore
 // @ts-ignore
@@ -123,6 +124,10 @@ function main0(tentativi: number = 0) {
     console.log('main0 wait(100)');
     return;
   }// else { mainForceTabChange(0); }
+
+  // U.loadScript('./app/common/jquery-ui-1.12.1/jquery-ui.js');
+  // U.loadScript('./app/common/jquery-ui-1.12.1/jquery-ui.structure.js');
+  U.loadScript('https://code.jquery.com/ui/1.12.1/jquery-ui.min.js');
   main();
   console.log('main(), $ loaded:', $ !== undefined, 'status: ', status);
 }
@@ -152,18 +157,23 @@ const M2InputXml: string = '<?xml version="1.0" encoding="UTF-8"?>\n' +
   '    <eStructuralFeatures xsi:type="ecore:EReference" name="playerlist" eType="#//player"/>\n' +
   '  </eClassifiers>\n' +
   '</ecore:EPackage>\n';
-function main() {
-  U.tabSetup();
-  U.resizableBorderSetup();
-  ECoreRoot.initializeAllECoreEnums();
+
+function globalevents(): void {
+  // Prevent the backspace key from navigating back.
+  const $document = $(document);
+  $document.unbind('keydown').bind('keydown', U.preventBackSlashHistoryNavigation);
+  $document.on('keydown', (e: KeyDownEvent): void  => {
+    console.log('documentKeyDown: ', e.key, e.keyCode);
+    if (e.key === 'Escape') { Status.status.getActiveModel().graph.edgeChangingAbort(e); }
+  });
   window['' + 'help'] = [
     'setBackup (backup <= save)',
     'backupSave (save <= backup)',
     'destroy (the backup)',
     'discardSave (stop autosave)'];
   window['' + 'destroy'] = () => {
-    localStorage.setItem('LastOpenedMM', null);
-    localStorage.setItem('LastOpenedM', null);
+    localStorage.setItem('m1_' + saveEntries.lastOpened, null);
+    localStorage.setItem('m2_' + saveEntries.lastOpened, null);
     localStorage.setItem('backupMM', null);
     localStorage.setItem('backupGUI', null);
     localStorage.setItem('backupM', null);
@@ -185,7 +195,15 @@ function main() {
   window['' + 'setBackupGUI'] = () => { localStorage.setItem('backupGUI', localStorage.getItem('modelGraphSave_GUI_Damiano')); };
   window['' + 'setBackupMM'] = () => { localStorage.setItem('backupMM', localStorage.getItem('LastOpenedMM')); };
   window['' + 'setBackupM'] = () => { localStorage.setItem('backupM', localStorage.getItem('LastOpenedM')); };
+}
 
+function main() {
+  (window as any).U = U;
+  (window as any).status = Status.status;
+  U.tabSetup();
+  U.resizableBorderSetup();
+  ECoreRoot.initializeAllECoreEnums();
+  globalevents();
   const mmconsole: MyConsole = new MyConsole($('.mmconsole')[0]);
   const mconsole: MyConsole = new MyConsole($('.mconsole')[0]);
 
@@ -197,6 +215,7 @@ function main() {
     'The bug happens in: Chrome.',
     'The bug does NOT happen in: Firefox.',
     'Behaviour is unknown for other browsers.');
+  Status.status.typeAliasDictionary[ShortAttribETypes.void] = 'void';
   Status.status.typeAliasDictionary[ShortAttribETypes.EChar] = 'char';
   Status.status.typeAliasDictionary[ShortAttribETypes.EString] = 'string';
   Status.status.typeAliasDictionary[ShortAttribETypes.EDate] = 'date';
@@ -221,11 +240,10 @@ function main() {
   EType.staticInit();
   DamContextMenuComponent.staticInit();
 
-  tmp = localStorage.getItem('LastOpenedMM');
-  if (tmp && tmp !== '' && tmp !== 'null' && tmp !== 'undefined') { MetaModelinputStr = tmp;
-  } else { MetaModelinputStr = ($('input#MM_INPUT')[0] as HTMLInputElement).value; }
+  tmp = localStorage.getItem('m2_' + saveEntries.lastOpened);
+  if (tmp && tmp !== '' && tmp !== 'null' && tmp !== 'undefined') { MetaModelinputStr = tmp; }
 
-  tmp = localStorage.getItem('LastOpenedM');
+  tmp = localStorage.getItem('m1_' + saveEntries.lastOpened);
   if (tmp && tmp !== '' && tmp !== 'null' && tmp !== 'undefined') { ModelInputStr = tmp; }
 
   console.log('loading MMM:', MetaMetaModelStr);
@@ -246,8 +264,8 @@ function main() {
   useless = new IGraph(Status.status.mm, document.getElementById('metamodel_editor'));
   useless = new IGraph(Status.status.m, document.getElementById('model_editor'));
   Status.status.loadedGUI = true;
-  Status.status.mm.graph.propertyBar.show(Status.status.mm);
-  Status.status.m.graph.propertyBar.show(Status.status.m);
+  Status.status.mm.graph.propertyBar.show(Status.status.mm, false);
+  Status.status.m.graph.propertyBar.show(Status.status.m, false);
   M2Class.updateAllMMClassSelectors();
   EType.fixPrimitiveTypeSelectors();
   // M2Class.updateAllMClassSelectors();

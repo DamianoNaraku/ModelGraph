@@ -1,4 +1,4 @@
-﻿import {
+import {
   IVertex,
   IEdge,
   IField,
@@ -9,7 +9,7 @@
   ModelPiece, MetaMetaModel,
   ISidebar, XMIModel,
   IGraph, IReference, IModel, Status,
-  Point, GraphPoint, GraphSize, ECoreClass, ECorePackage, ECoreRoot
+  Point, GraphPoint, GraphSize, ECoreClass, ECorePackage, ECoreRoot, ECoreOperation, JQueryUI, $$$, $ui, MAttribute, IClass
 } from './Joiner';
 
 import ClickEvent = JQuery.ClickEvent;
@@ -17,6 +17,11 @@ import MouseDownEvent = JQuery.MouseDownEvent;
 import MouseMoveEvent = JQuery.MouseMoveEvent;
 import MouseUpEvent = JQuery.MouseUpEvent;
 import ContextMenuEvent = JQuery.ContextMenuEvent;
+
+export class MeasurableArrays {rules: Attr[]; imports: Attr[]; exports: Attr[]; variables: Attr[];
+  constraints: Attr[]; chain: Attr[]; chainFinal: Attr[]; dstyle: Attr[]; html: HTMLElement | SVGElement; e: Event}
+
+
 export class InputPopup {
   static popupCounter = 0;
   html: HTMLElement;
@@ -87,6 +92,7 @@ export class InputPopup {
 }
 
 export enum ShortAttribETypes {
+  void = 'void',
   EChar  = 'Echar',
   EString  = 'EString',
   EDate  = 'EDate',
@@ -111,88 +117,23 @@ export enum ShortAttribETypes {
   EELIST  = 'EELIST',*/
 
 }
-export enum AttribETypes {
-//  FakeElementAddFeature = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//FakeElement',
-// era il 'pulsante per aggiungere feature nel mm.',
-  // reference = 'reference??',
-
-  EChar = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EChar',
-  EString = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString',
-  EDate = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDate',
-  EFloat = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EFloat',
-  EDouble = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDouble',
-  EBoolean = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean',
-  EByte = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EByte',
-  EShort = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EShort',
-  EInt = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt',
-  ELong = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//ELong',
-  /*
-  ECharObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//ECharObject',
-  EStringObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EStringObject',
-  EDateObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDateObject',
-  EFloatObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EFloatObject',
-  EDoubleObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDoubleObject',
-  EBooleanObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBooleanObj',
-  EByteObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EByteObject',
-  EShortObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EShortObject',
-  EIntObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EIntegerObject',
-  ELongObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//ELongObject', */
-  // EELIST = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EEList', // List<E> = List<?>
- }
-
-
-/*
-export class Json {
-  eClassifiers: any;
-  eStructuralFeatures: any;
-  logical: ModelPiece;
-}*/
-
-// export type Json = object;
-export class Json {
-  constructor(j: object) {/* U.pe('' + j === j, 'parameter cannot be a string'); */}
-  static getChildrensXMI(json: Json): Json[] {
-    return ['todo childrensxmi'];
-  }
-  static getChildrens(thiss: Json, throwError: boolean = false): Json[] {
-    if (!thiss && !throwError) { return []; }
-    const mod = thiss[ECoreRoot.ecoreEPackage];
-    const pkg = thiss[ECorePackage.eClassifiers];
-    const cla = thiss[ECoreClass.eStructuralFeatures];
-    const ret: any = mod || pkg || cla;
-    /*if ( ret === undefined || ret === null ) {
-      if (thiss['@name'] !== undefined) { ret = thiss; } // if it's the root with only 1 child arrayless
-    }*/
-    // U.pe(true, debug, 'getchildrens(', thiss, ')');
-    U.pe( throwError && !ret, 'getChildrens() Failed: ', thiss, ret);
-    // console.log('ret = ', ret, ' === ', {}, ' ? ', ($.isEmptyObject(ret) ? [] : [ret]));
-    if (!ret || $.isEmptyObject(ret)) { return []; }
-    if (Array.isArray(ret)) { return ret; } else { return [ret]; }
-  }
-
-  static read<T>(json: Json, field: string, valueIfNotFound: any = 'read<T>CanThrowError'): T {
-    const ret: T = json ? json[field] as T : null;
-    if ((ret === null || ret === undefined)) {
-      U.pe(valueIfNotFound === 'read<T>CanThrowError', 'Json.read<',  '> failed: field[' + field + '], json: ', json);
-      return valueIfNotFound; }
-    return ret; }
-  static write(json: Json, field: string, val: string): string { json[field] = val; return val; }
-
-}
 
 export class U {
   private static prefix = 'ULibrary_';
-  private static sizeofvar = null;
-  private static $sizeofvar = null;
+  private static sizeofvar: HTMLElement = null;
+  private static $sizeofvar: JQuery<HTMLElement> = null;
   private static clipboardinput: HTMLInputElement = null;
   private static PermuteArr: any[][] = [];
   private static PermuteUsedChars: any[] = [];
   private static resizingBorder: HTMLElement = null;
   private static resizingContainer: HTMLElement = null;
-  static he = null;
+  // static he = null;
   static production = false; // true;
 
   private static addCssAvoidDuplicates: Dictionary<string, HTMLStyleElement> = {};
+
+  static $measurableRelativeTargetRoot: JQuery<HTMLElement | SVGElement>;
+
   static addCss(key: string, str: string, prepend: boolean = true): void {
     const css: HTMLStyleElement = document.createElement('style');
     css.innerHTML = str;
@@ -262,9 +203,7 @@ export class U {
   }
 
   static p(s: any, ...restArgs: any[]): string {
-    if (restArgs === null || restArgs === undefined) {
-      restArgs = [];
-    }
+    if (restArgs === null || restArgs === undefined) { restArgs = []; }
     let str = 'p: ' + s;
     console.log('p:', s);
     for (let i = 0; i < restArgs.length; i++) {
@@ -303,13 +242,85 @@ export class U {
 
   static cloneObj2<T extends object>(o: T): T {
     U.pe(true, 'todo: dovrebbe fare una deep copy copiando anche le funzioni (cosa che json.stringify non fa).');
-    return null;
+    return null; }
 
-  }
+  static loadScript(path: string, useEval: boolean = false): void {
+    const script = document.createElement('script');
+    script.src = path;
+    script.type = 'text/javascript';
+    U.pe(useEval, 'useEval: todo. potrebbe essere utile per avviare codice fuori dalle funzioni in futuro.');
+    document.body.append(script); }
 
   static newSvg<T extends SVGElement>(type: string): T {
     return document.createElementNS('http://www.w3.org/2000/svg', type) as T; }
 
+  static measurableGetArrays(measureHtml: HTMLElement | SVGElement, e: Event): MeasurableArrays {
+    if (!measureHtml) {
+      measureHtml = (e.target || e.currentTarget) as HTMLElement | SVGElement; // currentTarget === dicument sometimes.
+//      console.log('html:', measureHtml, 'e: ', e);
+      if (!measureHtml || measureHtml as any === document) {
+        measureHtml = e.target as HTMLElement | SVGElement;
+        while (measureHtml && !measureHtml.classList.contains('measurable')) { measureHtml = measureHtml.parentElement; }
+        U.pe(!measureHtml, ' failed to get measurableRoot. evt:', e);
+      }
+      if(measureHtml.classList.contains('ui-wrapper') && !measureHtml.classList.contains('measurable')
+        && (measureHtml.firstChild as HTMLElement).classList.contains('measurable')) { measureHtml = measureHtml.firstChild as any; }
+    }
+    const ret: {rules: Attr[], imports: Attr[], exports: Attr[], variables: Attr[], constraints: Attr[], chain: Attr[],
+      chainFinal: Attr[], dstyle: Attr[], html: HTMLElement | SVGElement, e: Event} = {} as any;
+    ret.e = e;
+    ret.html = measureHtml;
+    ret.rules = [];
+    ret.constraints = [];
+    ret.rules = [];
+    ret.imports = [];
+    ret.exports = [];
+    ret.variables = [];
+    ret.constraints = [];
+    ret.chain = [];
+    ret.chainFinal = [];
+    ret.dstyle = [];
+    let i: number;
+    for (i = 0; i < measureHtml.attributes.length; i++) {
+      const attr: Attr = measureHtml.attributes[i];
+      const key = attr.name.toLowerCase();
+      if (key.indexOf('_') !== 0) { continue; }
+      if (key.indexOf('_rule') === 0) { ret.rules.push(attr); continue; }
+      if (key.indexOf('_import') === 0) { ret.imports.push(attr); continue; }
+      if (key.indexOf('_export') === 0) { ret.exports.push(attr); continue; }
+      if (key.indexOf('_constraint') === 0) { ret.constraints.push(attr); continue; }
+      if (key.indexOf('_chain') === 0) { ret.chain.push(attr); continue; }
+      if (key.indexOf('_chainfinal') === 0) { ret.chainFinal.push(attr); continue; }
+      if (key.indexOf('_dstyle') === 0) { ret.dstyle.push(attr); continue; }
+      ret.variables.push(attr); }
+    return ret; }
+
+  static measurableElementSetup($root: JQuery<Element>, resizeConfig: ResizableOptions = null, dragConfig: DraggableOptions = null): void {
+    $root.find('.measurable').addBack('.measurable').each(
+      (i: number, h: Element) => U.measurableElementSetupSingle(h as HTMLElement | SVGElement,  resizeConfig, dragConfig)); }
+  static measurableElementSetupSingle(elem: HTMLElement | SVGElement, resizeConfig: ResizableOptions = null, dragConfig: DraggableOptions = null): void {
+    // apply resizableborder AND jquery.resize
+    if (!elem.classList || !elem.classList.contains('measurable') || elem as any === document) {
+      U.pw(true, 'invalid measurable:', elem, !elem.classList, '||', !elem.classList.contains('measurable')); return; }
+    U.resizableBorderSetup(elem as HTMLElement);
+    if (!resizeConfig) { resizeConfig = {}; }
+    if (!dragConfig) { dragConfig = {}; }
+    resizeConfig.create = resizeConfig.create || eval(elem.dataset.r_create);
+    resizeConfig.resize = resizeConfig.resize || eval(elem.dataset.r_resize);
+    resizeConfig.start = resizeConfig.start || eval(elem.dataset.r_start);
+    resizeConfig.stop = resizeConfig.stop || eval(elem.dataset.r_stop);
+    dragConfig.create = dragConfig.create || eval(elem.dataset.d_create);
+    dragConfig.drag = dragConfig.drag || eval(elem.dataset.d_drag);
+    dragConfig.start = dragConfig.start || eval(elem.dataset.d_start);
+    dragConfig.stop = dragConfig.stop || eval(elem.dataset.d_stop);
+    for (const key in resizeConfig) {
+      if (resizeConfig[key] || !elem.dataset['r_' + key]) { continue; }
+      resizeConfig[key] = elem.dataset['r_' + key]; }
+    for (const key in dragConfig) {
+      if (dragConfig[key] || !elem.dataset['d_' + key]) { continue; }
+      dragConfig[key] = elem.dataset['d_' + key]; }
+    $(elem).resizable(resizeConfig).draggable(dragConfig);
+  }
 
   static replaceVars<T extends HTMLElement | SVGElement>(obj: object, html0: T, cloneHtml = true, debug: boolean = false): T {
     const html: T = cloneHtml ? U.cloneHtml<T>(html0) : html0;
@@ -320,8 +331,7 @@ export class U {
     // console.log('html0:', html0, 'html:', html);
     html.innerHTML = U.replaceVarsString(obj, html.innerHTML, debug);
     U.pif(debug, 'ReplaceVars() return = ', html.innerHTML);
-    return html;
-  }
+    return html; }
 
   static replaceVarsString0(obj: object, str: string, escapeC: string[] = null, replacer: string[] = null, debug: boolean = false): string {
     U.pe(escapeC && !replacer, 'replacer cannot be null if escapeChar is defined.');
@@ -331,28 +341,25 @@ export class U {
     str = str.replace(/(^\$|(((?!\$).|^))[\$](?!\$))(.*?)(^\$|((?!\$).|^)[\$](?!\$))/gm,
       (match: string, capture) => {
         // console.log('matched:', match, 'capture: ', capture);
-        if (match === '$') {
-          return '';
-        }
+        if (match === '$') { return ''; }
         let prefixError = '';
         if (match.charAt(0) !== '$') {
           prefixError = match.charAt(0);
-          match = match.substring(1);
-        }
+          match = match.substring(1); }
         // # = default value: {asHtml = true, isbase64 = false}
-        const asHtml = match.charAt(0) === '1' || match.charAt(0) !== '#';
-        const isBase64 = match.charAt(1) === '1' || match.charAt(1) !== '#';
+        const asHtml = match.charAt(1) === '1' || match.charAt(1) !== '#';
+        const isBase64 = match.charAt(2) === '1' || match.charAt(2) !== '#';
         const varname = match.substring(3, match.length - 1);
         const debugtext = varname + '(' + match + ')';
-        const tmp = prefixError + '' + U.replaceSingleVar(obj, varname, isBase64, false);
-        let ret = tmp;
+        U.pif(debug, 'match:', match);
+        let result = '' + U.replaceSingleVar(obj, varname, isBase64, false);
         let i = -1;
-        if (!asHtml) { while (++i < escapeC.length) { ret = U.replaceAll(tmp, escapeC[i], replacer[i]); } }
-        U.pif(debug, 'replaceSingleVar: ' + debugtext + ' --> ' + tmp + ' --> ' + ret, obj);
-        return ret;
+        if (!asHtml) { while (++i < escapeC.length) { result = U.replaceAll(result, escapeC[i], replacer[i]); } }
+        U.pif(debug, 'replaceSingleVar: ' + debugtext + ' --> ' + result + ' --> ' + prefixError + result, obj);
+        return prefixError + result;
       });
-    return str; // str.replace(/\$\$/gm, '$');
-  }
+    return str; }
+
   static replaceVarsString(obj: object, htmlStr: string, debug: boolean = false): string {
     U.pe(!obj || !htmlStr, 'parameters cannot be null. obj:', obj, ', htmlString:', htmlStr);
     //  https://stackoverflow.com/questions/38563414/javascript-regex-to-select-quoted-string-but-not-escape-quotes
@@ -364,8 +371,8 @@ export class U {
     htmlStr = U.QuoteReplaceVarString(obj, htmlStr, '\'', debug);
     // replaces what's left outside any quotation. (eventually escaping <>)
     htmlStr = U.replaceVarsString0(obj, htmlStr, ['<', '>'], ['&lt;', '&gt;']); // check here aaaaaaaaaaaaaa $$$$$$$$$$$
-    return htmlStr;
-  }
+    return htmlStr; }
+
   static QuoteReplaceVarString(obj: object, htmlStr: string, quote: string, debug: boolean = false): string {
     U.pe(quote !== '"' && quote !== '\'', 'the only quote supported are single chars " and \'.');
     const quoteEscape = quote === '&quot;' ? '' : '&#39;'; // '\\' + quote;
@@ -387,6 +394,32 @@ export class U {
     return htmlStr;
   }
 
+  static replaceSingleVarGetParentAndChildKey(obj: object, fullpattern: string, canThrow: boolean = false): {parent: any, childkey: string} {
+    const ret: {parent: any, childkey: string} = {parent: null, childkey: null};
+    let targetPatternParent: string;
+    const pos = fullpattern.indexOf('.');
+    const isBase64 = fullpattern.charAt(2) === '1' || fullpattern.charAt(2) !== '#';
+    U.pe(isBase64, 'currently this method does not support base64 encoded templates. the conversion is still to do.', fullpattern);
+    if (pos === -1) {
+      ret.parent = obj;
+      ret.childkey = fullpattern.substring(3, fullpattern.length - 1);
+      return ret; }
+    try {
+      targetPatternParent = fullpattern.substring(0, pos) + '$';
+      ret.parent = U.replaceSingleVarRaw(obj, targetPatternParent);
+      ret.childkey = fullpattern.substring(pos + 1, fullpattern.length - 1);
+    } catch (e) {
+      U.pw(true, 'replaceSingleVarGetParentAndChildKey failed. fullpattern: |' + fullpattern + '| targetPatternParent: |'
+        + targetPatternParent + '| obj: ', obj, ' reason: ', e);
+      return null; }
+    return ret; }
+
+  static replaceSingleVarRaw(obj: object, fullpattern: string, canThrow: boolean = false): any {
+    fullpattern = fullpattern.trim();
+    const isBase64 = fullpattern.charAt(2) === '1' || fullpattern.charAt(2) !== '#';
+    const varName = fullpattern.substring(3, fullpattern.length - 1);
+    return U.replaceSingleVar(obj, varName, isBase64, canThrow); }
+
   static replaceSingleVar(obj: object, varname: string, isBase64: boolean, canThrow: boolean = false): any {
     const debug = false;
     const showErrors = false;
@@ -394,13 +427,13 @@ export class U {
     if (isBase64) { varname = atob(varname); }
     let requestedValue: any = obj;
     const fullpath: string = varname;
-    const tokens: string[] = varname.split('.');
+    const tokens: string[] = varname.split('.'); // varname.split(/\.,/);
     let j;
     for (j = 0; j < tokens.length; j++) {
       const token = tokens[j];
       U.pif(debug || showErrors, 'replacer: obj[req] = ', requestedValue, '[', token, '] =', (requestedValue ? requestedValue[token] : ''));
-      requestedValue = (requestedValue === null) ? undefined : requestedValue[token];
-      if (requestedValue === undefined) {
+
+      if (requestedValue === null || requestedValue === undefined) {
         U.pe(showErrors, 'requested null or undefined:', obj, ', canthrow ? ', canThrow, ', fillplath:', fullpath);
         if (canThrow) {
           U.pif(showErrors, 'wrong variable path:', debugPathOk + '.' + token, ': ' + token + ' is undefined. object = ', obj);
@@ -409,33 +442,66 @@ export class U {
           U.pif(showErrors, 'wrong variable path:', debugPathOk + '.' + token, ': ' + token + ' is undefined. ovjet = ', obj);
         }
         return 'Error: ' + debugPathOk + '.' + token + ' = ' + undefined;
-      } else {
-        debugPathOk += (debugPathOk === '' ? '' : '.') + token;
-      }
+      } else { debugPathOk += (debugPathOk === '' ? '' : '.') + token; }
+      ////
+      if (requestedValue instanceof ModelPiece) {
+        const info: any = requestedValue.getInfo(true);
+        const key = token.toLowerCase();
+        if (key in info) { requestedValue = info[key]; } else { requestedValue = requestedValue[token]; }
+      } else { requestedValue = (requestedValue === null) ? undefined : requestedValue[token]; }
     }
-    return requestedValue;
-  }
+    return requestedValue; }
+
+  static changeVarTemplateDelimitersInMeasurables(innerText: string, toReplace: string = '$', replacement = '£'): string {
+    if (!innerText.indexOf('measurable')) { return innerText; } // + performance su scommessa probabilistica. better avg, worser worst case.
+    const html = document.createElement('div');
+    html.innerHTML = innerText;
+    const $measurables = $(html).find('.measurable');
+    let i: number;
+    let j: number;
+    for (i = 0; i < $measurables.length; i++) {
+      for (j = 0; j < $measurables[i].attributes.length; j++) {
+        if($measurables[i].attributes[j].name[0] !== '_') { continue; }
+        U.changeVarTemplateDelimitersInMeasurablesAttr($measurables[i].attributes[j], toReplace, replacement); } }
+    return html.innerHTML; }
+
+  static changeBackVarTemplateDelimitersInMeasurablesAttr(attrVal: string, toReplace: string = '£', replacement = '$'): string {
+    return U.changeVarTemplateDelimitersInMeasurablesAttrStr(attrVal, toReplace, replacement); }
+
+  private static changeVarTemplateDelimitersInMeasurablesAttr(attr: Attr, toReplace: string = '$', replacement = '£'): void {
+    attr.value = U.changeVarTemplateDelimitersInMeasurablesAttrStr(attr.value, toReplace, replacement); }
+
+  private static changeVarTemplateDelimitersInMeasurablesAttrStr(val: string, toReplace: string, replacement: string): string {
+    const r = toReplace;
+    const rstr = '(^\\' + r + '|(((?!\\' + r + ').|^))[\\' + r + '](?!\\' + r + '))(.*?)(^\\' + r + '|((?!\\' + r + ').|^)[\\' + r + '](?!\\' + r + '))';
+    return val.replace(new RegExp(rstr, 'gm'), (match: string, capture) => {
+      if (match === toReplace) { return toReplace; }
+      let prefixError = '';
+      if (match.charAt(0) !== toReplace) {
+        prefixError = match.charAt(0);
+        match = match.substring(1); }
+      return prefixError + replacement + match.substring(1, match.length - 1) + replacement;
+    }); }
 
   static sizeof<T extends HTMLElement | SVGElement>(element: T, debug: boolean = false): Size {
     U.pif(debug, 'sizeof(', element, ')');
+    U.pe(element as any === document, 'trying to measure document.');
+    if (element as any === document) { element = document.body as any; }
     const $element = $(element);
     U.pe(element.tagName === 'foreignObject', 'SvgForeignElementObject have a bug with size, measure a child instead.');
     let i;
     let tmp;
     let size: Size;
-    if (U.sizeofvar === null) {
+    if (!U.sizeofvar) {
       U.sizeofvar = document.createElement('div');
-      U.$sizeofvar = $(U.sizeofvar);
-      $('body').append(U.sizeofvar);
-    }
+      document.body.append(U.sizeofvar); }
+
     const isOrphan = element.parentNode === null;
     // var visible = element.style.display !== 'none';
     // var visible = $element.is(":visible"); crea bug quando un elemento è teoricamente visibile ma orfano
     const ancestors = U.ancestorArray(element);
     const visibile = [];
-    if (isOrphan) {
-      U.$sizeofvar.append(element);
-    }
+    if (isOrphan) { U.sizeofvar.append(element); }
     // show all and save visibility to restore it later
     for (i = 0; i < ancestors.length; i++) { // document has undefined style
       visibile[i] = (ancestors[i].style === undefined) ? (true) : (ancestors[i].style.display !== 'none');
@@ -454,9 +520,7 @@ export class U {
         $(ancestors[i]).hide();
       }
     }
-    if (isOrphan) {
-      U.clear(U.sizeofvar);
-    }
+    if (isOrphan) { U.clear(U.sizeofvar); }
     // Status.status.getActiveModel().graph.markS(size, false);
     return size;
   }
@@ -526,16 +590,16 @@ export class U {
   static setSvgSize(style: SVGElement, size: GraphSize = null): GraphSize {
     size = size.clone();
     const defaults: GraphSize = new GraphSize(0, 0, 200, 101);
-    if (isNaN(size.x)) {
+    if (isNaN(+size.x)) {
       U.pw(true, 'Svg x attribute is NaN: ' + style.getAttribute('x') + ' will be set to default: ' + defaults.x);
       size.x = defaults.x; }
-    if (isNaN(size.y)) {
+    if (isNaN(+size.y)) {
       U.pw(true, 'Svg y attribute is NaN: ' + style.getAttribute('y') + ' will be set to default: ' + defaults.y);
       size.y = defaults.y; }
-    if (isNaN(size.w)) {
+    if (isNaN(+size.w)) {
       U.pw(true, 'Svg w attribute is NaN: ' + style.getAttribute('width') + ' will be set to default: ' + defaults.w);
       size.w = defaults.w; }
-    if (isNaN(size.h)) {
+    if (isNaN(+size.h)) {
       U.pw(true, 'Svg h attribute is NaN: ' + style.getAttribute('height') + ' will be set to default: ' + defaults.h);
       size.h = defaults.h; }
     // U.pe(true, '100!, ', size, style);
@@ -611,7 +675,7 @@ export class U {
       'metaParentName:', metaParentName, 'parent:', parent, 'json:', childJson);
     // console.log('findMetaParent of:', childJson, ' using parent:', parent, ' = ', ret);
     return ret; }
-
+/*
   static findMetaParentP(parent: IModel, childJson: Json, canFail: boolean = true): IPackage {
     return U.findMetaParent<IModel, IPackage>(parent, childJson, canFail);
   }
@@ -627,7 +691,7 @@ export class U {
   static findMetaParentR(prnt: M2Class, childJ: Json, canFail: boolean = true): IReference {
     return U.findMetaParent<M2Class, IReference>(prnt, childJ, canFail);
   }
-
+*/
   static arrayRemoveAll<T>(arr: Array<T>, elem: T): void {
     let index;
     while (true) {
@@ -669,6 +733,33 @@ export class U {
     if (!pt || !shape) { return null; }
     return (pt.y === shape.y + shape.h) && (pt.x >= shape.x && pt.x <= shape.x + shape.w);
   }
+  // usage: var scope1 = makeEvalContext("variable declariation list"); scope1("another eval like: x *=3;");
+  // remarks: variable can be declared only on the first call, further calls on a created context can only modify the context without expanding it.
+
+  static makeEvalContext(declarations: string): (exp: string) => any {
+    eval(declarations);
+    return (str) => eval(str); }
+
+  // same as above, but with dynamic context, although it's only extensible manually and not by the eval code itself.
+  static evalInContext(context, js): any {
+    let value;
+    try { // for expressions
+      value = eval('with(context) { ' + js + ' }');
+    } catch (e) {
+      if (e instanceof SyntaxError) {
+        try { // for statements
+          value = (new Function('with(this) { ' + js + ' }')).call(context);
+        } catch (e) {}
+      }
+    }
+    return value; }
+
+  static multiReplaceAllKV(a: string, kv: string[][] = []): string {
+    const keys: string[] = [];
+    const vals: string[] = [];
+    let i: number;
+    for (i = 0; i < kv.length; i++) { keys.push(kv[i][0]); vals.push(kv[i][0]); }
+    return U.multiReplaceAll(a, keys, vals); }
 
   static multiReplaceAll(a: string, searchText: string[] = [], replacement: string[] = []): string {
     U.pe(!(searchText.length === replacement.length), 'search and replacement must be have same length:', searchText, replacement);
@@ -747,11 +838,10 @@ export class U {
     const $options: JQuery<HTMLOptionElement> = $(htmlSelect).find('option') as unknown as any;
     let i: number;
     let isFound = false;
+    if (optionValue === null || optionValue === undefined) { return; }
     for (i = 0; i < $options.length; i++) {
       const opt = $options[i] as HTMLOptionElement;
-      if (opt.value === optionValue) {
-        opt.selected = isFound = true;
-      }
+      if (opt.value === optionValue) { opt.selected = isFound = true; }
     }
     console.log('SelectOption not found. html:', htmlSelect, ', searchingFor: ', optionValue, ', in options:', $options);
     U.pe(!isFound && !canFail, 'SelectOption not found. html:', htmlSelect, ', searchingFor: ', optionValue, ', in options:', $options);
@@ -850,31 +940,36 @@ export class U {
           break; // leaf: comment
         case 3: // leaf: text node
           let txt = child.nodeValue;
-          if (includeNBSP) {
-            txt = U.replaceAll(txt, '&nbsp;', '');
-          }
-          txt = txt.trim();
-          U.pif(debug, 'txt:', txt, 'delete?', (/^[\n\r ]*$/g.test(txt)));
-          // if (!/^[\n\r ]*$/g.test(txt)) { break; }
           let i: number;
+          // replacing first blanks (\n, \r, &nbsp;) with classic spaces.
           for (i = 0; i < txt.length; i++) {
-            const char = txt.charAt(i);
-            switch (char) {
-              default:
-                return;
+            let exit: boolean = false && false;
+            switch (txt[i]) {
+              default: exit = true; break; // if contains non-blank is allowed to live but trimmed.
+              case '&nbsp': if (includeNBSP) { txt[i] = ' '; } else { exit = true; } break;
               case ' ':
               case '\n':
-              case '\r':
-                break;
-            }
+              case '\r': txt[i] = ' '; break; }
+            if (exit) { break; }
           }
-          root.removeChild(child);
-          n--;
+          // replacing last blanks (\n, \r, &nbsp;) with classic spaces.
+          for (i = txt.length; i >= 0; i--) {
+            let exit: boolean = false && false;
+            switch (txt[i]) {
+              default: exit = true; break; // if contains non-blank is allowed to live but trimmed.
+              case '&nbsp': if (includeNBSP) { txt[i] = ' '; } else { exit = true; } break;
+              case ' ':
+              case '\n':
+              case '\r': txt[i] = ' '; break; }
+            if (exit) { break; }
+          }
+          txt = txt.trim();
+          U.pif(debug, 'txt: |' + root.nodeValue + '| --> |' + txt + '| delete?', (/^[\n\r ]*$/g.test(txt)));
+          if (txt === '') { root.removeChild(child); n--; } else { root.nodeValue = txt; }
           break;
       }
     }
-    return root;
-  }
+    return root; }
 
   static replaceAll(str: string, searchText: string, replacement: string, debug: boolean = false, warn: boolean = true): string {
     if (!str) { return str; }
@@ -894,16 +989,23 @@ export class U {
     return str;
   }
 
-  static isValidHtml(htmlStr: string): boolean {
+  static isValidHtml(htmlStr: string, debug: boolean = false ): boolean {
     const div = document.createElement('div');
+    if (!htmlStr) { return false; }
     div.innerHTML = htmlStr;
-    return (div.innerHTML === htmlStr);
-  }
+    // if (div.innerHTML === htmlStr) { return true; }
+    const s2 = U.multiReplaceAll(div.innerHTML, [' ', ' ', '\n', '\r'], ['', '', '', '']);
+    const s1 = U.multiReplaceAll(htmlStr, [' ', ' ', '\n', '\r'], ['', '', '', '']);
+    const ret: boolean = s1 === s2;
+    if (ret || !debug) { return ret; }
+    const tmp: string[] = U.strFirstDiff(s1, s2, 20);
+    U.pif(debug, 'isValidHtml() ' + (tmp ? '|' + tmp[0] + '| vs |' + tmp[1] + '|' : 'tmp === null'));
+    return ret; }
 
   static getIndex(node: Element): number {
-    if (!node.parentNode) { return -1; }
-    return U.toArray(node.parentNode.childNodes).indexOf(node);
-  }
+    if (!node.parentElement) { return -1; }
+    // return U.toArray(node.parentElement.children).indexOf(node);
+    return Array.prototype.indexOf.call(node.parentElement.children, this); }
 
   static toArray(childNodes: NodeListOf<ChildNode>): ChildNode[] {
     if (Array['' + 'from']) { return Array['' + 'from'](childNodes); }
@@ -992,7 +1094,9 @@ export class U {
     U.resizingContainer.style.flexBasis = 'unset'; }
 
   static resizableBorderSetup(root: HTMLElement = document.body): void {
-    const arr = $(root).find('.resizableBorder');
+    // todo: addBack is great, aggiungilo tipo ovunque. find() esclude l'elemento radice anche se matcha la query, addback rimedia
+    // todo: aggiungendo il previous matched set che matcha la condizione.
+    const arr = $(root).find('.resizableBorder').addBack('.resizableBorder');
     let i = -1;
     const nl = '\n';
     while (++i < arr.length) {
@@ -1123,6 +1227,7 @@ export class U {
     if (!computedStyle) { return false; }
     // checking that the value is not a undefined, object, function, empty or int index ( happens on some browser)
     const stylePropertyValid = (name: any, value: any) => {
+      // nb: mind that typeof [] === 'object';
       return typeof value !== 'undefined' && typeof value !== 'object' && typeof value !== 'function' && value.length > 0
         // && value !== parseInt(value, 10); };
         && +name !== parseInt(name, 10); };
@@ -1196,10 +1301,15 @@ export class U {
 
   static isArray(v: any): boolean { return Array.isArray(v); }
 
-  static isEmptyObject(v: any): boolean { return $.isEmptyObject(v); }
-  static isObject(v: any, returnIfNull: boolean = true, returnIfUndefined: boolean = false): boolean {
+  static isEmptyObject(v: any, returnIfNull: boolean = true, returnIfUndefined: boolean = false): boolean {
     if (v === null) { return returnIfNull; }
     if (v === undefined) { return returnIfUndefined; }
+    return U.isObject(v, returnIfNull, returnIfUndefined) && $.isEmptyObject(v); }
+  static isObject(v: any, returnIfNull: boolean = true, returnIfUndefined: boolean = false, retIfArray: boolean = false): boolean {
+    if (v === null) { return returnIfNull; }
+    if (v === undefined) { return returnIfUndefined; }
+    if (Array.isArray(v)) { return retIfArray; }
+    // nb: mind that typeof [] === 'array'
     return typeof v === 'object'; }
 
   static isFunction(v: any): boolean { return (typeof v === 'function'); }
@@ -1243,7 +1353,22 @@ export class U {
   static isValidName(name: string): boolean { return /^[a-zA-Z_$][0-9a-zA-Z_$]*$/.test(name); }
 
   static getTSClassName(thing: any): string { return thing.constructor.name + ''; }
-
+// Prevent the backspace key from navigating back.
+  static preventBackSlashHistoryNavigation(event: KeyDownEvent): boolean {
+    if (!event || !event.key || event.key.toLowerCase() !== 'backspace') { return true; }
+    const types: string[] = ['text', 'password', 'file', 'search', 'email', 'number', 'date',
+      'color', 'datetime', 'datetime-local', 'month', 'range', 'search', 'tel', 'time', 'url', 'week'];
+    const srcElement: JQuery<any> = $(event['' + 'srcElement'] || event.target);
+    const disabled = srcElement.prop('readonly') || srcElement.prop('disabled');
+    if (!disabled) {
+      if (srcElement[0].isContentEditable || srcElement.is('textarea')) { return true; }
+      if (srcElement.is('input')) {
+        const type = srcElement.attr('type');
+        if (!type || types.indexOf(type.toLowerCase()) > -1) { return true; }
+      }
+    }
+    event.preventDefault();
+    return false; }
   // esercizio per antonella array deep copy
   /// copy all the element inside the array, eventually deep cloning but not duplicating objects or leaf elements.
   static ArrayCopy<T>(arr: Array<T>, deep: boolean): Array<T> {
@@ -1285,10 +1410,418 @@ export class U {
 
   static RadToDegree(radians: number): number { return radians * (180 / Math.PI); }
   static DegreeToRad(degree: number): number { return degree * (Math.PI / 180); }
+
+  static replaceAllRegExp(value: string, regExp: RegExp, replacement: string): string { return value.replace(regExp, replacement); }
+
+  static fixHtmlSelected($root: JQuery<Element>): void {
+    const $selecteds: JQuery<HTMLSelectElement> = $root.find('select') as JQuery<HTMLSelectElement>;
+    let i: number;
+    for (i = 0 ; i < $selecteds.length; i++) {
+      const $option: JQuery<HTMLOptionElement> = $($selecteds[i]).find('option[selected]') as any as JQuery<HTMLOptionElement>;
+      U.selectHtml($selecteds[i], $option.length ? $option[0].value : null); }
+  }
+
+  static computeMeasurableAttributeRightPart(str: string, attr: Attr, logic: ModelPiece, measurableHtml: HTMLElement | SVGElement,
+                                             size: Size = null, absTargetSize: Size = null, relTargetSize: Size = null, allowVariables: boolean = true): any {
+    str = U.changeBackVarTemplateDelimitersInMeasurablesAttr(str);
+    if (!size) { size = U.sizeof(measurableHtml); }
+    let relativeRoot: HTMLElement | SVGElement = measurableHtml;
+    while (!relativeRoot.classList.contains('vertexShell')) { relativeRoot = relativeRoot.parentElement; }
+    if (!absTargetSize) { absTargetSize = U.sizeof(relativeRoot); }
+    if (!relTargetSize) {
+      const $relativeHtml = $(relativeRoot).find(measurableHtml.getAttribute('relativeSelectorOf' + attr.name));
+      U.pw($relativeHtml.length > 1, 'found more than one relative target (', $relativeHtml, ') assigned to: ', measurableHtml, ' root:', relativeRoot);
+      relTargetSize = $relativeHtml.length ? U.sizeof($relativeHtml[0]) : absTargetSize; }
+    const relativePos: Point = size.tl().subtract(relTargetSize.tl(), false);
+    const absolutePos: Point = size.tl().subtract(absTargetSize.tl(), false);
+    const str0debug = str;
+    str = U.replaceVarsString(logic, str);
+
+    // ERRORE parzialmente fixato: se il relative container è la vertexRoot che ha bordo e boxsizing = border-box
+    // allora this.top == absPositionY - ShellBorderY invece di this.top == absPositionY
+    // consiglio generico: non usare mai position: relative su cose con i bordi o con border-box
+    const rootStyle = window.getComputedStyle(relativeRoot);
+    const borderFix: Point = new Point(+rootStyle.borderTopWidth, +rootStyle.borderLeftWidth);
+    if (rootStyle.position === 'relative' && rootStyle.boxSizing === 'border-box'){ absolutePos.subtract(borderFix, false); }
+    // relativePos.subtract(borderFix, false); should not work, should check borders on relativetarget vs border on curr. or maybe is correct without any fix.
+    if (allowVariables) {
+      str = U.multiReplaceAll(str, ['positionX', 'positionX'], ['positionRelX', 'positionRelY']);
+      str = U.multiReplaceAll(str,
+        ['width', 'height', 'positionAbsX', 'positionAbsY', 'positionRelX', 'positionRelY'],
+        ['' + size.w, '' + size.h, '' + absolutePos.x, '' + absolutePos.y, '' + relativePos.x, '' + relativePos.y]);
+      str = U.multiReplaceAll(str,
+        ['absoluteTargetSizeX', 'absoluteTargetSizeY', 'absoluteTargetSizeW', 'absoluteTargetSizeH'],
+        ['' + absTargetSize.x, '' + absTargetSize.y, '' + absTargetSize.w, '' + absTargetSize.h]);
+      str = U.multiReplaceAll(str,
+        ['relativeTargetSizeX', 'relativeTargetSizeY', 'relativeTargetSizeW', 'relativeTargetSizeH'],
+        ['' + relTargetSize.x, '' + relTargetSize.y, '' + relTargetSize.w, '' + relTargetSize.h]);
+    }
+    if (true || attr.name === '_ruleY') {
+      console.log(attr.name + ': WallH: ('+(logic.childrens[0] as MAttribute).values[0] + '), top: ' + measurableHtml.style.top +
+        ' |' + str0debug + '| --> |' + str + '| abs:', absTargetSize, ' rel:', relTargetSize, ' size:', size, ' htmls.abs', relativeRoot,
+        ' rel.html:', $(relativeRoot).find(measurableHtml.getAttribute('relativeSelectorOf' + attr.name)), ' size.html:', measurableHtml,
+        'absPos:', absolutePos, 'relPos:', relativePos);
+    }
+    try { str = eval(str); } catch (e) { U.pw(true, 'error occurred while evaluating ', str, 'in measurable attribute ', attr, 'err:', e, ', are you missing quotes?'); }
+    return str; }
+
+  static computeResizableAttribute(attr: Attr, logic: ModelPiece, measurableHtml: HTMLElement | SVGElement, size: Size = null,
+                                   absTargetSize: Size = null, relTargetSize: Size = null): {destination: string, operator: string, value: any} {
+    const val = attr.value;
+    let pos = 0;
+    let operator: string = null;
+    let i: number;
+    for (i = 1; i < val.length - 1; i++) {
+      switch (val[i]) {
+        case '>':
+          if (val[i - 1] !== '-') { continue; } // ignoro lo pseudo operatore "->" per selezionare un attributo in measurableExport
+          pos = i; operator = (val[i + 1] === '=' ? '>=' : '>'); break;
+        case '<': pos = i; operator = (val[i + 1] === '=' ? '<=' : '<'); break;
+        case '!': if (val[i + 1] !== '=') { continue; } pos = i; operator = '='; break;
+        case '=': pos = i; operator = '='; break;
+        default: continue; } }
+
+    if (!operator) { U.pw(true, 'found measurable _attribute without operator: ', attr); return null; }
+    if (!size) { size = U.sizeof(measurableHtml); }
+    const leftSide = val.substr(0, pos).trim();
+    const rightSide = val.substr(pos + operator.length).trim();
+    let value: any = null;
+    try { value = U.computeMeasurableAttributeRightPart(rightSide, attr, logic, measurableHtml, size, absTargetSize, relTargetSize);
+    } catch (e) { U.pw(true, 'failed to read expression of ' + attr.name + ': |' + attr.value
+      + '| --> |' + rightSide + '|. reason:' + e.toString()
+      + '; the allowed variables are: width, height, positionRelX, positionRelY, positionAbsX, positionAbsY, ' +
+      'relativeTargetSizeX, relativeTargetSizeY, relativeTargetSizeW, relativeTargetSizeH, ' +
+      'absoluteTargetSizeX, absoluteTargetSizeY, absoluteTargetSizeW, absoluteTargetSizeH, ' + '. and js functions.'); }
+    // console.log('attr:', attr, 'left:', leftSide, 'right:', rightSide, ' ---> |' + value + '|');
+    return {destination: leftSide, operator, value}; }
+
+
+  static processMeasuring(logic: IClass, m: MeasurableArrays, ui: ResizableUIParams | DraggableEventUIParams): void {
+    const size: Size = U.sizeof(m.html);
+    let relativeRoot: HTMLElement | SVGElement = m.html;
+    while (!relativeRoot.classList.contains('vertexShell')) { relativeRoot = relativeRoot.parentElement; }
+    const absTargetSize: Size = U.sizeof(relativeRoot);
+    console.log('measurableHtml parsed special attributes:', m);
+    let i: number;
+    for (i = 0; i < m.variables.length; i++) {
+      const attr: Attr = m.variables[i];
+      const val = attr.value;
+      if (val.indexOf('=') === -1) {
+        U.pw(true, 'found a .resizable variable attribute without "=". ' + attr.name + ': |' + val + '| inside:', m.html); continue; }
+      U.processMeasurableVariable(attr, logic, m.html, size, absTargetSize); }
+
+    for (i = 0; i < m.imports.length; i++) { U.processMeasurableImport(m.imports[i], logic, m.html, null, absTargetSize); }
+
+    for (i = 0; i < m.rules.length; i++) {
+      const attr: Attr = m.rules[i];
+      const val = attr.value;
+      if (val.indexOf('=') === -1) {
+        U.pw(true, 'found a .resizable rule attribute without "=". ' + attr.name + ': |' + val + '| inside:', m.html); continue; }
+      U.processMeasurableRule(attr, logic, m.html, size, absTargetSize); }
+
+    for (i = 0; i < m.constraints.length; i++) {
+      const attr: Attr = m.constraints[i];
+      const val = attr.value;
+      if (val.indexOf('=') === -1) {
+        U.pw(true, 'found a .resizable variable attribute without "=". ' + attr.name + ': |' + val + '| inside:', m.html); continue; }
+      // NB: size must be null, constraint will modify size without updating the object, so it must be recalculated.
+      U.processMeasurableConstraint(attr, logic, m.html, null, absTargetSize);}
+
+    for (i = 0; i < m.dstyle.length; i++) { U.processMeasurableDstyle(m.dstyle[i], logic, m.html, null, absTargetSize); }
+
+    for (i = 0; i < m.exports.length; i++) {
+      const attr: Attr = m.exports[i];
+      const val = attr.value;
+      if (val.indexOf('=') === -1) {
+        U.pw(true, 'found a .resizable export attribute without "=". ' + attr.name + ': |' + val + '| inside:', m.html); continue; }
+      U.processMeasurableExport(attr, logic, m.html, size, absTargetSize); }
+
+    for (i = 0; i < m.chain.length; i++) { U.processMeasurableChain(m.chain[i], logic, m.html, null, absTargetSize, logic.getVertex(), ui); }
+
+    for (i = 0; i < m.chainFinal.length; i++) { U.processMeasurableChain(m.chainFinal[i], logic, m.html, null, absTargetSize, logic.getVertex(), ui); }
+
+  }
+
+  static processMeasurableExport(attr: Attr, logic: ModelPiece, measurableHtml: HTMLElement | SVGElement,
+                                 size: Size = null, absTargetSize: Size = null): void {
+    const rule: {destination: string, value: any} = U.computeResizableAttribute(attr, logic, measurableHtml, size, absTargetSize);
+    if (!rule) { return; }
+    const attributePseudoSelector = '->';
+    const pos = rule.destination.indexOf(attributePseudoSelector);
+    let htmlSelector: string;
+    let attribName: string;
+    if (pos !== -1) {
+      htmlSelector = rule.destination.substring(0, pos);
+      attribName = rule.destination.substring(pos + attributePseudoSelector.length).trim();
+    } else {
+      htmlSelector = rule.destination;
+      attribName = null; }
+    const $targets = $(htmlSelector);
+    if (attribName) { $targets.attr(attribName, rule.value); } else { $targets.html(rule.value); }
+  }
+
+  static processMeasurableChain(attr0: Attr, logic: ModelPiece, measurableHtml: HTMLElement | SVGElement,
+                                size: Size = null, absTargetSize: Size = null, vertex: IVertex, ui: ResizableUIParams | DraggableEventUIParams): void {
+
+    const destination: string = U.computeMeasurableAttributeRightPart('\'' + attr0.value + '\'', attr0, logic, measurableHtml, size, absTargetSize, null, false);
+    const attributePseudoSelector = '->';
+    const pos = destination.indexOf(attributePseudoSelector);
+    let htmlSelector: string;
+    let attribName: string;
+    if (pos !== -1) {
+      htmlSelector = destination.substring(0, pos);
+      attribName = destination.substring(pos + attributePseudoSelector.length).trim();
+    } else {
+      htmlSelector = destination;
+      attribName = null; }
+    const $targets = $(htmlSelector);
+    console.log('measurableChain: ' + htmlSelector + ' -> ' + attribName + '| targets:', $targets);
+    U.pe($targets.length <= 0, 'measurableChain: ' + htmlSelector + ' -> ' + attribName + '| targets:', $targets);
+    let i: number;
+    for (i = 0; i < $targets.length; i++) {
+      const html: HTMLElement | SVGElement = $targets[i];
+      const attr: Attr = attribName ? html.attributes.getNamedItem(attribName) : null;
+      if (!attr) { vertex.measuringChanged(ui, null, html); continue; }
+      if (attribName.indexOf('_') !== 0) { continue; }
+      if (attribName.indexOf('_rule') === 0) { U.processMeasurableRule(attr, logic, html, null, null);
+      } else if (attribName.indexOf('_import') === 0) { U.processMeasurableImport(attr, logic, html, null, null);
+      } else if (attribName.indexOf('_export') === 0) { U.processMeasurableExport(attr, logic, html, null, null);
+      } else if (attribName.indexOf('_constraint') === 0) { U.processMeasurableConstraint(attr, logic, html, null, null);
+      } else if (attribName.indexOf('_dstyle') === 0) { U.processMeasurableDstyle(attr, logic, html, null, null);
+      } else { U.processMeasurableVariable(attr, logic, html, null, null); }
+      const val: Attr = $targets.length === 1 ? html.attributes.getNamedItem(attribName.substr(1)) : null;
+      if (!val) { continue; }
+      measurableHtml.setAttribute(attr0.name.substr(1), val.value);
+    }
+  }
+
+  static processMeasurableRule(attr: Attr, logic: ModelPiece, measurableHtml: HTMLElement | SVGElement,
+                               size: Size = null, absTargetSize: Size = null): void {
+    const rule: {destination: string, value: any} = U.computeResizableAttribute(attr, logic, measurableHtml, size, absTargetSize);
+    if (!rule) { return; }
+    // console.log('rule:', rule, 'attr:', attr);
+    const tmp: {parent: any, childkey: string} = U.replaceSingleVarGetParentAndChildKey(logic, rule.destination);
+    if (!tmp) {
+      U.pw(true, 'replaceVar of ' + rule.destination + '| failed. while parsing the resizable.rule |' + attr.name + ' in vertex of: ' + logic.name);
+      return; }
+    if (!tmp.parent && !(tmp.parent instanceof ModelPiece)) {
+      U.pw(true, 'found a rule template with his parent missing or not instance of ModelPiece?? :', tmp.parent, 'rule:', rule);
+      return; }
+    const destinationParent: ModelPiece = tmp.parent as ModelPiece;
+    switch (tmp.childkey) {
+      default:
+        U.pw(true, 'The rule ' + attr.name + ': |' + attr.value + '| is targeting a valid but not yet allowed field, currently only ".values" is allowed.');
+        break;
+      case 'values':
+        if (destinationParent instanceof MAttribute) {
+          destinationParent.setValue(rule.value, false, true);
+          break;
+        }
+        U.pw(true, 'The rule ' + attr.name + ': |' + attr.value + '| is trying to set "value" on an invalid modelPiece:', destinationParent);
+        break;
+    }
+  }
+
+  static processMeasurableConstraint(attr: Attr, logic: ModelPiece, measurableHtml: HTMLElement | SVGElement,
+                                     size: Size = null, absTargetSize: Size = null): void {
+    return U.processMeasurableImport(attr, logic, measurableHtml, size, absTargetSize); }
+
+  static processMeasurableImport(attr: Attr, logic: ModelPiece, measurableHtml: HTMLElement | SVGElement,
+                                 size: Size = null, absTargetSize: Size = null): void {
+    let relativeRoot: HTMLElement | SVGElement = measurableHtml;
+    while (!relativeRoot.classList.contains('vertexShell')) { relativeRoot = relativeRoot.parentElement; }
+    const $relativeHtml = $(relativeRoot).find(measurableHtml.getAttribute('relativeSelectorOf' + attr.name));
+    U.pw($relativeHtml.length > 1, 'found more than one relative target (', $relativeHtml, ') assigned to: ', measurableHtml, ' root:', relativeRoot);
+
+    const relativeSize: Size = $relativeHtml.length ? U.sizeof($relativeHtml[0]) : absTargetSize;
+    const rule: {destination: string, operator: string, value: any} =
+      U.computeResizableAttribute(attr, logic, measurableHtml, size, absTargetSize, relativeSize);
+    if (!rule) { return; }
+    const outputSize: Size = size.clone();
+    switch (rule.destination) {
+      default: U.pw(true, 'invalid import destination: |' + rule.destination + '| found in html:', measurableHtml); break;
+      case 'width': outputSize.w = rule.value; break;
+      case 'height': outputSize.h = rule.value; break;
+      case 'positionAbsX': outputSize.x = (absTargetSize.tl() + rule.value); break;
+      case 'positionAbsY': outputSize.y = (absTargetSize.tl() + rule.value); break;
+      case 'positionRelX': outputSize.x = (relativeSize.tl() + rule.value); break;
+      case 'positionRelY': outputSize.y = (relativeSize.tl() + rule.value); break; }
+
+    const setx = (val: number) => { measurableHtml.setAttributeNS(null, 'x', '' + val); measurableHtml.style.left = val + 'px'; };
+    const sety = (val: number) => { measurableHtml.setAttributeNS(null, 'y', '' + val); measurableHtml.style.top = val + 'px'; };
+    const setw = (val: number) => { measurableHtml.setAttributeNS(null, 'width', '' + val); measurableHtml.style.width = val + 'px'; };
+    const seth = (val: number) => { measurableHtml.setAttributeNS(null, 'height', '' + val); measurableHtml.style.height = val + 'px'; };
+
+    const add = 1;
+    switch (rule.operator) {
+      default: U.pe(true, 'unrecognized operator (not your fault, 100% developer failure): ' + rule.operator, attr); break;
+      case '>=':
+        if (size.x < outputSize.x) { setx(outputSize.x); }
+        if (size.y < outputSize.y) { sety(outputSize.y); }
+        if (size.w < outputSize.w) { setw(outputSize.w); }
+        if (size.h < outputSize.h) { seth(outputSize.h); } break;
+      case '>':
+        if (size.x <= outputSize.x) { setx(outputSize.x + add); }
+        if (size.y <= outputSize.y) { sety(outputSize.y + add); }
+        if (size.w <= outputSize.w) { setw(outputSize.w + add); }
+        if (size.h <= outputSize.h) { seth(outputSize.h + add); } break;
+      case '<':
+        if (size.x >= outputSize.x) { setx(outputSize.x + add); }
+        if (size.y >= outputSize.y) { sety(outputSize.y + add); }
+        if (size.w >= outputSize.w) { setw(outputSize.w + add); }
+        if (size.h >= outputSize.h) { seth(outputSize.h + add); } break;
+      case '<=':
+        if (size.x > outputSize.x) { setx(outputSize.x); }
+        if (size.y > outputSize.y) { sety(outputSize.y); }
+        if (size.w > outputSize.w) { setw(outputSize.w); }
+        if (size.h > outputSize.h) { seth(outputSize.h); } break;
+      case '=':
+        setx(outputSize.x);
+        sety(outputSize.y);
+        setw(outputSize.w);
+        seth(outputSize.h); break;
+    }
+  }
+
+  static processMeasurableVariable(attr: Attr, logic: ModelPiece, measurableHtml: HTMLElement | SVGElement,
+                                   size: Size = null, absTargetSize: Size = null, relTargetSize: Size = null, allowVariables: boolean = false): void {
+    attr.ownerElement.setAttribute(attr.name.substr(1),
+      U.computeMeasurableAttributeRightPart(attr.value, attr, logic, measurableHtml, size, absTargetSize, relTargetSize,false));
+    return; }
+
+  static strFirstDiff(s1: string, s2: string, len: number): string[] {
+    let i: number;
+    if (!s1 && !s2) { return [s1, s2]; }
+    if (s1 && !s2) { return [s1.substr(0, len), s2]; }
+    if (!s1 && s2) { return [s1, s2.substr(0, len)]; }
+    const min: number = Math.min(s1.length, s2.length);
+    for (i = 0; i < min; i++) { if (s1[i] !== s2[i]) { return [s1.substr(i, len), s2.substr(i, len)]; } }
+    return null; }
+
+  static processMeasurableDstyle(attr: Attr, logic: ModelPiece, html: HTMLElement | SVGElement, size: Size = null, absTargetSize: Size = null): void {
+    U.processMeasurableVariable(attr, logic, html, size, absTargetSize, null, false);
+    const fake: HTMLElement | SVGElement = document.createElement('div');
+    fake.setAttribute('style', html.getAttribute('dstyle'));
+    console.log('preStyle.Real:', html.getAttribute('style'));
+    console.log('preStyle.Fake:', fake.getAttribute('style'));
+    U.mergeStyles(fake, html);
+    html.setAttribute('style', fake.getAttribute('style'));
+    console.log('finalStyle:', html.getAttribute('style'));
+    // const fake: HTMLElement = document.createElement('div'); fake.setAttribute('style', elem.getAttribute('dstyle'));
+    // let key: string; console.log('processDstyle() fake:', fake, 'attr:', attr, 'html:', elem);
+    // for (key in fake.style) { console.log('fake[' + key + '] = ' + fake[key]);
+    // if (fake[key] !== null && fake[key] !== undefined && fake[key] !== '') { elem.style[key] = fake[key]; } }
+
+  }
+
+  private static mergeStyles(html: HTMLElement | SVGElement, fake: HTMLElement | SVGElement): void {
+    let i: number;
+    const styles1 = html.getAttribute('style').split(';');
+    const styles2 = fake.getAttribute('style').split(';');
+    let stylesKv1: Dictionary<string, string> = {};
+    const stylesKv2: Dictionary<string, string> = {};
+    let key: string;
+    let val: string;
+    let pos: number;
+    for (i = 0; i < styles1.length; i++) {
+      pos = styles1[i].indexOf(':');
+      key = styles1[i].substr(0, pos).trim();
+      val = styles1[i].substr(pos + 1).trim();
+      if (key == '' || val == '') continue;
+      stylesKv1[key] = val; }
+    for (i = 0; i < styles2.length; i++) {
+      pos = styles2[i].indexOf(':');
+      key = styles2[i].substr(0, pos).trim();
+      val = styles2[i].substr(pos + 1).trim();
+      if (key == '' || val == '') continue;
+      stylesKv2[key] = val; }
+    stylesKv1 = U.join(stylesKv1, stylesKv2, true, false);
+    let style: string = '';
+    for (key in stylesKv1) { style += key + ':' + stylesKv1[key] + '; '; }
+    html.setAttribute('style', style); }
+
+  public static merge(a: object, b: object, overwriteNull: boolean = true, clone: boolean = true): object { return U.join(a, b, overwriteNull, clone); }
+  public static join(a: object, b: object, overwriteNull: boolean = true, clone: boolean = true): object {
+    if (clone) { a = U.cloneObj(a); }
+    let key: string;
+    for (key in b) {
+      if (!b.hasOwnProperty(key)) { continue; }
+      if (b[key] !== undefined && a[key] === null && overwriteNull || a[key] === undefined) { a[key] = b[key]; }
+    }
+    return a;
+  }
 }
+
+export enum AttribETypes {
+//  FakeElementAddFeature = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//FakeElement',
+// era il 'pulsante per aggiungere feature nel mm.',
+  // reference = 'reference??',
+  void = '???void',
+  EChar = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EChar',
+  EString = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString',
+  EDate = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDate',
+  EFloat = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EFloat',
+  EDouble = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDouble',
+  EBoolean = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean',
+  EByte = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EByte',
+  EShort = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EShort',
+  EInt = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt',
+  ELong = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//ELong',
+  /*
+  ECharObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//ECharObject',
+  EStringObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EStringObject',
+  EDateObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDateObject',
+  EFloatObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EFloatObject',
+  EDoubleObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDoubleObject',
+  EBooleanObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBooleanObj',
+  EByteObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EByteObject',
+  EShortObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EShortObject',
+  EIntObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EIntegerObject',
+  ELongObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//ELongObject', */
+  // EELIST = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EEList', // List<E> = List<?>
+}
+
+// export type Json = object;
+export class Json {
+  constructor(j: object) {/* U.pe('' + j === j, 'parameter cannot be a string'); */}
+  static getChildrensXMI(json: Json): Json[] {
+    return ['todo childrensxmi'];
+  }
+  static getChildrens(thiss: Json, throwError: boolean = false, functions: boolean = false): Json[] {
+    if (!thiss && !throwError) { return []; }
+    const mod = thiss[ECoreRoot.ecoreEPackage];
+    const pkg = thiss[ECorePackage.eClassifiers];
+    const cla = thiss[functions ? ECoreClass.eOperations : ECoreClass.eStructuralFeatures];
+    const fun = thiss[ECoreOperation.eParameters];
+
+    const ret: any = mod || pkg || cla || fun;
+    /*if ( ret === undefined || ret === null ) {
+      if (thiss['@name'] !== undefined) { ret = thiss; } // if it's the root with only 1 child arrayless
+    }*/
+    // U.pe(true, debug, 'getchildrens(', thiss, ')');
+    U.pe( throwError && !ret, 'getChildrens() Failed: ', thiss, ret);
+    // console.log('ret = ', ret, ' === ', {}, ' ? ', ($.isEmptyObject(ret) ? [] : [ret]));
+    if (!ret || $.isEmptyObject(ret)) { return []; }
+    if (Array.isArray(ret)) { return ret; } else { return [ret]; }
+  }
+
+  static read<T>(json: Json, field: string, valueIfNotFound: any = 'read<T>CanThrowError'): T {
+    const ret: T = json ? json[field] as T : null;
+    if ((ret === null || ret === undefined)) {
+      U.pe(valueIfNotFound === 'read<T>CanThrowError', 'Json.read<',  '> failed: field[' + field + '], json: ', json);
+      return valueIfNotFound; }
+    return ret; }
+  static write(json: Json, field: string, val: string): string { json[field] = val; return val; }
+}
+
 export class Dictionary<K = string, V = string> extends Object {}
 
 import * as detectzoooom from 'detect-zoom';
+import ResizableOptions = JQueryUI.ResizableOptions;
+import DraggableOptions = JQueryUI.DraggableOptions;
+import KeyDownEvent = JQuery.KeyDownEvent;
+import ResizableUIParams = JQueryUI.ResizableUIParams;
+import DraggableEventUIParams = JQueryUI.DraggableEventUIParams;
 
 export class DetectZoom {
   static device(): number { return detectzoooom.device(); }
@@ -1304,37 +1837,36 @@ export class Size {
   w: number;
   h: number;
   dontMixWithGraphSize: any;
-  constructor(x: number, y: number, w: number, h: number) {
-    if (x === null || x === undefined) { this.x = 0; } else { this.x = x; }
-    if (y === null || y === undefined) { this.y = 0; } else { this.y = y; }
-    if (w === null || w === undefined) { this.w = 0; } else { this.w = w; }
-    if (h === null || h === undefined) { this.h = 0; } else { this.h = h; }
-  }
+
+  constructor(x: number = 0, y: number = 0, w: number = 0, h: number = 0) {
+    if (+x === null || +x === undefined) { this.x = 0; } else { this.x = x; }
+    if (+y === null || +y === undefined) { this.y = 0; } else { this.y = y; }
+    if (+w === null || +w === undefined) { this.w = 0; } else { this.w = w; }
+    if (+h === null || +h === undefined) { this.h = 0; } else { this.h = h; } }
+
   tl(): Point { return new Point(this.x + 0,      this.y + 0); }
   tr(): Point { return new Point(this.x + this.w, this.y + 0); }
   bl(): Point { return new Point(this.x + 0,      this.y + this.h); }
   br(): Point { return new Point(this.x + this.w, this.y + this.h); }
-}
 
+  clone(): Size { return new Size(this.x, this.y, this.w, this.h); }
 
-export let FastXmi = require('fast-xml-parser');
-const he = require('he');
-(window as any).he = U.he = he;
+  equals(size: Size) { return this.x === size.x && this.y === size.y && this.w === size.w && this.h === size.h; }
 
-export class FastXmiOptions {
-  attributeNamePrefix = Status.status.XMLinlineMarker;
-  attrNodeName = 'attr'; // default is 'false'
-  textNodeName = '#text';
-  ignoreAttributes = true;
-  ignoreNameSpace = false;
-  allowBooleanAttributes = false;
-  parseNodeValue = true;
-  parseAttributeValue = false;
-  trimValues = false;
-  cdataTagName = '__cdata'; // default is 'false'
-  cdataPositionChar = '\\c';
-  localeRange = ''; // To support non english character in tag/attribute values.
-  parseTrueNumberOnly = false;
-  attrValueProcessor = (a => U.he.decode(a, {isAttributeValue: true})); // default is a=>a
-  tagValueProcessor = (a => U.he.decode(a)); // default is a=>a
+  /// field-wise Math.min()
+  min(minSize: Size, clone: boolean): Size {
+    const ret: Size = clone ? this.clone() : this;
+    if (!isNaN(minSize.x) && ret.x < minSize.x) { ret.x = minSize.x; }
+    if (!isNaN(minSize.y) && ret.y < minSize.y) { ret.y = minSize.y; }
+    if (!isNaN(minSize.w) && ret.w < minSize.w) { ret.w = minSize.w; }
+    if (!isNaN(minSize.h) && ret.h < minSize.h) { ret.h = minSize.h; }
+    return ret; }
+
+  max(maxSize: Size, clone: boolean): Size {
+    const ret: Size = clone ? this.clone() : this;
+    if (!isNaN(maxSize.x) && ret.x > maxSize.x) { ret.x = maxSize.x; }
+    if (!isNaN(maxSize.y) && ret.y > maxSize.y) { ret.y = maxSize.y; }
+    if (!isNaN(maxSize.w) && ret.w > maxSize.w) { ret.w = maxSize.w; }
+    if (!isNaN(maxSize.h) && ret.h > maxSize.h) { ret.h = maxSize.h; }
+    return ret; }
 }
