@@ -4,12 +4,12 @@ import {
   IField,
   IPackage,
   M2Class,
-  IAttribute,
+  IAttribute, IReference,
   IFeature,
   ModelPiece, MetaMetaModel,
   ISidebar, XMIModel,
-  IGraph, IReference, IModel, Status,
-  Point, GraphPoint, GraphSize, ECoreClass, ECorePackage, ECoreRoot, ECoreOperation, JQueryUI, $$$, $ui, MAttribute, IClass
+  IGraph, IModel, Status,
+  ECoreClass, ECorePackage, ECoreRoot, ECoreOperation, JQueryUI, MAttribute, IClass,
 } from './Joiner';
 
 import ClickEvent = JQuery.ClickEvent;
@@ -41,17 +41,17 @@ export class InputPopup {
     const container: HTMLElement = U.toHtml('' +
       '<div _ngcontent-c3="" data-closebuttontarget="' + id + '" class="screenWideShadow" style="display: none;">' +
       '<div _ngcontent-c3="" class="popupContent">' +
-        '<h1 _ngcontent-c3="" style="text-align: center;">' + title + '</h1>' +
-        '<button _ngcontent-c3="" class="closeButton" data-closebuttontarget="' + id + '">X</button>' +
-        '<br _ngcontent-c3="">' +
-        '<div _ngcontent-c3="" class="TypeList">' +
-        '<table class="typeTable"><tbody>' +
-          '<tr class="typeRow"><td class="alias textPre">' + txtpre + '</td>' +
-          '<' + inputType + ' ' + inputSubType + ' ' + placeholder + ' ' + value + ' class="form-control popupInput" ' +
-              'aria-label="Small" aria-describedby="inputGroup-sizing-sm">' + innerValue + txtpost +
-          '</td>' +
-          '</tr>' +
-        '</tbody></table></div>' +
+      '<h1 _ngcontent-c3="" style="text-align: center;">' + title + '</h1>' +
+      '<button _ngcontent-c3="" class="closeButton" data-closebuttontarget="' + id + '">X</button>' +
+      '<br _ngcontent-c3="">' +
+      '<div _ngcontent-c3="" class="TypeList">' +
+      '<table class="typeTable"><tbody>' +
+      '<tr class="typeRow"><td class="alias textPre">' + txtpre + '</td>' +
+      '<' + inputType + ' ' + inputSubType + ' ' + placeholder + ' ' + value + ' class="form-control popupInput" ' +
+      'aria-label="Small" aria-describedby="inputGroup-sizing-sm">' + innerValue + txtpost +
+      '</td>' +
+      '</tr>' +
+      '</tbody></table></div>' +
       '</div></div>');
     const $input = $(container).find('input');
     U.closeButtonSetup($(container));
@@ -72,10 +72,10 @@ export class InputPopup {
     document.body.appendChild(this.html);
     this.html.style.display = 'block'; }
   hide(): void { this.html.style.display = 'none'; }
-  destroy(): void {
+  destroy(): null {
     if (this.html && this.html.parentNode) {
       this.html.parentNode.removeChild(this.html);
-      this.html = null; }
+      return this.html = null; }
   }
 
   addOkButton(load1: string, finish: () => void) {
@@ -133,6 +133,17 @@ export class U {
   private static addCssAvoidDuplicates: Dictionary<string, HTMLStyleElement> = {};
 
   static $measurableRelativeTargetRoot: JQuery<HTMLElement | SVGElement>;
+
+  static varTextToSvg: SVGSVGElement = null;
+
+  public static textToSvg<T extends SVGElement>(str: string): T { return U.textToSvgArr<T>(str)[0]; }
+  static textToSvgArr<T extends SVGElement> (str: string): T[] {
+    if (!U.varTextToSvg) { U.varTextToSvg = U.newSvg<SVGSVGElement>('svg'); }
+    U.varTextToSvg.innerHTML = str;
+    const ret: T[] = [];
+    let i: number;
+    for (i = 0; i < U.varTextToSvg.childNodes.length; i++) { ret.push(U.varTextToSvg.childNodes[i] as T); }
+    return ret; }
 
   static addCss(key: string, str: string, prepend: boolean = true): void {
     const css: HTMLStyleElement = document.createElement('style');
@@ -215,7 +226,7 @@ export class U {
     return str;
   }
 
-  static cloneHtml<T extends HTMLElement | SVGElement>(html: T, deep = true, defaultIDNum = 1): T {
+  static cloneHtml<T extends Element>(html: T, deep = true, defaultIDNum = 1): T {
     const clone: T = html.cloneNode(deep) as T;
     const getLastNum = (str: string): number => {
       let pos = str.length ;
@@ -236,8 +247,7 @@ export class U {
     // r.innerHTML = o.innerHTML;
     // U.pe( o as HTMLElement !== null, 'non utilizzabile su html');
     return JSON.parse(JSON.stringify(o));
-    // todo: questa funzione non può clonare html.
-    // todo: allow cloneObj of circular objects.
+    // todo: questa funzione non può clonare html. allow cloneObj of circular objects.
   }
 
   static cloneObj2<T extends object>(o: T): T {
@@ -322,7 +332,7 @@ export class U {
     $(elem).resizable(resizeConfig).draggable(dragConfig);
   }
 
-  static replaceVars<T extends HTMLElement | SVGElement>(obj: object, html0: T, cloneHtml = true, debug: boolean = false): T {
+  static replaceVars<T extends Element>(obj: object, html0: T, cloneHtml = true, debug: boolean = false): T {
     const html: T = cloneHtml ? U.cloneHtml<T>(html0) : html0;
     /// see it in action & parse or debug at
     // v1) perfetto ma non supportata in jscript https://regex101.com/r/Do2ndU/1
@@ -352,10 +362,14 @@ export class U {
         const varname = match.substring(3, match.length - 1);
         const debugtext = varname + '(' + match + ')';
         U.pif(debug, 'match:', match);
-        let result = '' + U.replaceSingleVar(obj, varname, isBase64, false);
+        const resultarr = U.replaceSingleVar(obj, varname, isBase64, false);
+        let result: string = resultarr[resultarr.length - 1].value;
+        if (result !== '' + result) { try { result = JSON.stringify(result); } catch(e) { result = '{_Cyclic object_}'} }
         let i = -1;
+        U.pif(debug, 'replaceSingleVar: ', match, ', arr', resultarr, ', ret', result, ', this:', obj);
         if (!asHtml) { while (++i < escapeC.length) { result = U.replaceAll(result, escapeC[i], replacer[i]); } }
-        U.pif(debug, 'replaceSingleVar: ' + debugtext + ' --> ' + result + ' --> ' + prefixError + result, obj);
+        U.pif(debug, 'replaceSingleVar: ' + debugtext + ' --> ' + result + ' --> ' + prefixError, result, obj);
+        if (U.isObject(result)) {  }
         return prefixError + result;
       });
     return str; }
@@ -394,6 +408,7 @@ export class U {
     return htmlStr;
   }
 
+  //todo: da rimuovere, è stata completamente superata dal nuovo return type array di replaceSingleVar
   static replaceSingleVarGetParentAndChildKey(obj: object, fullpattern: string, canThrow: boolean = false): {parent: any, childkey: string} {
     const ret: {parent: any, childkey: string} = {parent: null, childkey: null};
     let targetPatternParent: string;
@@ -406,7 +421,8 @@ export class U {
       return ret; }
     try {
       targetPatternParent = fullpattern.substring(0, pos) + '$';
-      ret.parent = U.replaceSingleVarRaw(obj, targetPatternParent);
+      const tmparr = U.replaceSingleVarRaw(obj, targetPatternParent);
+      ret.parent = tmparr[tmparr.length - 1].value;
       ret.childkey = fullpattern.substring(pos + 1, fullpattern.length - 1);
     } catch (e) {
       U.pw(true, 'replaceSingleVarGetParentAndChildKey failed. fullpattern: |' + fullpattern + '| targetPatternParent: |'
@@ -414,13 +430,52 @@ export class U {
       return null; }
     return ret; }
 
-  static replaceSingleVarRaw(obj: object, fullpattern: string, canThrow: boolean = false): any {
+  static replaceSingleVarRaw(obj: object, fullpattern: string, canThrow: boolean = false): {token: string, value: any}[] {
     fullpattern = fullpattern.trim();
     const isBase64 = fullpattern.charAt(2) === '1' || fullpattern.charAt(2) !== '#';
     const varName = fullpattern.substring(3, fullpattern.length - 1);
     return U.replaceSingleVar(obj, varName, isBase64, canThrow); }
 
-  static replaceSingleVar(obj: object, varname: string, isBase64: boolean, canThrow: boolean = false): any {
+  static replaceSingleVar(obj: object, varname: string, isBase64: boolean, canThrow: boolean = false): {token: string, value: any}[] {
+    const debug = false;
+    const showErrors = false;
+    let debugPathOk = '';
+    if (isBase64) { varname = atob(varname); }
+    let requestedValue: any = obj;
+    const fullpath: string = varname;
+    const tokens: string[] = varname.split('.'); // varname.split(/\.,/);
+    const ret: {token: string, value: any}[] = [];
+    let j;
+    let token: string = null;
+    for (j = 0; j < tokens.length; j++) {
+      ret.push({token: token === null ? 'this' : token, value: requestedValue});
+      token = tokens[j];
+      U.pif(debug || showErrors, 'replacer: obj[req] = ', requestedValue, '[', token, '] =', (requestedValue ? requestedValue[token] : ''));
+      if (requestedValue === null || requestedValue === undefined) {
+        U.pe(showErrors, 'requested null or undefined:', obj, ', canthrow ? ', canThrow, ', fillplath:', fullpath);
+        if (canThrow) {
+          U.pif(showErrors, 'wrong variable path:', debugPathOk + '.' + token, ': ' + token + ' is undefined. object = ', obj);
+          throw new DOMException('replace_Vars.WrongVariablePath', 'replace_Vars.WrongVariablePath');
+        } else {
+          U.pif(showErrors, 'wrong variable path:', debugPathOk + '.' + token, ': ' + token + ' is undefined. ovjet = ', obj);
+        }
+
+        ret.push({token: token, value: 'Error: ' + debugPathOk + '.' + token + ' = ' + undefined});
+        // ret.push({token: token, value: requestedValue});
+        return ret;
+      } else { debugPathOk += (debugPathOk === '' ? '' : '.') + token; }
+      ////
+      if (requestedValue instanceof ModelPiece) {
+        const info: any = requestedValue.getInfo(true);
+        const key = token.toLowerCase();
+        if (key in info) { requestedValue = info[key]; } else { requestedValue = requestedValue[token]; }
+      } else { requestedValue = (requestedValue === null) ? undefined : requestedValue[token]; }
+    }
+
+    ret.push({token: token, value: requestedValue});
+    return ret; }
+
+  static replaceSingleVar_backup(obj: object, varname: string, isBase64: boolean, canThrow: boolean = false): any {
     const debug = false;
     const showErrors = false;
     let debugPathOk = '';
@@ -502,7 +557,7 @@ export class U {
     const ancestors = U.ancestorArray(element);
     const visibile = [];
     if (isOrphan) { U.sizeofvar.append(element); }
-    // show all and save visibility to restore it later
+    // show all and saveToDB visibility to restore it later
     for (i = 0; i < ancestors.length; i++) { // document has undefined style
       visibile[i] = (ancestors[i].style === undefined) ? (true) : (ancestors[i].style.display !== 'none');
       if (!visibile[i]) {
@@ -564,10 +619,9 @@ export class U {
     return container.firstChild as T;
   }
 
-  static toHtml_RootlessArray(html: string): NodeListOf<HTMLElement> {
-    const o: HTMLElement = document.createElement('div');
-    o.innerHTML = html;
-    return o.childNodes as NodeListOf<HTMLElement>;
+  static toBase64Image(html: Element, container: Element = null, containerTag: string = 'div'): string {
+    // https://github.com/tsayen/dom-to-image
+    return 'HtmlToImage todo: check https://github.com/tsayen/dom-to-image';
   }
 
 
@@ -609,22 +663,22 @@ export class U {
     style.setAttributeNS(null, 'height', '' + size.h);
     return size; }
 
-  static getSvgSize(style: SVGElement, minimum: GraphSize = null, maximum: GraphSize = null): GraphSize {
+  static getSvgSize(elem: SVGElement, minimum: GraphSize = null, maximum: GraphSize = null): GraphSize {
     const defaults: GraphSize = new GraphSize(0, 0, 200, 99);
-    const ret0: GraphSize = new GraphSize(+style.getAttribute('x'), +style.getAttribute('y'),
-      +style.getAttribute('width'), +style.getAttribute('height'));
+    const ret0: GraphSize = new GraphSize(+elem.getAttribute('x'), +elem.getAttribute('y'),
+      +elem.getAttribute('width'), +elem.getAttribute('height'));
     const ret: GraphSize = ret0.clone();
     if (isNaN(ret.x)) {
-      U.pw(true, 'Svg x attribute is NaN: ' + style.getAttribute('x') + ' will be set to default: ' + defaults.x);
+      U.pw(true, 'Svg x attribute is NaN: ' + elem.getAttribute('x') + ' will be set to default: ' + defaults.x);
       ret.x = defaults.x; }
     if (isNaN(ret.y)) {
-      U.pw(true, 'Svg y attribute is NaN: ' + style.getAttribute('y') + ' will be set to default: ' + defaults.y);
+      U.pw(true, 'Svg y attribute is NaN: ' + elem.getAttribute('y') + ' will be set to default: ' + defaults.y);
       ret.y = defaults.y; }
     if (isNaN(ret.w)) {
-      U.pw(true, 'Svg w attribute is NaN: ' + style.getAttribute('width') + ' will be set to default: ' + defaults.w);
+      U.pw(true, 'Svg w attribute is NaN: ' + elem.getAttribute('width') + ' will be set to default: ' + defaults.w);
       ret.w = defaults.w; }
     if (isNaN(ret.h)) {
-      U.pw(true, 'Svg h attribute is NaN: ' + style.getAttribute('height') + ' will be set to default: ' + defaults.h);
+      U.pw(true, 'Svg h attribute is NaN: ' + elem.getAttribute('height') + ' will be set to default: ' + defaults.h);
       ret.h = defaults.h; }
     if (minimum) {
       if (!isNaN(+minimum.x) && ret.x < minimum.x) { ret.x = minimum.x; }
@@ -636,12 +690,11 @@ export class U {
       if (!isNaN(+maximum.y) && ret.y > maximum.y) { ret.y = maximum.y; }
       if (!isNaN(+maximum.w) && ret.w > maximum.w) { ret.w = maximum.w; }
       if (!isNaN(+maximum.h) && ret.h > maximum.h) { ret.h = maximum.h; } }
-    if (!ret.equals(ret0)) { U.setSvgSize(style, ret); }
+    if (!ret.equals(ret0)) { U.setSvgSize(elem, ret); }
     return ret; }
 
-  static findMetaParent<ParentT extends ModelPiece, childT extends ModelPiece>(parent: ParentT, childJson: Json, canFail: boolean): childT {
+  static findMetaParent<ParentT extends ModelPiece, childT extends ModelPiece>(parent: ParentT, childJson: Json, canFail: boolean, debug: boolean = true): childT {
     const modelRoot: IModel = parent.getModelRoot();
-    const debug = true;
     // instanceof crasha non so perchè, dà undefined constructor quando non lo è.
     if (U.getClass(modelRoot) === 'MetaMetaModel') { U.pif(debug, 'return null;'); return null; }
     if (U.getClass(modelRoot) === 'MetaModel') { U.pif(debug, 'return null;'); return null; } // potrei ripensarci e collegarlo a m3
@@ -675,29 +728,31 @@ export class U {
       'metaParentName:', metaParentName, 'parent:', parent, 'json:', childJson);
     // console.log('findMetaParent of:', childJson, ' using parent:', parent, ' = ', ret);
     return ret; }
-/*
-  static findMetaParentP(parent: IModel, childJson: Json, canFail: boolean = true): IPackage {
-    return U.findMetaParent<IModel, IPackage>(parent, childJson, canFail);
-  }
+  /*
+    static findMetaParentP(parent: IModel, childJson: Json, canFail: boolean = true): IPackage {
+      return U.findMetaParent<IModel, IPackage>(parent, childJson, canFail);
+    }
 
-  static findMetaParentC(parent: IPackage, childJson: Json, canFail: boolean = true): M2Class {
-    return U.findMetaParent<IPackage, M2Class>(parent, childJson, canFail);
-  }
+    static findMetaParentC(parent: IPackage, childJson: Json, canFail: boolean = true): M2Class {
+      return U.findMetaParent<IPackage, M2Class>(parent, childJson, canFail);
+    }
 
-  static findMetaParentA(prnt: M2Class, childJ: Json, canFail: boolean = true): IAttribute {
-    return U.findMetaParent<M2Class, IAttribute>(prnt, childJ, canFail);
-  }
+    static findMetaParentA(prnt: M2Class, childJ: Json, canFail: boolean = true): IAttribute {
+      return U.findMetaParent<M2Class, IAttribute>(prnt, childJ, canFail);
+    }
 
-  static findMetaParentR(prnt: M2Class, childJ: Json, canFail: boolean = true): IReference {
-    return U.findMetaParent<M2Class, IReference>(prnt, childJ, canFail);
-  }
-*/
-  static arrayRemoveAll<T>(arr: Array<T>, elem: T): void {
+    static findMetaParentR(prnt: M2Class, childJ: Json, canFail: boolean = true): IReference {
+      return U.findMetaParent<M2Class, IReference>(prnt, childJ, canFail);
+    }
+  */
+  static arrayRemoveAll<T>(arr: Array<T>, elem: T, debug: boolean = false): void {
     let index;
     while (true) {
       index = arr.indexOf(elem);
+      U.pif (debug, 'ArrayRemoveAll: index: ', index, '; arr:', arr, '; elem:', elem);
       if (index === -1) { return; }
       arr.splice(index, 1);
+      U.pif (debug, 'ArrayRemoveAll RemovedOne:', arr);
     }
   }
 
@@ -747,9 +802,9 @@ export class U {
       value = eval('with(context) { ' + js + ' }');
     } catch (e) {
       if (e instanceof SyntaxError) {
-        try { // for statements
-          value = (new Function('with(this) { ' + js + ' }')).call(context);
-        } catch (e) {}
+        //try { // for statements
+        value = (new Function('with(this) { ' + js + ' }')).call(context);
+        //} catch (e) { U.pw(true, 'error evaluating')}
       }
     }
     return value; }
@@ -769,8 +824,9 @@ export class U {
   static toFileName(a: string = 'nameless.txt'): string {
     if (!a) { a = 'nameless.txt'; }
     a = U.multiReplaceAll(a.trim(), ['\\', '//', ':', '*', '?', '<', '>', '"', '|'],
-                       ['[lslash]', '[rslash]', ';', '°', '_', '{', '}', '\'', '!']);
+      ['[lslash]', '[rslash]', ';', '°', '_', '{', '}', '\'', '!']);
     return a; }
+
   static download(filename: string = 'nameless.txt', text: string = null, debug: boolean = true): void {
     if (!text) { return; }
     filename = U.toFileName(filename);
@@ -918,55 +974,50 @@ export class U {
     $targethtml.slideDown();
   }
 
-  static cloneAllAttributes(source: HTMLElement | SVGElement, destination: HTMLElement | SVGElement) {
-    U.pw(true, 'cloneAllAttributes: todo');
-    // todo
-  }
-
   static removeemptynodes(root: HTMLElement | SVGElement, includeNBSP: boolean = false, debug: boolean = false): HTMLElement | SVGElement {
     let n: number;
     for (n = 0; n < root.childNodes.length; n++) {
       const child: any = root.childNodes[n];
       U.pif(debug, 'removeEmptyNodes: ', child.nodeType);
       switch (child.nodeType) {
-        default:
-          break;
-        case 1:
-          U.removeemptynodes(child, includeNBSP);
-          break; // node: element
-        case 2:
-          break; // leaf: attribute
-        case 8:
-          break; // leaf: comment
-        case 3: // leaf: text node
-          let txt = child.nodeValue;
-          let i: number;
-          // replacing first blanks (\n, \r, &nbsp;) with classic spaces.
-          for (i = 0; i < txt.length; i++) {
-            let exit: boolean = false && false;
-            switch (txt[i]) {
-              default: exit = true; break; // if contains non-blank is allowed to live but trimmed.
-              case '&nbsp': if (includeNBSP) { txt[i] = ' '; } else { exit = true; } break;
-              case ' ':
-              case '\n':
-              case '\r': txt[i] = ' '; break; }
-            if (exit) { break; }
-          }
-          // replacing last blanks (\n, \r, &nbsp;) with classic spaces.
-          for (i = txt.length; i >= 0; i--) {
-            let exit: boolean = false && false;
-            switch (txt[i]) {
-              default: exit = true; break; // if contains non-blank is allowed to live but trimmed.
-              case '&nbsp': if (includeNBSP) { txt[i] = ' '; } else { exit = true; } break;
-              case ' ':
-              case '\n':
-              case '\r': txt[i] = ' '; break; }
-            if (exit) { break; }
-          }
-          txt = txt.trim();
-          U.pif(debug, 'txt: |' + root.nodeValue + '| --> |' + txt + '| delete?', (/^[\n\r ]*$/g.test(txt)));
-          if (txt === '') { root.removeChild(child); n--; } else { root.nodeValue = txt; }
-          break;
+      default:
+        break;
+      case 1:
+        U.removeemptynodes(child, includeNBSP);
+        break; // node: element
+      case 2:
+        break; // leaf: attribute
+      case 8:
+        break; // leaf: comment
+      case 3: // leaf: text node
+        let txt = child.nodeValue;
+        let i: number;
+        // replacing first blanks (\n, \r, &nbsp;) with classic spaces.
+        for (i = 0; i < txt.length; i++) {
+          let exit: boolean = false && false;
+          switch (txt[i]) {
+          default: exit = true; break; // if contains non-blank is allowed to live but trimmed.
+          case '&nbsp': if (includeNBSP) { txt[i] = ' '; } else { exit = true; } break;
+          case ' ':
+          case '\n':
+          case '\r': txt[i] = ' '; break; }
+          if (exit) { break; }
+        }
+        // replacing last blanks (\n, \r, &nbsp;) with classic spaces.
+        for (i = txt.length; i >= 0; i--) {
+          let exit: boolean = false && false;
+          switch (txt[i]) {
+          default: exit = true; break; // if contains non-blank is allowed to live but trimmed.
+          case '&nbsp': if (includeNBSP) { txt[i] = ' '; } else { exit = true; } break;
+          case ' ':
+          case '\n':
+          case '\r': txt[i] = ' '; break; }
+          if (exit) { break; }
+        }
+        txt = txt.trim();
+        U.pif(debug, 'txt: |' + root.nodeValue + '| --> |' + txt + '| delete?', (/^[\n\r ]*$/g.test(txt)));
+        if (txt === '') { root.removeChild(child); n--; } else { root.nodeValue = txt; }
+        break;
       }
     }
     return root; }
@@ -1094,8 +1145,8 @@ export class U {
     U.resizingContainer.style.flexBasis = 'unset'; }
 
   static resizableBorderSetup(root: HTMLElement = document.body): void {
-    // todo: addBack is great, aggiungilo tipo ovunque. find() esclude l'elemento radice anche se matcha la query, addback rimedia
-    // todo: aggiungendo il previous matched set che matcha la condizione.
+    // todo: addBack is great, aggiungilo tipo ovunque. find() esclude l'elemento radice anche se matcha la query, addback rimedia aggiungendo il
+    //  previous matched set che matcha la condizione.
     const arr = $(root).find('.resizableBorder').addBack('.resizableBorder');
     let i = -1;
     const nl = '\n';
@@ -1294,7 +1345,7 @@ export class U {
     document.body.removeChild(U.clipboardinput);
     U.clearSelection(); }
 
-   static clearSelection() {}
+  static clearSelection() {}
 
   static refreshPage(): void { window.location.href += ''; }
 
@@ -1333,8 +1384,8 @@ export class U {
     s = numberEnd === -1 ? '1' : s.substring(i, numberEnd);
     return +parseFloat(s); }
 
-  static increaseEndingNumber(s: string, ignoreNonNumbers: boolean = false, allowDecimal: boolean = false): string {
-    let i = s.length;
+  static increaseEndingNumber(s: string, allowLastNonNumberChars: boolean = false, allowDecimal: boolean = false, increaseWhile: (x: string) => boolean = null): string {
+    /*let i = s.length;
     let numberEnd = -1;
     while (--i > 0) {
       if (!isNaN(+s[i])) { if (numberEnd === -1) { numberEnd = i; } continue; }
@@ -1344,11 +1395,20 @@ export class U {
       if (numberEnd !== -1) { ignoreNonNumbers = false; }
     }
     if (numberEnd === -1) { return s + '_1'; }
-    i++;
-    numberEnd++;
-    const nums: number = +s.substring(i, numberEnd);
-    U.pe(isNaN(nums), 'wrong parsing:', s, s.substring(i, numberEnd), i, numberEnd);
-    return s.substring(0, i) + (+nums + 1); }
+    // i++;
+    numberEnd++;*/
+    let regexpstr = '([0-9]+' + (allowDecimal ? '|[0-9]+\\.[0-9]+' : '') + ')' + (allowLastNonNumberChars ? '[^0-9]*' : '') + '$';
+    const matches: RegExpExecArray = new RegExp(regexpstr, 'g').exec(s); // Global (return multi-match) Single line (. matches \n).
+    // S flag removed for browser support (firefox), should work anyway.
+    U.pe(matches.length > 2, 'parsing error: /' + regexpstr + '/gs.match(' + s + ')');
+    let i = s.length - matches[0].length;
+    const prefix = s.substring(0, i);
+    let num: number = 1 + (+matches[1]);
+    // U.pe(isNaN(num), 'wrong parsing:', s, s.substring(i, numberEnd), i, numberEnd);
+    // const prefix: string = s.substring(0, i);
+    // console.log('increaseendingNumber:  prefix: |' + prefix+'| num:'+num, '[i] = ['+i+']; s: |'+s+"|");
+    while (increaseWhile !== null && increaseWhile(prefix + num)) { num++; }
+    return prefix + num; }
 
   static isValidName(name: string): boolean { return /^[a-zA-Z_$][0-9a-zA-Z_$]*$/.test(name); }
 
@@ -1455,14 +1515,25 @@ export class U {
       str = U.multiReplaceAll(str,
         ['relativeTargetSizeX', 'relativeTargetSizeY', 'relativeTargetSizeW', 'relativeTargetSizeH'],
         ['' + relTargetSize.x, '' + relTargetSize.y, '' + relTargetSize.w, '' + relTargetSize.h]);
-    }
+    }/*
     if (true || attr.name === '_ruleY') {
       console.log(attr.name + ': WallH: ('+(logic.childrens[0] as MAttribute).values[0] + '), top: ' + measurableHtml.style.top +
         ' |' + str0debug + '| --> |' + str + '| abs:', absTargetSize, ' rel:', relTargetSize, ' size:', size, ' htmls.abs', relativeRoot,
         ' rel.html:', $(relativeRoot).find(measurableHtml.getAttribute('relativeSelectorOf' + attr.name)), ' size.html:', measurableHtml,
         'absPos:', absolutePos, 'relPos:', relativePos);
+    }*/
+    const evalContext = {a: measurableHtml.attributes};
+    let a = {};
+    let i: number;
+    for (i = 0; i < measurableHtml.attributes.length; i++) {
+      const attr: Attr = measurableHtml.attributes[i];
+      a[attr.name] = attr.value;
     }
-    try { str = eval(str); } catch (e) { U.pw(true, 'error occurred while evaluating ', str, 'in measurable attribute ', attr, 'err:', e, ', are you missing quotes?'); }
+    try {
+      // str =  U.evalInContext(evalContext, str);
+      str = eval(str);
+    } catch (e) { U.pw(true, 'error occurred while evaluating ', str, 'in measurable attribute ', attr, 'err:', e, ', are you' +
+      ' missing quotes?'); }
     return str; }
 
   static computeResizableAttribute(attr: Attr, logic: ModelPiece, measurableHtml: HTMLElement | SVGElement, size: Size = null,
@@ -1473,13 +1544,13 @@ export class U {
     let i: number;
     for (i = 1; i < val.length - 1; i++) {
       switch (val[i]) {
-        case '>':
-          if (val[i - 1] !== '-') { continue; } // ignoro lo pseudo operatore "->" per selezionare un attributo in measurableExport
-          pos = i; operator = (val[i + 1] === '=' ? '>=' : '>'); break;
-        case '<': pos = i; operator = (val[i + 1] === '=' ? '<=' : '<'); break;
-        case '!': if (val[i + 1] !== '=') { continue; } pos = i; operator = '='; break;
-        case '=': pos = i; operator = '='; break;
-        default: continue; } }
+      case '>':
+        if (val[i - 1] !== '-') { continue; } // ignoro lo pseudo operatore "->" per selezionare un attributo in measurableExport
+        pos = i; operator = (val[i + 1] === '=' ? '>=' : '>'); break;
+      case '<': pos = i; operator = (val[i + 1] === '=' ? '<=' : '<'); break;
+      case '!': if (val[i + 1] !== '=') { continue; } pos = i; operator = '='; break;
+      case '=': pos = i; operator = '='; break;
+      default: continue; } }
 
     if (!operator) { U.pw(true, 'found measurable _attribute without operator: ', attr); return null; }
     if (!size) { size = U.sizeof(measurableHtml); }
@@ -1503,12 +1574,7 @@ export class U {
     const absTargetSize: Size = U.sizeof(relativeRoot);
     console.log('measurableHtml parsed special attributes:', m);
     let i: number;
-    for (i = 0; i < m.variables.length; i++) {
-      const attr: Attr = m.variables[i];
-      const val = attr.value;
-      if (val.indexOf('=') === -1) {
-        U.pw(true, 'found a .resizable variable attribute without "=". ' + attr.name + ': |' + val + '| inside:', m.html); continue; }
-      U.processMeasurableVariable(attr, logic, m.html, size, absTargetSize); }
+    for (i = 0; i < m.variables.length; i++) { U.processMeasurableVariable(m.variables[i], logic, m.html, size, absTargetSize); }
 
     for (i = 0; i < m.imports.length; i++) { U.processMeasurableImport(m.imports[i], logic, m.html, null, absTargetSize); }
 
@@ -1523,7 +1589,7 @@ export class U {
       const attr: Attr = m.constraints[i];
       const val = attr.value;
       if (val.indexOf('=') === -1) {
-        U.pw(true, 'found a .resizable variable attribute without "=". ' + attr.name + ': |' + val + '| inside:', m.html); continue; }
+        U.pw(true, 'found a .resizable constraint without "=". ' + attr.name + ': |' + val + '| inside:', m.html); continue; }
       // NB: size must be null, constraint will modify size without updating the object, so it must be recalculated.
       U.processMeasurableConstraint(attr, logic, m.html, null, absTargetSize);}
 
@@ -1547,7 +1613,9 @@ export class U {
     const rule: {destination: string, value: any} = U.computeResizableAttribute(attr, logic, measurableHtml, size, absTargetSize);
     if (!rule) { return; }
     const attributePseudoSelector = '->';
-    const pos = rule.destination.indexOf(attributePseudoSelector);
+    rule.destination = U.changeBackVarTemplateDelimitersInMeasurablesAttr(rule.destination);
+    rule.destination = U.replaceVarsString(logic, rule.destination);
+    const pos = rule.destination.lastIndexOf(attributePseudoSelector);
     let htmlSelector: string;
     let attribName: string;
     if (pos !== -1) {
@@ -1609,16 +1677,16 @@ export class U {
       return; }
     const destinationParent: ModelPiece = tmp.parent as ModelPiece;
     switch (tmp.childkey) {
-      default:
-        U.pw(true, 'The rule ' + attr.name + ': |' + attr.value + '| is targeting a valid but not yet allowed field, currently only ".values" is allowed.');
+    default:
+      U.pw(true, 'The rule ' + attr.name + ': |' + attr.value + '| is targeting a valid but not yet allowed field, currently only ".values" is allowed.');
+      break;
+    case 'values':
+      if (destinationParent instanceof MAttribute) {
+        destinationParent.setValue(rule.value, false, true);
         break;
-      case 'values':
-        if (destinationParent instanceof MAttribute) {
-          destinationParent.setValue(rule.value, false, true);
-          break;
-        }
-        U.pw(true, 'The rule ' + attr.name + ': |' + attr.value + '| is trying to set "value" on an invalid modelPiece:', destinationParent);
-        break;
+      }
+      U.pw(true, 'The rule ' + attr.name + ': |' + attr.value + '| is trying to set "value" on an invalid modelPiece:', destinationParent);
+      break;
     }
   }
 
@@ -1639,13 +1707,13 @@ export class U {
     if (!rule) { return; }
     const outputSize: Size = size.clone();
     switch (rule.destination) {
-      default: U.pw(true, 'invalid import destination: |' + rule.destination + '| found in html:', measurableHtml); break;
-      case 'width': outputSize.w = rule.value; break;
-      case 'height': outputSize.h = rule.value; break;
-      case 'positionAbsX': outputSize.x = (absTargetSize.tl() + rule.value); break;
-      case 'positionAbsY': outputSize.y = (absTargetSize.tl() + rule.value); break;
-      case 'positionRelX': outputSize.x = (relativeSize.tl() + rule.value); break;
-      case 'positionRelY': outputSize.y = (relativeSize.tl() + rule.value); break; }
+    default: U.pw(true, 'invalid import destination: |' + rule.destination + '| found in html:', measurableHtml); break;
+    case 'width': outputSize.w = rule.value; break;
+    case 'height': outputSize.h = rule.value; break;
+    case 'positionAbsX': outputSize.x = (absTargetSize.tl() + rule.value); break;
+    case 'positionAbsY': outputSize.y = (absTargetSize.tl() + rule.value); break;
+    case 'positionRelX': outputSize.x = (relativeSize.tl() + rule.value); break;
+    case 'positionRelY': outputSize.y = (relativeSize.tl() + rule.value); break; }
 
     const setx = (val: number) => { measurableHtml.setAttributeNS(null, 'x', '' + val); measurableHtml.style.left = val + 'px'; };
     const sety = (val: number) => { measurableHtml.setAttributeNS(null, 'y', '' + val); measurableHtml.style.top = val + 'px'; };
@@ -1654,32 +1722,32 @@ export class U {
 
     const add = 1;
     switch (rule.operator) {
-      default: U.pe(true, 'unrecognized operator (not your fault, 100% developer failure): ' + rule.operator, attr); break;
-      case '>=':
-        if (size.x < outputSize.x) { setx(outputSize.x); }
-        if (size.y < outputSize.y) { sety(outputSize.y); }
-        if (size.w < outputSize.w) { setw(outputSize.w); }
-        if (size.h < outputSize.h) { seth(outputSize.h); } break;
-      case '>':
-        if (size.x <= outputSize.x) { setx(outputSize.x + add); }
-        if (size.y <= outputSize.y) { sety(outputSize.y + add); }
-        if (size.w <= outputSize.w) { setw(outputSize.w + add); }
-        if (size.h <= outputSize.h) { seth(outputSize.h + add); } break;
-      case '<':
-        if (size.x >= outputSize.x) { setx(outputSize.x + add); }
-        if (size.y >= outputSize.y) { sety(outputSize.y + add); }
-        if (size.w >= outputSize.w) { setw(outputSize.w + add); }
-        if (size.h >= outputSize.h) { seth(outputSize.h + add); } break;
-      case '<=':
-        if (size.x > outputSize.x) { setx(outputSize.x); }
-        if (size.y > outputSize.y) { sety(outputSize.y); }
-        if (size.w > outputSize.w) { setw(outputSize.w); }
-        if (size.h > outputSize.h) { seth(outputSize.h); } break;
-      case '=':
-        setx(outputSize.x);
-        sety(outputSize.y);
-        setw(outputSize.w);
-        seth(outputSize.h); break;
+    default: U.pe(true, 'unrecognized operator (not your fault, 100% developer failure): ' + rule.operator, attr); break;
+    case '>=':
+      if (size.x < outputSize.x) { setx(outputSize.x); }
+      if (size.y < outputSize.y) { sety(outputSize.y); }
+      if (size.w < outputSize.w) { setw(outputSize.w); }
+      if (size.h < outputSize.h) { seth(outputSize.h); } break;
+    case '>':
+      if (size.x <= outputSize.x) { setx(outputSize.x + add); }
+      if (size.y <= outputSize.y) { sety(outputSize.y + add); }
+      if (size.w <= outputSize.w) { setw(outputSize.w + add); }
+      if (size.h <= outputSize.h) { seth(outputSize.h + add); } break;
+    case '<':
+      if (size.x >= outputSize.x) { setx(outputSize.x + add); }
+      if (size.y >= outputSize.y) { sety(outputSize.y + add); }
+      if (size.w >= outputSize.w) { setw(outputSize.w + add); }
+      if (size.h >= outputSize.h) { seth(outputSize.h + add); } break;
+    case '<=':
+      if (size.x > outputSize.x) { setx(outputSize.x); }
+      if (size.y > outputSize.y) { sety(outputSize.y); }
+      if (size.w > outputSize.w) { setw(outputSize.w); }
+      if (size.h > outputSize.h) { seth(outputSize.h); } break;
+    case '=':
+      setx(outputSize.x);
+      sety(outputSize.y);
+      setw(outputSize.w);
+      seth(outputSize.h); break;
     }
   }
 
@@ -1750,6 +1818,92 @@ export class U {
     }
     return a;
   }
+
+  public static getChildIndex_old(html: Node, allNodes: boolean = true): number {
+    if (allNodes) { return Array.prototype.indexOf.call(html.parentNode.childNodes, html); }
+    return Array.prototype.indexOf.call(html.parentNode.children, html); }
+
+  public static getChildIndex(array: any, child: any): number {
+    return Array.prototype.indexOf.call(array, child); }
+
+  public static getIndexesPath_old(parent: Element, child: Element) {
+    let ret: number[] = [];
+    while (child && child !== parent) {
+      ret.push(U.getChildIndex(parent.childNodes, child));
+      child = child.parentElement; }
+    // ret = ret.splice(ret.length - 2, 1);
+    return ret.reverse(); }
+
+  public static getIndexesPath_NoParentKey<T>(child: T, parent: any): string[] {
+    U.pe(true, 'getindexespath without parent key: todo');
+    return null;
+    // todo: top-down ricorsivo a tentativi. implementa loop detection. senza childkey (può variare es: parent.a[3].b.c[1] = child)
+    //  return string array con nomi di campi e indici di array.
+  }
+  public static getIndexesPath<T>(child: T, parentKey: string, childKey: string = null /* null = parent is raw array*/, parentLimit: T = null) {
+    let ret: number[] = [];
+    while (child) {
+      const parent: any = child[parentKey];
+      if (child === parentLimit) { break; }
+      if (!parent || parent === child) { break; }
+      const parentArrChilds: T[] = childKey ? parent[childKey] : parent;
+      ret.push(U.getChildIndex(parentArrChilds, child));
+      child = child[parentKey];
+    }
+    return ret.reverse(); }
+
+  static followIndexesPath(root: any, indexedPath: number[] | string[], childKey: string = null,
+                           outArr: {indexFollowed: number[] | string[], debugArr: {index: string | number, elem: any}[]} = {indexFollowed: [],
+                             debugArr: [{index: 'Start', elem: root}]}): any {
+    let j: number;
+    let ret: any = root;
+    let oldret: any = ret;
+    for (j = 0; j < indexedPath.length; j++) {
+      const key = indexedPath[j];
+      let childArr = childKey ? ret[childKey] : ret;
+      if (!childArr) { return oldret; }
+      ret = childArr[key];
+      if (!ret) { return oldret; }
+      oldret = ret;
+      (outArr.indexFollowed as any[]).push(key);
+      outArr.debugArr.push({index: key, elem: ret});
+    }
+    return ret; }
+
+  static followIndexesPathOld(templateRoot: Element, indexedPath: number[], allNodes: boolean = true,
+                              outArr: {indexFollowed: number[]} = {indexFollowed: []}, debug: boolean = false): Element {
+    let j: number;
+    let ret: Element = templateRoot;
+    let oldret: Element = ret;
+    const debugarr: {index: number, html: Node}[] = [{index: 'Start' as any, html: ret}];
+    for (j = 0; j < indexedPath.length; j++) {
+      const index = indexedPath[j];
+      ret = (allNodes ? ret.childNodes[index] : ret.children[index]) as any;
+      if (!ret) {
+        console.log('folllowPath: clicked on some dinamically generated content, returning the closest static parent.', debugarr);
+        U.pw(debug, 'clicked on some dinamically generated content, returning the closest static parent.', debugarr);
+        return oldret; }
+      oldret = ret;
+      outArr.indexFollowed.push(index);
+      debugarr.push({index: index, html: ret});
+    }
+    U.pif(debug, 'followpath debug arr:', debugarr);
+    return ret; }
+
+  static removeDuplicates(arr0: any[], clone: boolean = false): any[] {
+    if (!arr0) return [];
+    const arr: any[] = clone ? U.cloneObj<any[]>(arr0) as any[] : arr0;
+    const found: any[] = [];
+    let i: number;
+    for (i = 0; i < arr.length; i++) {
+      if (arr[i] in found) { U.arrayRemoveAll(arr, arr[i]); i--; continue; }
+      found.push(arr[i]); }
+    return arr; }
+
+  static findTemplateList(str: string): string[] {
+    return undefined;
+  }
+
 }
 
 export enum AttribETypes {
@@ -1822,6 +1976,8 @@ import DraggableOptions = JQueryUI.DraggableOptions;
 import KeyDownEvent = JQuery.KeyDownEvent;
 import ResizableUIParams = JQueryUI.ResizableUIParams;
 import DraggableEventUIParams = JQueryUI.DraggableEventUIParams;
+import MouseEnterEvent = JQuery.MouseEnterEvent;
+import MouseLeaveEvent = JQuery.MouseLeaveEvent;
 
 export class DetectZoom {
   static device(): number { return detectzoooom.device(); }
@@ -1831,42 +1987,326 @@ export class DetectZoom {
     return a = null; }
 }
 
-export class Size {
+export abstract class ISize {
   x: number;
   y: number;
   w: number;
   h: number;
-  dontMixWithGraphSize: any;
-
   constructor(x: number = 0, y: number = 0, w: number = 0, h: number = 0) {
-    if (+x === null || +x === undefined) { this.x = 0; } else { this.x = x; }
-    if (+y === null || +y === undefined) { this.y = 0; } else { this.y = y; }
-    if (+w === null || +w === undefined) { this.w = 0; } else { this.w = w; }
-    if (+h === null || +h === undefined) { this.h = 0; } else { this.h = h; } }
-
-  tl(): Point { return new Point(this.x + 0,      this.y + 0); }
-  tr(): Point { return new Point(this.x + this.w, this.y + 0); }
-  bl(): Point { return new Point(this.x + 0,      this.y + this.h); }
-  br(): Point { return new Point(this.x + this.w, this.y + this.h); }
-
-  clone(): Size { return new Size(this.x, this.y, this.w, this.h); }
-
-  equals(size: Size) { return this.x === size.x && this.y === size.y && this.w === size.w && this.h === size.h; }
-
+    if (isNaN(+x)) { x = 0; }
+    if (isNaN(+y)) { y = 0; }
+    if (isNaN(+w)) { w = 0; }
+    if (isNaN(+h)) { h = 0; }
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h; }
+  abstract makePoint(x: number, y: number): IPoint;
+  abstract clone(): ISize;
+  tl(): IPoint { return this.makePoint(   this.x,             this.y         ); }
+  tr(): IPoint { return this.makePoint(this.x + this.w,    this.y         ); }
+  bl(): IPoint { return this.makePoint(   this.x,          this.y + this.h); }
+  br(): IPoint { return this.makePoint(this.x + this.w, this.y + this.h); }
+  equals(size: ISize): boolean { return this.x === size.x && this.y === size.y && this.w === size.w && this.h === size.h; }
   /// field-wise Math.min()
-  min(minSize: Size, clone: boolean): Size {
-    const ret: Size = clone ? this.clone() : this;
+  min(minSize: ISize, clone: boolean): ISize {
+    const ret: ISize = clone ? this.clone() : this;
     if (!isNaN(minSize.x) && ret.x < minSize.x) { ret.x = minSize.x; }
     if (!isNaN(minSize.y) && ret.y < minSize.y) { ret.y = minSize.y; }
     if (!isNaN(minSize.w) && ret.w < minSize.w) { ret.w = minSize.w; }
     if (!isNaN(minSize.h) && ret.h < minSize.h) { ret.h = minSize.h; }
     return ret; }
-
-  max(maxSize: Size, clone: boolean): Size {
-    const ret: Size = clone ? this.clone() : this;
+  max(maxSize: ISize, clone: boolean): ISize {
+    const ret: ISize = clone ? this.clone() : this;
     if (!isNaN(maxSize.x) && ret.x > maxSize.x) { ret.x = maxSize.x; }
     if (!isNaN(maxSize.y) && ret.y > maxSize.y) { ret.y = maxSize.y; }
     if (!isNaN(maxSize.w) && ret.w > maxSize.w) { ret.w = maxSize.w; }
     if (!isNaN(maxSize.h) && ret.h > maxSize.h) { ret.h = maxSize.h; }
     return ret; }
+}
+export class Size extends ISize {
+  static fromPoints(firstPt: Point, secondPt: Point): Size {
+    const minX = Math.min(firstPt.x, secondPt.x);
+    const maxX = Math.max(firstPt.x, secondPt.x);
+    const minY = Math.min(firstPt.y, secondPt.y);
+    const maxY = Math.max(firstPt.y, secondPt.y);
+    return new Size(minX, minY, maxX - minX, maxY - minY); }
+  dontMixWithGraphSize: any;
+  clone(): Size { return new Size(this.x, this.y, this.w, this.h); }
+  makePoint(x: number, y: number): Point { return new Point(x, y); }
+  tl(): Point { return super.tl() as Point; }
+  tr(): Point { return super.tr() as Point; }
+  bl(): Point { return super.bl() as Point; }
+  br(): Point { return super.br() as Point; }
+  equals(size: Size): boolean { return super.equals(size); }
+  min(minSize: Size, clone: boolean): Size { return super.min(minSize, clone) as Size; }
+  max(minSize: Size, clone: boolean): Size { return super.max(minSize, clone) as Size; }
+}
+export class GraphSize extends ISize {
+  static fromPoints(firstPt: GraphPoint, secondPt: GraphPoint): GraphSize {
+    const minX = Math.min(firstPt.x, secondPt.x);
+    const maxX = Math.max(firstPt.x, secondPt.x);
+    const minY = Math.min(firstPt.y, secondPt.y);
+    const maxY = Math.max(firstPt.y, secondPt.y);
+    return new GraphSize(minX, minY, maxX - minX, maxY - minY); }
+  static closestIntersection(vertexGSize: GraphSize, prevPt: GraphPoint, pt0: GraphPoint, gridAlign: GraphPoint = null): GraphPoint {
+    let pt = pt0.clone();
+    const m = GraphPoint.getM(prevPt, pt);
+    const q = GraphPoint.getQ(prevPt, pt);
+    U.pe( Math.abs((pt.y - m * pt.x) - (prevPt.y - m * prevPt.x)) > .001,
+      'wrong math in Q:', (pt.y - m * pt.x), ' vs ', (prevPt.y - m * prevPt.x));
+    /*const isL = prevPt.x < pt.x;
+    const isT = prevPt.y < pt.y;
+    const isR = !isL;
+    const isB = !isT; */
+    if (m === Number.POSITIVE_INFINITY && q === Number.NEGATIVE_INFINITY) { // bottom middle
+      return new GraphPoint(vertexGSize.x + vertexGSize.w / 2, vertexGSize.y + vertexGSize.h); }
+    // console.log('pt:', pt, 'm:', m, 'q:', q);
+    let L: GraphPoint = new GraphPoint(0, 0);
+    let T: GraphPoint = new GraphPoint(0, 0);
+    let R: GraphPoint = new GraphPoint(0, 0);
+    let B: GraphPoint = new GraphPoint(0, 0);
+    L.x = vertexGSize.x;
+    L.y = m * L.x + q;
+    R.x = vertexGSize.x + vertexGSize.w;
+    R.y = m * R.x + q;
+    T.y = vertexGSize.y;
+    T.x = (T.y - q) / m;
+    B.y = vertexGSize.y + vertexGSize.h;
+    B.x = (B.y - q) / m;
+    // prendo solo il compreso pt ~ prevPt (escludo così il "pierce" sulla faccia opposta), prendo il più vicino al centro.
+    // console.log('4 possibili punti di intersezione (LTBR):', L, T, B, R);
+    /* this.owner.mark(this.owner.toHtmlCoord(T), true, 'blue');
+    this.owner.mark(this.owner.toHtmlCoord(B), false, 'violet');
+    this.owner.mark(this.owner.toHtmlCoord(L), false, 'red');
+    this.owner.mark(this.owner.toHtmlCoord(R), false, 'orange');*/
+    if ( (B.x >= pt.x && B.x <= prevPt.x) || (B.x >= prevPt.x && B.x <= pt.x) ) { } else { B = null; }
+    if ( (T.x >= pt.x && T.x <= prevPt.x) || (T.x >= prevPt.x && T.x <= pt.x) ) { } else { T = null; }
+    if ( (L.y >= pt.y && L.y <= prevPt.y) || (L.y >= prevPt.y && L.y <= pt.y) ) { } else { L = null; }
+    if ( (R.y >= pt.y && R.y <= prevPt.y) || (R.y >= prevPt.y && R.y <= pt.y) ) { } else { R = null; }
+    // console.log('superstiti step1: (LTBR):', L, T, B, R);
+    const vicinanzaT = !T ? Number.POSITIVE_INFINITY : ((T.x - pt.x) * (T.x - pt.x)) + ((T.y - pt.y) * (T.y - pt.y));
+    const vicinanzaB = !B ? Number.POSITIVE_INFINITY : ((B.x - pt.x) * (B.x - pt.x)) + ((B.y - pt.y) * (B.y - pt.y));
+    const vicinanzaL = !L ? Number.POSITIVE_INFINITY : ((L.x - pt.x) * (L.x - pt.x)) + ((L.y - pt.y) * (L.y - pt.y));
+    const vicinanzaR = !R ? Number.POSITIVE_INFINITY : ((R.x - pt.x) * (R.x - pt.x)) + ((R.y - pt.y) * (R.y - pt.y));
+    const closest = Math.min(vicinanzaT, vicinanzaB, vicinanzaL, vicinanzaR);
+    // console.log( 'closest:', closest);
+    // succede quando pt e prevPt sono entrambi all'interno del rettangolo del vertice.
+    // L'edge non è visibile e il valore ritornato è irrilevante.
+    if (closest === Number.POSITIVE_INFINITY) {
+      /* top center */
+      pt = vertexGSize.tl();
+      pt.x += vertexGSize.w / 2; } else
+    if (closest === Number.POSITIVE_INFINITY) {
+      /* bottom center */
+      pt = vertexGSize.br();
+      pt.x -= vertexGSize.w / 2; } else
+    if (closest === vicinanzaT) { pt = T; } else
+    if (closest === vicinanzaB) { pt = B; } else
+    if (closest === vicinanzaR) { pt = R; } else
+    if (closest === vicinanzaL) { pt = L; }
+
+    if (!gridAlign) { return pt; }
+    if ((pt === T || pt === B || isNaN(closest)) && gridAlign.x) {
+      const floorX: number = Math.floor(pt.x / gridAlign.x) * gridAlign.x;
+      const ceilX: number = Math.ceil(pt.x / gridAlign.x) * gridAlign.x;
+      let closestX;
+      let farthestX;
+      if (Math.abs(floorX - pt.x) < Math.abs(ceilX - pt.x)) {
+        closestX = floorX; farthestX = ceilX;
+      } else { closestX = ceilX; farthestX = floorX; }
+
+      // todo: possibile causa del bug che non allinea punti fake a punti reali. nel calcolo realPT questo non viene fatto.
+      // if closest grid intersection is inside the vertex.
+      if (closestX >= vertexGSize.x && closestX <= vertexGSize.x + vertexGSize.w) { pt.x = closestX; } else
+      // if 2° closer grid intersection is inside the vertex.
+      if (closestX >= vertexGSize.x && closestX <= vertexGSize.x + vertexGSize.w) { pt.x = farthestX;
+        // if no intersection are inside the vertex (ignore grid)
+      } else { pt = pt; }
+    } else if ((pt === L || pt === R) && gridAlign.y) {
+      const floorY: number = Math.floor(pt.y / gridAlign.y) * gridAlign.y;
+      const ceilY: number = Math.ceil(pt.y / gridAlign.y) * gridAlign.y;
+      let closestY;
+      let farthestY;
+      if (Math.abs(floorY - pt.y) < Math.abs(ceilY - pt.y)) {
+        closestY = floorY; farthestY = ceilY;
+      } else { closestY = ceilY; farthestY = floorY; }
+
+      // if closest grid intersection is inside the vertex.
+      if (closestY >= vertexGSize.y && closestY <= vertexGSize.y + vertexGSize.h) { pt.y = closestY; } else
+      // if 2° closer grid intersection is inside the vertex.
+      if (closestY >= vertexGSize.y && closestY <= vertexGSize.y + vertexGSize.h) { pt.y = farthestY;
+        // if no intersection are inside the vertex (ignore grid)
+      } else { pt = pt; }
+    }
+    return pt; }
+  dontMixWithSize: any;
+  clone(): GraphSize { return new GraphSize(this.x, this.y, this.w, this.h); }
+  makePoint(x: number, y: number): Point { return new GraphPoint(x, y); }
+  tl(): GraphPoint { return super.tl() as GraphPoint; }
+  tr(): GraphPoint { return super.tr() as GraphPoint; }
+  bl(): GraphPoint { return super.bl() as GraphPoint; }
+  br(): GraphPoint { return super.br() as GraphPoint; }
+  equals(size: GraphSize): boolean { return super.equals(size); }
+  min(minSize: GraphSize, clone: boolean): GraphSize { return super.min(minSize, clone) as GraphSize; }
+  max(minSize: GraphSize, clone: boolean): GraphSize { return super.max(minSize, clone) as GraphSize; }
+}
+
+export abstract class IPoint {
+  x: number;
+  y: number;
+
+  static getM(firstPt: IPoint, secondPt: IPoint): number { return (firstPt.y - secondPt.y) / (firstPt.x - secondPt.x); }
+  static getQ(firstPt: IPoint, secondPt: IPoint): number { return firstPt.y - IPoint.getM(firstPt, secondPt) * firstPt.x; }
+  constructor(x: number | string, y: number | string) {
+    if (isNaN(+x)) { x = 0; }
+    if (isNaN(+y)) { y = 0; }
+    this.x = +x;
+    this.y = +y; }
+
+  toString(): string { return '(' + this.x + ', ' + this.y + ')'; }
+  abstract clone(): IPoint;
+
+  subtract(p2: IPoint, newInstance: boolean): IPoint {
+    U.pe(!p2, 'subtract argument must be a valid point: ', p2);
+    let p1: IPoint;
+    if (!newInstance) { p1 = this; } else { p1 = this.clone(); }
+    p1.x -= p2.x;
+    p1.y -= p2.y;
+    return p1; }
+
+  add(p2: IPoint, newInstance: boolean): IPoint {
+    U.pe(!p2, 'add argument must be a valid point: ', p2);
+    let p1: IPoint;
+    if (!newInstance) { p1 = this; } else { p1 = this.clone(); }
+    p1.x += p2.x;
+    p1.y += p2.y;
+    return p1; }
+
+  addAll(p: IPoint[], newInstance: boolean): IPoint {
+    let i;
+    let p0: IPoint;
+    if (!newInstance) { p0 = this; } else { p0 = this.clone(); }
+    for (i = 0; i < p.length; i++) { p0.add(p[i], true); }
+    return p0; }
+
+  subtractAll(p: IPoint[], newInstance: boolean): IPoint {
+    let i;
+    let p0: IPoint;
+    if (!newInstance) { p0 = this; } else { p0 = this.clone(); }
+    for (i = 0; i < p.length; i++) { p0.subtract(p[i], true); }
+    return p0; }
+
+  multiply(scalar: number, newInstance: boolean): IPoint {
+    U.pe( isNaN(+scalar), 'scalar argument must be a valid number: ', scalar);
+    let p1: IPoint;
+    if (!newInstance) { p1 = this; } else { p1 = this.clone(); }
+    p1.x *= scalar;
+    p1.y *= scalar;
+    return p1; }
+
+  divide(scalar: number, newInstance: boolean): IPoint {
+    U.pe( isNaN(+scalar), 'scalar argument must be a valid number: ', scalar);
+    let p1: IPoint;
+    if (!newInstance) { p1 = this; } else { p1 = this.clone(); }
+    p1.x /= scalar;
+    p1.y /= scalar;
+    return p1; }
+
+  isInTheMiddleOf(firstPt: IPoint, secondPt: IPoint, tolleranza: number): boolean {
+    const rectangle: Size = Size.fromPoints(firstPt as Point, secondPt as Point);
+    const tolleranzaX = tolleranza; // actually should be cos * arctan(m);
+    const tolleranzaY = tolleranza; // actually should be sin * arctan(m);
+    if (this.x < rectangle.x - tolleranzaX || this.x > rectangle.x + rectangle.w + tolleranzaX) { return false; }
+    if (this.y < rectangle.y - tolleranzaX || this.y > rectangle.y + rectangle.h + tolleranzaY) { return false; }
+    const m = IPoint.getM(firstPt, secondPt);
+    const q = IPoint.getQ(firstPt, secondPt);
+    const lineDistance = this.distanceFromLine(firstPt, secondPt);
+    // console.log('distance:', lineDistance, ', this:', this, ', p1:', firstPt, ', p2:', secondPt);
+    return lineDistance <= tolleranza; }
+
+  distanceFromLine(p1: IPoint, p2: IPoint): number {
+    const top: number =
+      + (p2.y - p1.y) * this.x
+      - (p2.x - p1.x) * this.y
+      + p2.x * p1.y
+      - p1.x * p2.y;
+    const bot =
+      (p2.y - p1.y) * (p2.y - p1.y) +
+      (p2.x - p1.x) * (p2.x - p1.x);
+    return Math.abs(top) / Math.sqrt(bot);  }
+
+  equals(pt: IPoint, tolleranzaX: number = 0, tolleranzaY: number = 0): boolean {
+    if (pt === null) { return false; }
+    return Math.abs(this.x - pt.x) <= tolleranzaX && Math.abs(this.y - pt.y) <= tolleranzaY; }
+
+  moveOnNearestBorder(startVertexSize: ISize, clone: boolean, debug: boolean = true): IPoint {
+    const pt: IPoint = clone ? this.clone() : this;
+    const tl: IPoint = startVertexSize.tl();
+    const tr: IPoint = startVertexSize.tr();
+    const bl: IPoint = startVertexSize.bl();
+    const br: IPoint = startVertexSize.br();
+    const L: number = pt.distanceFromLine(tl, bl);
+    const R: number = pt.distanceFromLine(tr, br);
+    const T: number = pt.distanceFromLine(tl, tr);
+    const B: number = pt.distanceFromLine(bl, br);
+    const min: number = Math.min(L, R, T, B);
+    if (min === L) { pt.x = tl.x; }
+    if (min === R) { pt.x = tr.x; }
+    if (min === T) { pt.y = tr.y; }
+    if (min === B) { pt.y = br.y; }
+    if (debug && pt instanceof GraphPoint) { Status.status.getActiveModel().graph.markg(pt, false, 'purple'); }
+    return pt;
+  }
+
+  getM(pt2: IPoint): number { return IPoint.getM(this, pt2); }
+
+  degreeWith(pt2: IPoint, toRadians: boolean): number {
+    const directionVector: IPoint = this.subtract(pt2, true);
+    const ret: number = Math.atan2(directionVector.y, directionVector.x);
+    return toRadians ? ret : U.RadToDegree(ret); }
+}
+export class GraphPoint extends IPoint{
+  dontmixwithPoint: any;
+  static fromEvent(e: ClickEvent | MouseMoveEvent | MouseUpEvent | MouseDownEvent | MouseEnterEvent | MouseLeaveEvent | MouseEvent)
+    : GraphPoint {
+    if (!e) { return null; }
+    const p: Point = new Point(e.pageX, e.pageY);
+    const g: IGraph = Status.status.getActiveModel().graph;
+    return g.toGraphCoord(p); }
+
+  clone(): GraphPoint { return new GraphPoint(this.x, this.y); }
+  subtract(p2: GraphPoint, newInstance: boolean): GraphPoint { return super.subtract(p2, newInstance) as GraphPoint; }
+  add(p2: GraphPoint, newInstance: boolean): GraphPoint { return super.add(p2, newInstance) as GraphPoint; }
+  multiply(scalar: number, newInstance: boolean): GraphPoint { return super.multiply(scalar, newInstance) as GraphPoint; }
+  divide(scalar: number, newInstance: boolean): GraphPoint { return super.divide(scalar, newInstance) as GraphPoint; }
+  isInTheMiddleOf(firstPt: GraphPoint, secondPt: GraphPoint, tolleranza: number): boolean { return super.isInTheMiddleOf(firstPt, secondPt, tolleranza); }
+  distanceFromLine(p1: GraphPoint, p2: GraphPoint): number { return super.distanceFromLine(p1, p2); }
+  equals(pt: GraphPoint, tolleranzaX: number = 0, tolleranzaY: number = 0): boolean { return super.equals(pt, tolleranzaX, tolleranzaY); }
+  moveOnNearestBorder(startVertexSize: GraphSize, clone: boolean, debug: boolean = true): GraphPoint {
+    return super.moveOnNearestBorder(startVertexSize, clone, debug) as GraphPoint; }
+  getM(pt2: GraphPoint): number { return super.getM(pt2); }
+  degreeWith(pt2: GraphPoint, toRadians: boolean): number { return super.degreeWith(pt2, toRadians); }
+}
+export class Point extends IPoint{
+  dontmixwithPoint: any;
+  static fromEvent(e: ClickEvent | MouseMoveEvent | MouseUpEvent | MouseDownEvent | MouseEnterEvent | MouseLeaveEvent | MouseEvent)
+    : Point {
+    if (!e) { return null; }
+    const p: Point = new Point(e.pageX, e.pageY);
+    const g: IGraph = Status.status.getActiveModel().graph;
+    return g.toGraphCoord(p); }
+
+  clone(): Point { return new Point(this.x, this.y); }
+  subtract(p2: Point, newInstance: boolean): Point { return super.subtract(p2, newInstance) as Point; }
+  add(p2: Point, newInstance: boolean): Point { return super.add(p2, newInstance) as Point; }
+  multiply(scalar: number, newInstance: boolean): Point { return super.multiply(scalar, newInstance) as Point; }
+  divide(scalar: number, newInstance: boolean): Point { return super.divide(scalar, newInstance) as Point; }
+  isInTheMiddleOf(firstPt: Point, secondPt: Point, tolleranza: number): boolean { return super.isInTheMiddleOf(firstPt, secondPt, tolleranza); }
+  distanceFromLine(p1: Point, p2: Point): number { return super.distanceFromLine(p1, p2); }
+  equals(pt: Point, tolleranzaX: number = 0, tolleranzaY: number = 0): boolean { return super.equals(pt, tolleranzaX, tolleranzaY); }
+  moveOnNearestBorder(startVertexSize: GraphSize, clone: boolean, debug: boolean = true): Point {
+    return super.moveOnNearestBorder(startVertexSize, clone, debug) as Point; }
+  getM(pt2: Point): number { return super.getM(pt2); }
+  degreeWith(pt2: Point, toRadians: boolean): number { return super.degreeWith(pt2, toRadians); }
 }

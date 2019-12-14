@@ -32,6 +32,7 @@ import {
 } from '../common/Joiner';
 
 export class M2Class extends IClass {
+  static stylesDatalist: HTMLDataListElement;
   // static all: any[] = [];
   parent: M2Package;
   childrens: Array<M2Feature | EOperation>; // M2Feature[];
@@ -39,9 +40,9 @@ export class M2Class extends IClass {
   operations: EOperation[] = [];
   attributes: M2Attribute[];
   references: M2Reference[];
-  referencesIN: M2Reference[] = []; // external pointers to this class.
-  metaParent: M3Class = null;
-  instances: MClass[] = [];
+  referencesIN: M2Reference[]; // external pointers to this class.
+  metaParent: M3Class;
+  instances: MClass[];
   extends: M2Class[] = [];
 
 
@@ -67,12 +68,12 @@ export class M2Class extends IClass {
     if (debug) { console.clear(); }
     if (mustSelect && !selected) {
       const mp: ModelPiece = ModelPiece.getLogic(htmlSelect);
-      U.pif(debug, 'mp:', mp, 'select:', htmlSelect);
-      // if (mp instanceof IAttribute || mp instanceof MAttribute) { selected = mp.parent as M2Class; }
+      U.pif(debug, 'ownermp:', mp, 'select:', htmlSelect);
+      // if (ownermp instanceof IAttribute || ownermp instanceof MAttribute) { selected = ownermp.parent as M2Class; }
       if (mp instanceof M2Reference) { selected = (mp as M2Reference).classType; }
       if (mp instanceof MReference) { selected = (mp as MReference).getm2Target(); }
       if (mp instanceof EParameter) { selected = (mp as EParameter).classType; }
-      U.pw(!selected, 'ClassSelectors must be held inside a m2-reference:', htmlSelect, 'mp:', mp) ;
+      U.pw(!selected, 'ClassSelectors must be held inside a m2-reference:', htmlSelect, 'ownermp:', mp) ;
       if (!selected) { return; }
     }
     toSelect = '' + (selected ? selected.id : '');
@@ -99,10 +100,10 @@ export class M2Class extends IClass {
   // isRoot(): boolean { U.pe(true, 'm2 class cannot be roots.'); return false; }
   // setRoot(value: boolean): void { U.pe(true, 'only usable in model version'); }
 
-  constructor(pkg: M2Package, json: Json, metaVersion: M3Class) {
-    super(pkg, metaVersion);
+  constructor(pkg: M2Package, json: Json) {
+    super(pkg, Status.status.mmm.getAllClasses()[0]);
     this.instances = [];
-    if (!pkg && !json && !metaVersion) { return; } // empty constructor for .duplicate();
+    if (!pkg && !json) { return; } // empty constructor for .duplicate();
     this.parse(json, true); }
 
   getModelRoot(): MetaModel { return super.getModelRoot() as MetaModel; }
@@ -113,7 +114,7 @@ export class M2Class extends IClass {
     return str + ':' + this.name; }
 
   parse(json: Json, destructive: boolean) {
-    console.log('M2Class.parse(); json:', json, '; metaVersion: ', this.metaParent, 'this:', this);
+//     console.log('M2Class.parse(); json:', json, '; metaVersion: ', this.metaParent, 'this:', this);
     /// own attributes.
     this.setName(Json.read<string>(json, ECoreClass.namee, 'Class_1'), false);
     /*this.name = Json.read<string>(this.json, ECoreClass.name);
@@ -134,14 +135,13 @@ export class M2Class extends IClass {
       switch (xsiType) {
         default: U.pe(true, 'unexpected xsi:type: ', xsiType, ' in feature:', child); break;
         case 'ecore:EAttribute':
-          const metaAttr: M3Attribute = null;
           // metaParent = oldChildrens[i] && oldChildrens[i].metaParent ? oldChildrens[i].metaParent : U.findMetaParentA(this, child);
-          newFeature = new M2Attribute(this, child, metaAttr);
+          newFeature = new M2Attribute(this, child);
           U.ArrayAdd(this.attributes, newFeature); break;
         case 'ecore:EReference':
           const metaRef: M3Reference = null;
           // metaParent = oldChildrens[i] && oldChildrens[i].metaParent ? oldChildrens[i].metaParent : U.findMetaParentA(this, child);
-          newFeature = new M2Reference(this, child, metaRef);
+          newFeature = new M2Reference(this, child);
           U.ArrayAdd(this.references, newFeature); break;
       }
       U.ArrayAdd(this.childrens, newFeature);
@@ -150,7 +150,13 @@ export class M2Class extends IClass {
       const newFunction: EOperation = new EOperation(this, functions[i]);
       U.ArrayAdd(this.operations, newFunction);
       U.ArrayAdd(this.childrens, newFunction);
-    }
+    }/*
+    this.views = [];
+    for(i = 0; i < this.parent.views.length; i++) {
+      const pv: PackageView = this.parent.views[i];
+      const v = new ClassView(pv);
+      this.views.push(v);
+      pv.classViews.push(v); }*/
   }
 
   generateModel() {
@@ -177,7 +183,7 @@ export class M2Class extends IClass {
     return op; }
 
   addReference(): M2Reference {
-    const ref: M2Reference = new M2Reference(this, null, null);
+    const ref: M2Reference = new M2Reference(this, null);
     U.ArrayAdd(this.childrens, ref);
     U.ArrayAdd(this.references, ref);
     ref.classType = this;
@@ -187,7 +193,7 @@ export class M2Class extends IClass {
     return ref; }
 
   addAttribute(): M2Attribute {
-    const attr: M2Attribute = new M2Attribute(this, null, null);
+    const attr: M2Attribute = new M2Attribute(this, null);
     U.ArrayAdd(this.childrens, attr);
     U.ArrayAdd(this.attributes, attr);
     this.refreshGUI();
@@ -219,32 +225,8 @@ export class M2Class extends IClass {
   }*/
 
   duplicate(nameAppend: string = '_Copy', newParent: M2Package = null): M2Class {
-    const c: M2Class = new M2Class(null, null, null);
-    c.setName(this.name + nameAppend);
-    c.parent = (newParent ? newParent : this.parent);
-    if (c.parent) { U.ArrayAdd(c.parent.childrens, c); }
-    c.metaParent = this.metaParent;
-    if (c.metaParent) { U.ArrayAdd(c.metaParent.instances, c); }
-    c.childrens = [];
-    c.references = [];
-    c.attributes = [];
-    c.operations = [];
-    c.referencesIN = [];
-    c.styleOfInstances = this.styleOfInstances;
-    c.customStyle = this.customStyle;
-    //// set childrens
-    let i;
-    for (i = 0; i < this.childrens.length; i++) {
-      // console.log('duplicating children[' + (i + 1) + '/' + this.childrens.length + ']');
-      const child = this.childrens[i].duplicate();
-      U.ArrayAdd(c.childrens, child);
-      if (false && false) {
-      } else if (child instanceof EOperation) { U.ArrayAdd(c.operations, child);
-      } else if (child instanceof M2Attribute) { U.ArrayAdd(c.attributes, child);
-      } else if (child instanceof M2Reference) { U.ArrayAdd(c.references, child);
-      } else { U .pe(true, 'unexpected child class: ' + U.getTSClassName(child) + ', child:', child); }
-    }
-    // M2Class.updateAllMMClassSelectors(); already did by setname
+    const c: M2Class = new M2Class(null, null);
+    c.copy(this);
     c.refreshGUI();
     return c; }
 
@@ -257,7 +239,7 @@ export class M2Class extends IClass {
     }
     return out; }
 
-  linkToMetaParent(meta: M3Class): void { return super.linkToMetaParent(meta); }
+  // linkToMetaParent(meta: M3Class): void { return super.linkToMetaParent(meta); }
   getReferencePointingHere(): M2Reference[] { return super.getReferencePointingHere() as M2Reference[]; }
   getAttribute(name: string, caseSensitive: boolean = false): M2Attribute { return super.getAttribute(name, caseSensitive) as M2Attribute; }
   getReference(name: string, caseSensitive: boolean = false): M2Reference { return super.getReference(name, caseSensitive) as M2Reference; }

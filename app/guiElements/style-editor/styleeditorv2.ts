@@ -1,8 +1,8 @@
-import {Component, OnInit} from '@angular/core';
+/*import {Component, OnInit} from '@angular/core';
 import {
   IAttribute, M2Class, IEdge, IModel, IPackage, IReference, ModelPiece, PropertyBarr, Status, U, IClass,
-  EdgeModes, EOperation, EParameter, Database, Size, AttribETypes, EType, Vieww, ViewHtmlSettings, StyleComplexEntry, ViewPoint
-} from '../../common/Joiner';
+  EdgeModes, EOperation, EParameter, Database, Size, AttribETypes, EType, ModelPieceStyleEntry, ViewHtmlSettings, StyleComplexEntry
+}                 from '../../common/Joiner';
 import ChangeEvent = JQuery.ChangeEvent;
 import BlurEvent = JQuery.BlurEvent;
 import KeyDownEvent = JQuery.KeyDownEvent;
@@ -10,6 +10,7 @@ import KeyboardEventBase = JQuery.KeyboardEventBase;
 import KeyUpEvent = JQuery.KeyUpEvent;
 import ClickEvent = JQuery.ClickEvent;
 import SelectEvent = JQuery.SelectEvent;
+import {template} from '@angular/core/src/render3';
 
 @Component({
   selector: 'app-style-editor',
@@ -35,11 +36,11 @@ export class StyleEditor {
   private clickedLevel: Element = null;
 
   onHide(): void {
-    this.updateClickedGUIHighlight();
+    this.updateClickedGUI();
   }
   onShow(): void {
     this.propertyBar.onHide();
-    this.updateClickedGUIHighlight();
+    this.updateClickedGUI();
   }
 
   constructor(propertyBar: PropertyBarr, $root: JQuery<HTMLElement>) {
@@ -52,7 +53,7 @@ export class StyleEditor {
     this.templates = this.$templates[0]; }
 
   // static styleChanged(e: ClipboardEvent | ChangeEvent | KeyDownEvent | KeyUpEvent | KeyboardEvent): HTMLElement | SVGElement { }
-  onPaste(e: any): void { // e: ClipboardEvent
+  static onPaste(e: any): void { // e: ClipboardEvent
     e.preventDefault();
     const div: HTMLDivElement | HTMLTextAreaElement = e.currentTarget as HTMLDivElement | HTMLTextAreaElement;
     const text: string = (e as unknown as any).originalEvent.clipboardData.getData('text/plain');
@@ -71,10 +72,10 @@ export class StyleEditor {
     if (m instanceof IAttribute) { this.showA(m); }
     if (m instanceof IReference) { this.showR(m); }
     if (m instanceof EOperation) { this.showO(m); }
-    if (m instanceof EParameter) { this.showParam(m); }*/
+    if (m instanceof EParameter) { this.showParam(m); }* /
   }
 
-  updateClickedGUIHighlight() {
+  updateClickedGUI() {
     $(this.propertyBar.model.graph.container).find('.styleEditorSelected').removeClass('styleEditorSelected');
     if (this.isVisible() && this.clickedLevel) { this.clickedLevel.classList.add('styleEditorSelected'); } }
   private getCopyOfTemplate(m: ModelPiece, s: string): HTMLElement {
@@ -140,13 +141,10 @@ export class StyleEditor {
 
   showP(m: IPackage) { U.pe(true, 'styles of Package(', m, '): unexpected.'); }
 
-  setStyleEditor($styleown, model: IModel, mp: ModelPiece, style: StyleComplexEntry, templateLevel: Element, indexedPath: number[] = null): number[] {
-    if (!style) return null;
+  setStyleEditor($styleown, m: ModelPiece, model: IModel, templateLevel: Element, indexedPath: number[] = null): number[] {
     const forinstances: boolean = !!indexedPath;
     let i: number;
     const obj: {
-      editLabel: HTMLLabelElement;
-      editAllowed: HTMLButtonElement;
       selectstyle: HTMLSelectElement,
       previewselect: HTMLSelectElement,
       preview: HTMLElement,
@@ -165,8 +163,6 @@ export class StyleEditor {
       delete: HTMLButtonElement,
       saveasName: HTMLInputElement,
     } = {
-      editLabel: null,
-      editAllowed: null,
       selectstyle: null,
       previewselect: null,
       preview: null,
@@ -186,6 +182,7 @@ export class StyleEditor {
       saveasName: null
     };
 
+
     obj.selectstyle = $styleown.find('select.stylename')[0] as HTMLSelectElement;
     obj.detailButton = $styleown.find('button.detail')[0] as HTMLButtonElement;
     obj.detailPanel = $styleown.find('div.detail')[0] as HTMLElement;
@@ -203,107 +200,65 @@ export class StyleEditor {
     obj.saveasName = $detail.find('input.saveas')[0] as HTMLInputElement;
     obj.delete = $detail.find('button.delete')[0] as HTMLButtonElement;
     obj.forkButton = $detail.find('button.saveas')[0] as HTMLButtonElement;
-    obj.editAllowed = $styleown.find('button.allowEdit')[0] as HTMLButtonElement;
-    obj.editLabel = $styleown.find('label.allowEdit')[0] as HTMLLabelElement;
 
     // obj.is...
-    if (model.isM1()) { obj.isM1.disabled = obj.isM1.checked = true; }
+    /* if (model.isM1()) { obj.isM1.disabled = obj.isM1.checked = true; }
     if (model.isM2()) { obj.isM2.disabled = obj.isM2.checked = true; }
-    if (mp instanceof IClass) { obj.isClass.disabled = obj.isClass.checked = true; }
-    if (mp instanceof IReference) { obj.isReference.disabled = obj.isReference.checked = true; }
-    if (mp instanceof IAttribute) { obj.isAttribute.disabled = obj.isAttribute.checked = true; }
-    if (mp instanceof EOperation) { obj.isOperation.disabled = obj.isOperation.checked = true; }
-    if (mp instanceof EParameter) { obj.isParameter.disabled = obj.isParameter.checked = true; }
-    let styleown: ViewHtmlSettings = style.htmlobj;
-    if (styleown) {
-      obj.isM1.checked = styleown.AllowedOnM1;
-      obj.isM2.checked = styleown.AllowedOnM2;
-      obj.isClass.checked = styleown.allowedOnClass;
-      obj.isReference.checked = styleown.allowedOnReference;
-      obj.isAttribute.checked = styleown.allowedOnAttribute;
-      obj.isOperation.checked = styleown.allowedOnOperation;
-      obj.isParameter.checked = styleown.allowedOnParameter;
-      $(obj.isM1).on('change', (e: ChangeEvent) => {
-        styleown.AllowedOnM1 = obj.isM1.checked;
-        styleown.saveToDB();
-      });
-      $(obj.isM2).on('change', (e: ChangeEvent) => {
-        styleown.AllowedOnM2 = obj.isM2.checked;
-        styleown.saveToDB();
-      });
-      $(obj.isClass).on('change', (e: ChangeEvent) => {
-        styleown.allowedOnClass = obj.isClass.checked;
-        styleown.saveToDB();
-      });
-      $(obj.isAttribute).on('change', (e: ChangeEvent) => {
-        styleown.allowedOnAttribute = obj.isAttribute.checked;
-        styleown.saveToDB();
-      });
-      $(obj.isReference).on('change', (e: ChangeEvent) => {
-        styleown.allowedOnReference = obj.isReference.checked;
-        styleown.saveToDB();
-      });
-      $(obj.isOperation).on('change', (e: ChangeEvent) => {
-        styleown.allowedOnOperation = obj.isOperation.checked;
-        styleown.saveToDB();
-      });
-      $(obj.isParameter).on('change', (e: ChangeEvent) => {
-        styleown.allowedOnParameter = obj.isParameter.checked;
-        styleown.saveToDB();
-      });
-    } else {
-      obj.isM1.disabled =
-        obj.isM2.disabled =
-          obj.isClass.disabled =
-            obj.isReference.disabled =
-              obj.isAttribute.disabled =
-                obj.isOperation.disabled =
-                  obj.isParameter.disabled = true; }
-    /*
-    $(obj.saveasName).on('input', (e: ChangeEvent) => {
-      Database.deleteStyle(styleown, () => {
-        styleown.name = obj.saveasName.value;
-        styleown.saveToDB();
-      });
-    })
-    $(obj.forkButton).on('click', () => {
-      m.styleobj = styleown = styleown.duplicate();
-      obj.saveasName.value = styleown.name;
+    if (m instanceof IClass) { obj.isClass.disabled = obj.isClass.checked = true; }
+    if (m instanceof IReference) { obj.isReference.disabled = obj.isReference.checked = true; }
+    if (m instanceof IAttribute) { obj.isAttribute.disabled = obj.isAttribute.checked = true; }
+    if (m instanceof EOperation) { obj.isOperation.disabled = obj.isOperation.checked = true; }
+    if (m instanceof EParameter) { obj.isParameter.disabled = obj.isParameter.checked = true; } * /
+    let style: ModelPieceStyleEntry = m.getStyleObj();
+    obj.isM1.checked = style.AllowedOnM1;
+    obj.isM2.checked = style.AllowedOnM2;
+    obj.isClass.checked = style.allowedOnClass;
+    obj.isReference.checked = style.allowedOnReference;
+    obj.isAttribute.checked = style.allowedOnAttribute;
+    obj.isOperation.checked = style.allowedOnOperation;
+    obj.isParameter.checked = style.allowedOnParameter;
+    $(obj.isM1).on('change', (e: ChangeEvent) => {
+      style.AllowedOnM1 = obj.isM1.checked;
+      style.saveToDB();
     });
-    $(obj.delete).on('click', (e: ClickEvent) => { m.styleobj = null; style.delete(); });*/
-
-    // htmlInput.value = (m.getStyle().firstChild as HTMLElement).outerHTML;
-    /*const clickedRoot: Element = ModelPiece.getLogicalRootOfHtml(clickedLevel);
-    const templateRoot: HTMLElement | SVGElement = m.styleobj.html;// m.getStyle();
-    // let templateLevel: HTMLElement | SVGElement = templateRoot;
-    const indexedPath: number[] = U.getIndexesPath(clickedRoot, clickedLevel);
-    console.log('clickedRoot', clickedRoot, 'clickedLevel', clickedLevel, 'path:', indexedPath);
-    let templateLevel: Element = U.followIndexesPath(templateRoot, indexedPath);
-    console.log('templateRoot', templateRoot, 'templateLevel', templateLevel);*/
-    // obj.input
-    obj.input.setAttribute('placeholder', U.replaceVarsString(mp, obj.input.getAttribute('placeholder')));
-    obj.input.setAttribute('templated', 'true'); // debug, todo: remove
-    obj.input.innerText = templateLevel.outerHTML;
-    const lastvp: ViewPoint = model.getLastView();
-    console.log('styleComplexEntry:', style, 'mp:', mp);
-    if (style.ownermp !== mp) {
-      obj.selectstyle.disabled = obj.detailButton.disabled = true;
-      obj.input.setAttribute('disabled', 'true');
-      obj.input.contentEditable = 'false';
-      if (!lastvp) {
-        obj.editLabel.innerText = 'Is required to have at least one non-default viewpoint applied to customize styles.';
-        obj.editAllowed.style.display = 'none';
-      }
-      $(obj.editAllowed).on('click', (e: ClickEvent) => {
-        const v: Vieww = new Vieww(lastvp);
-        v.htmlo = new ViewHtmlSettings();
-        v.htmlo.setHtmlStr(style.html.outerHTML);
-        v.apply(mp);
-        this.showMP(mp);
+    $(obj.isM2).on('change', (e: ChangeEvent) => {
+      style.AllowedOnM2 = obj.isM2.checked;
+      style.saveToDB();
+    });
+    $(obj.isClass).on('change', (e: ChangeEvent) => {
+      style.allowedOnClass = obj.isClass.checked;
+      style.saveToDB();
+    });
+    $(obj.isAttribute).on('change', (e: ChangeEvent) => {
+      style.allowedOnAttribute = obj.isAttribute.checked;
+      style.saveToDB();
+    });
+    $(obj.isReference).on('change', (e: ChangeEvent) => {
+      style.allowedOnReference = obj.isReference.checked;
+      style.saveToDB();
+    });
+    $(obj.isOperation).on('change', (e: ChangeEvent) => {
+      style.allowedOnOperation = obj.isOperation.checked;
+      style.saveToDB();
+    });
+    $(obj.isParameter).on('change', (e: ChangeEvent) => {
+      style.allowedOnParameter = obj.isParameter.checked;
+      style.saveToDB();
+    });
+    $(obj.saveasName).on('input', (e: ChangeEvent) => {
+      Database.deleteStyle(style, () => {
+        style.name = obj.saveasName.value;
+        style.saveToDB();
       });
-    } else {
-      $(obj.editLabel).hide();
-    }
+    });
+    $(obj.forkButton).on('click', () => {
+      m.styleobj = style = style.duplicate();
+      obj.saveasName.value = style.name;
+    });
+    $(obj.delete).on('click', (e: ClickEvent) => { m.styleobj = null; style.delete(); });* /
+    // obj.input
+    obj.input.setAttribute('placeholder', U.replaceVarsString(m, obj.input.getAttribute('placeholder')));
+    obj.input.innerText = templateLevel.outerHTML;
     $styleown.find('button.detail').on('click', (e: ClickEvent) => {
       const btn = e.currentTarget as HTMLButtonElement;
       const $btn = $(btn);
@@ -331,14 +286,25 @@ export class StyleEditor {
         $detailPanel.show();
       }
     });
+
+    // htmlInput.value = (m.getStyle().firstChild as HTMLElement).outerHTML;
+    /*const clickedRoot: Element = ModelPiece.getLogicalRootOfHtml(clickedLevel);
+    const templateRoot: HTMLElement | SVGElement = m.styleobj.html;// m.getStyle();
+    // let templateLevel: HTMLElement | SVGElement = templateRoot;
+    const indexedPath: number[] = U.getIndexesPath(clickedRoot, clickedLevel);
+    console.log('clickedRoot', clickedRoot, 'clickedLevel', clickedLevel, 'path:', indexedPath);
+    let templateLevel: Element = U.followIndexesPath(templateRoot, indexedPath);
+    console.log('templateRoot', templateRoot, 'templateLevel', templateLevel);* /
+    obj.input.innerText = templateLevel.outerHTML;
+    obj.input.setAttribute('templated', 'true'); // debug, todo: remove
     const updatePreview = () => { obj.preview.innerHTML = obj.input.innerText; };
 
     $styleown.find('.htmllevel').html((forinstances ? 'Instances Html' : 'Own html')
       + ' (' + (indexedPath && indexedPath.length ? 'Level&nbsp;' + indexedPath.length : 'Root&nbsp;level') + ')');
-    let optgroup: HTMLOptGroupElement = U.toHtml('<optgroup label="' + U.getTSClassName(mp) + '"></optgroup>');
+    let optgroup: HTMLOptGroupElement = U.toHtml('<optgroup label="' + U.getTSClassName(m) + '"></optgroup>');
     obj.previewselect.appendChild(optgroup);
-    for (i = 0; i < mp.metaParent.instances.length; i++) {
-      const peer: ModelPiece = mp.metaParent.instances[i];
+    for (i = 0; i < m.metaParent.instances.length; i++) {
+      const peer: ModelPiece = m.metaParent.instances[i];
       const opt: HTMLOptionElement = document.createElement('option');
       optgroup.appendChild(opt);
       opt.value = '' + peer.id;
@@ -346,27 +312,6 @@ export class StyleEditor {
     }
 
     optgroup = U.toHtml('<optgroup label="Compatible Styles"></optgroup>');
-    let o: HTMLOptionElement = document.createElement('option');
-    o.value = 'default';
-    o.text = 'default';
-    if (style.isGlobalhtml) o.selected = true;
-    optgroup.append(o);
-    console.log('viewpointSelect: ', mp.views);
-    for (i = 0; i < mp.views.length; i++) {
-      const v: Vieww = mp.views[i];
-      o = document.createElement('option');
-      o.value = '' + v.id;
-      o.text = v.getViewPoint().name + ' (own)';
-      if (v === style.view) o.selected = true;
-      optgroup.append(o); }
-    for (i = 0; mp.metaParent && i < mp.metaParent.views.length; i++) {
-      const v: Vieww = mp.metaParent.views[i];
-      o = document.createElement('option');
-      o.value = '' + v.id;
-      o.text = v.getViewPoint().name + ' (inherited)';
-      if (v === style.view) o.selected = true;
-      optgroup.append(o); }
-
     obj.selectstyle.appendChild(optgroup);
     /*    const styles: ModelPieceStyleEntry[] = Styles.getAllowed(m);
         for (i = 0; i < styles.length; i++) {
@@ -377,8 +322,7 @@ export class StyleEditor {
           opt.value = style.getKey();
         }
 
-    */
-    const onStyleChangeI = () => { U.pe(true, 'onStyleChangeI() todo.'); };
+    * /
     const onStyleChange = () => {
       const inputHtml: Element = U.toHtml(obj.input.innerText);
       // console.log('PRE: ', inputHtml, 'outer:', inputHtml.outerHTML, 'innertext:', obj.input.innerText);
@@ -386,21 +330,19 @@ export class StyleEditor {
         templateLevel.parentElement.insertBefore(inputHtml, templateLevel);
         templateLevel.parentElement.removeChild(templateLevel);
         templateLevel = inputHtml;
-      } else {
-        U.pe(!style.view || style.isGlobalhtml, 'default html cannot be modified.', style, 'todo: automatically make new ClassVieww');
-        // todo: se tutto va bene qui deve dare errore, crea una nuova ClassVieww e applicalo al modelpiece ed edita quello.
-        style.htmlobj.setHtml(templateLevel = inputHtml);
+      } else {/*
+        U.pe(!indexedPath || indexedPath.length > 0 || style.html !== templateLevel, 'parent should be null only on root style elements.');
+        style.html = templateLevel = inputHtml as HTMLElement | SVGElement;* /
+        m.customStyleToErase = templateLevel = inputHtml;
       }
-      mp.refreshGUI();
-      this.clickedLevel = U.followIndexesPath(mp.getHtmlOnGraph(), indexedPath);
-      this.updateClickedGUIHighlight();
+      m.refreshGUI();
       // obj.input.innerText = inputHtml.outerHTML;
       // DANGER: se lo fai con l'evento onchange() ti sposta il cursore all'inizio e finisci per scrivere rawtext prima dell'html invalidandolo.
       // tenendolo dovresti scrivere i caratteri uno alla volta riposizionando il cursore nel punto giusto ogni volta.
       // console.log('POST: ', inputHtml, 'outer:', inputHtml.outerHTML, 'innertext:', obj.input.innerText);
       updatePreview();
     };
-    $(obj.input).off('paste.set').on('paste.set', (e: any/*ClipboardEvent*/) => { /*this.onPaste(e);*/ onStyleChange(); })
+    $(obj.input).off('paste.set').on('paste.set', StyleEditor.onPaste)
       .off('change.set').on('change.set', onStyleChange)
       .off('input.set').on('input.set', onStyleChange)
       .off('blur.set').on('blur.set', onStyleChange)
@@ -411,7 +353,7 @@ export class StyleEditor {
       const style: ModelPieceStyleEntry = Styles.getStyleFromKey(obj.selectstyle.value);
       obj.input.innerText = style.htmlstr;
       $(obj.input).trigger('input');
-    });*/
+    });* /
     return indexedPath; }
 
   showMP(m: ModelPiece, clickedLevel: Element = null, asMeasurable: boolean = false, asEdge: boolean = false) {
@@ -419,22 +361,19 @@ export class StyleEditor {
     let i: number;
     this.clickedLevel = clickedLevel = clickedLevel || this.clickedLevel;
     // set htmls
-    const style: StyleComplexEntry = m.getStyle();
-    const stylei: StyleComplexEntry = m.getInstancesInheritedStyle();
     const clickedRoot: Element = ModelPiece.getLogicalRootOfHtml(clickedLevel);
-    const templateRoot: Element = style.html;// m.styleobj.html;// m.getStyle();
+    const style: StyleComplexEntry = m.getStyle();
+    const templateRoot: Element = style.html || null;// m.styleobj.html;// m.getStyle();
     // let templateLevel: HTMLElement | SVGElement = templateRoot;
     let indexedPath: number[] = U.getIndexesPath(clickedLevel, 'parentNode', 'childNodes', clickedRoot);
     console.log('clickedRoot', clickedRoot, 'clickedLevel', clickedLevel, 'path:', indexedPath);
-    U.pe(U.followIndexesPath(clickedRoot, indexedPath, 'childNodes') !== clickedLevel, 'mismatch.');
     const realindexfollowed: {indexFollowed: string[] | number[], debugArr: {index: string | number, elem: any}[]} = {indexFollowed: [], debugArr:[]};
-    console.clear();
-    let templateLevel: Element = U.followIndexesPath(templateRoot, indexedPath, 'childNodes', realindexfollowed);
-    console.log('clickedRoot:',clickedRoot, 'clikedLevel:', clickedLevel, 'indexedPath:', indexedPath, 'followed:', realindexfollowed, 'templateRoot:', templateRoot, 'templateLevel:', templateLevel);
+    const templateLevel: Element = U.followIndexesPath(templateRoot, indexedPath, 'childNodes', realindexfollowed);
+    const clickedonStyle = templateLevel; // todo: sure about this?
     if (realindexfollowed.indexFollowed.length !== indexedPath.length) {
       indexedPath = realindexfollowed.indexFollowed as number[];
       this.clickedLevel = clickedLevel = U.followIndexesPath(clickedRoot, indexedPath);}
-    this.updateClickedGUIHighlight();
+    this.updateClickedGUI();
     // html set END.
     const model: IModel = m.getModelRoot();
     if (asEdge && (m instanceof IClass || m instanceof IReference) && m.shouldBeDisplayedAsEdge()) { return this.showE(m); }
@@ -444,13 +383,15 @@ export class StyleEditor {
     const showAsEdgeText: HTMLElement = $html.find('.showAsEdgeText')[0] as HTMLElement;
     const $styleown = $html.find('.style.own');
     const $stylei = $html.find('.style.instances');
+    const instanceshtml = model.isM1() ? null : (m.styleOfInstances ? m.styleOfInstances : ModelPiece.GetStyle(Status.status.m, U.getTSClassName(m)));
     //const ownhtml = m.getStyle();
-    const htmlPath: number[] = this.setStyleEditor($styleown, model, m, style, templateLevel, indexedPath);
+    // const style: ModelPieceStyleEntry = m.getStyleObj();
+    const htmlPath: number[] = this.setStyleEditor($styleown, m, model, templateLevel, indexedPath);
     // U.pe(!style.html, $styleown, m, clickedLevel, model, style, instanceshtml);
-    const clickedonStyle: HTMLElement | SVGElement = U.followIndexesPath(style.html, htmlPath) as HTMLElement | SVGElement;
+    // const clickedonStyle: HTMLElement | SVGElement = U.followIndexesPath(style.html, htmlPath) as HTMLElement | SVGElement;
     $html.find('.tsclass').html('' + m.printableName()); // + (htmlDepth === 0 ? ' (root level)' : ' (level&nbsp;' + htmlDepth + ')') );
 
-    if (!model.isM1()) { this.setStyleEditor($stylei, model, m, stylei, templateLevel); }
+    if (!model.isM1()) { this.setStyleEditor($stylei, m, model, templateLevel); }
 
     // <meta>
     //     <dependency><attributes><type>double</ </ </
@@ -479,7 +420,6 @@ export class StyleEditor {
       const a: Attr = clickedonStyle.attributes[i];
       if (a.name[0] === '_' || a.name.indexOf('r_') == 0 || a.name.indexOf('r_') == 0) {
         const val: Attr = clickedLevel.attributes.getNamedItem(a.name.substr(1));
-        const style = null;
         this.addmeasurableAttributeButton(measurableSelect, $html, m, style, clickedonStyle, ownhtmlinput, htmlPath, a, val)
       }
     }
@@ -494,7 +434,7 @@ export class StyleEditor {
   }
 
   addmeasurableAttributeButton(measurableSelect: HTMLSelectElement, $styleeditor: JQuery<HTMLElement | SVGElement>, m: ModelPiece,
-                               style: StyleComplexEntry,
+                               style: ViewHtmlSettings,
                                clickedStyle: HTMLElement | SVGElement,
                                ownhtmlinput: HTMLDivElement | HTMLTextAreaElement,
                                htmlPath: number[], attr: Attr = null, valAttr: Attr = null): void {
@@ -555,7 +495,7 @@ export class StyleEditor {
     = {r_:null, d_:null, rule:null, constraint:null, dstyle:null, import:null, export:null, chain:null, chainfinal:null};
     const errormsgright: {r_:string, d_:string, rule:string, constraint:string, dstyle:string, import:string, export:string, chain:string, chainfinal:string}
     = {r_:null, d_:null, rule:null, constraint:null, dstyle:null, import:null, export:null, chain:null, chainfinal:null};
-    errormsgleft.rule = */
+    errormsgleft.rule = * /
     const $input = $(ownhtmlinput);
     const changenamewhile = (x: string) => { return !!clickedStyle.attributes.getNamedItem(x); };
     const namechanged = () => {
@@ -566,7 +506,7 @@ export class StyleEditor {
       setnameinput(name);
       clickedStyle.removeAttribute(oldname);
       clickedStyle.setAttribute(name, oldvalue);
-      style.htmlobj.saveToDB(); };
+      style.saveToDB(); };
     const leftIsValid = () => { return new RegExp(left.pattern).test(left.value); };
     // todo: set template.dataset.name nb: nel caso di d_ e d_ possono cambiare nome dinamicamente
     // todo: rimuovi modelpiece.ownhtml e modelpiece.instancesHtml e sostituiscili con oggetti ModelPieceStyleEntry.
@@ -574,7 +514,7 @@ export class StyleEditor {
       const is_ = left.value === '';
       const attrStr: string = (isr_ || is_ ? '' : left.value + ' ' + operator.value + ' ') + right.value;
       const templateList: string[] = U.removeDuplicates(U.findTemplateList(attrStr));
-      const featuredependency: {template: string, namesArray: string, typesArray: string}[] = [];
+      style.featuredependency = [];
       let i: number;
       for (i = 0; i < templateList.length; i++) {
         const template: string = templateList[i];
@@ -592,10 +532,8 @@ export class StyleEditor {
           typesArr += (replacedArr[j].value.this instanceof IClass ? 'Class' : typeDetail.name) + '.'; }
         namesArr = namesArr.substr(0, namesArr.length - 2);
         typesArr = typesArr.substr(0, typesArr.length - 2);
-        featuredependency.push({template: template, namesArray: namesArr, typesArray: typesArr});
+        style.featuredependency.push({template: template, namesArray: namesArr, typesArray: typesArr});
       }
-
-      style.htmlobj.setDependencyArray(featuredependency);
       if (isr_) {
         clickedStyle.removeAttribute(template.dataset.name);
         template.dataset.name = left.value.trim();
@@ -633,7 +571,7 @@ export class StyleEditor {
       outputErrorLeft.innerText = 'Left side is not matching any element, it must be a jQuery selector.' + outputErrorLeft.innerText;
     };
     const _right = () => {
-      const htmldrew: HTMLElement | SVGElement = m.getHtmlOnGraph();
+      const htmldrew: HTMLElement | SVGElement = m.getHtml();
       const sameElementInGraph: HTMLElement | SVGElement = U.followIndexesPath(htmldrew, htmlPath) as HTMLElement | SVGElement;
       let result: string;
       outputErrorRight.innerText = '';
@@ -646,7 +584,7 @@ export class StyleEditor {
       return result; };
     const constraintRight = () => {
       const result: string = _right();
-      const sameElementInGraph: HTMLElement | SVGElement = U.followIndexesPath(m.getHtmlOnGraph(), htmlPath) as HTMLElement | SVGElement;
+      const sameElementInGraph: HTMLElement | SVGElement = U.followIndexesPath(m.getHtml(), htmlPath) as HTMLElement | SVGElement;
       // todo: valuta anche left part e outputta: "true: leftpartcalcolata < rightpartcacolata. eventuali exceptions.";
       // todo: NB: è really incasinato e dovrei cambiare il modo di calcolare il risultato, che non calcola left e right, ma calcola size
       //  required e attuale e vede se sono soddisfacibili con l'operatore.
@@ -661,7 +599,7 @@ export class StyleEditor {
           _chain		  export
           _constraint	size	  js	    bool	inequality
           _dstyle		  /	      js->css	str
-          _import		  size	  js	    any*/
+          _import		  size	  js	    any* /
     switch (val) {
     default:
       U.pe(true, 'unexpected select.attributetypeadd value:' + val);
@@ -770,7 +708,7 @@ export class StyleEditor {
   public showE(m: IClass | IReference) {
     console.log('styleShowE(', m, ')');
     const edge: IEdge = m.edges && m.edges.length ? m.edges[0] : null;
-    const html: HTMLElement = this.getCopyOfTemplate(m as any, '.edge');
+    const html: HTMLElement = this.getCopyOfTemplate(m, '.edge');
     const $html = $(html);
     const edgeStyle: HTMLSelectElement = $html.find('.edgeStyle')[0] as HTMLSelectElement;
     const eColorCommon: HTMLInputElement = $html.find('.edgeColor.common')[0] as HTMLInputElement;
@@ -947,3 +885,4 @@ export class StyleEditor {
   }
 
 }
+*/

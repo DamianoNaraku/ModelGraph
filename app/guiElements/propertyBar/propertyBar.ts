@@ -35,6 +35,7 @@ export class PropertyBarr {
   selectedModelPiece: ModelPiece;
   styleEditor: StyleEditor = null;
   selectedModelPieceIsEdge: boolean;
+  clickedLevel: Element;
 
   constructor(model: IModel) {
     this.model = model;
@@ -158,7 +159,7 @@ export class PropertyBarr {
       (evt: Event) => {
         const input: HTMLInputElement = evt.currentTarget as HTMLInputElement;
         console.log('value:', input.value, 'inputHtml:', input, 'evt:', evt);
-        input.value = o.setName(input.value, false);
+        input.value = o.setName(input.value, true);
       });
     $html.find('.replaceVarOn').each( (i: number, elem: HTMLElement) => { U.replaceVars(o, elem, false); });
     $html.find((Status.status.isM() ? '.m1' : '.m2') + 'disable').attr('disabled');
@@ -181,9 +182,16 @@ export class PropertyBarr {
     if (!textArea) { return; }
     textArea.value = o.generateModelString(); }
 
-  show(o: ModelPiece = null, isEdge: boolean, forceRefresh: boolean = true): void {
-    if (!forceRefresh && this.selectedModelPiece === o && this.selectedModelPieceIsEdge === isEdge) { return; }
+  show(o: ModelPiece = null, clickedLevel: Element, isEdge: boolean, forceRefresh: boolean = true): void {
+    if (!forceRefresh && this.selectedModelPiece === o && this.selectedModelPieceIsEdge === isEdge) {
+      if (clickedLevel === this.clickedLevel) { return; }
+      this.clickedLevel = clickedLevel = clickedLevel || this.clickedLevel;
+      if (isEdge) { this.styleEditor.showE(o as IClass | IReference); } else { this.styleEditor.show(o, clickedLevel); }
+      return; }
+    this.clickedLevel = clickedLevel = clickedLevel || this.clickedLevel;
+    if (isEdge) { this.styleEditor.showE(o as IClass | IReference); } else { this.styleEditor.show(o, clickedLevel); }
     o = this.selectedModelPiece = (o || this.selectedModelPiece);
+
     U.pe(!(o instanceof ModelPiece), 'invalid parameter type:', U.getTSClassName(o), o);
     this.selectedModelPieceIsEdge = isEdge;
     if (!o) { return; }
@@ -198,7 +206,6 @@ export class PropertyBarr {
     } else if (o instanceof EOperation) { this.container.append(this.getO(o));
     } else if (o instanceof EParameter) { this.container.append(this.getParam(o));
     } else { U.pe(true, 'invalid ModelPiece type instance: ', o); }
-    if (isEdge) { this.styleEditor.showE(o as IClass | IReference); } else { this.styleEditor.show(o); }
     this.updateRaw(o);
     const $container = $(this.container);
     $container.find('.minimizer').off('click.minimizeTemplate').on('click.minimizeTemplate',
@@ -372,7 +379,7 @@ export class PropertyBarr {
       input.value = o.exceptionsStr = input.value; });
     return $html[0]; }
 
-  refreshGUI() { this.show(this.selectedModelPiece, this.selectedModelPieceIsEdge); }
+  refreshGUI() { this.show(this.selectedModelPiece, this.clickedLevel, this.selectedModelPieceIsEdge); }
 
   private getParam(o: EParameter | EOperation, asReturnType: boolean = false) {
     const $html: JQuery<HTMLElement> = this.getTemplate(o);
@@ -391,4 +398,8 @@ export class PropertyBarr {
         o.refreshGUI(); } ); // .trigger('change');
     return $html[0]; }
 
+  onShow(isRaw: boolean = false): void {
+    this.styleEditor.onHide();
+  }
+  onHide(): void {}
 }

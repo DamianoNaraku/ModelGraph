@@ -4,7 +4,7 @@ import {
   IClass,
   IField,
   IGraph, Info, IPackage,
-  IVertex,
+  IVertex, Json,
   M2Attribute,
   M2Class,
   M2Reference,
@@ -23,10 +23,10 @@ export type M2ClassChild = M2Attribute | M2Reference | EOperation;
 export type M3ClassChild = M3Attribute | M3Reference;
 export abstract class IClassChild extends ModelPiece {
   upperbound: number = 1 || 1; // to avoid stupid compiler warning on primitive types
-  lowerbound: number = 1 || 1;
+  lowerbound: number = 0 || 0;
   parent: ModelPiece; // parent: IClass | EOperation; todo: aggiusta.
   metaParent: IClassChild;
-  instances: IClassChild[] = [];
+  instances: IClassChild[];
   field: IField;
   ordered: boolean = false && false;
   unique: boolean = false && false;
@@ -137,7 +137,12 @@ export abstract class IClassChild extends ModelPiece {
     U.pif(debug, 'classType changed; targetFullName:' + this.classType.fullname() + '; this.targetStr:' + this.typeClassFullnameStr +
       '; target:', this.classType, 'inside:', this); }
 
-  linkToMetaParent<T extends IClassChild>(classChild: T) { this.metaParent = classChild; }
+  /*linkToMetaParent<T extends IClassChild>(classChild: T) {
+    U.pe(true, 'linkToMetaPrent: todo();');
+    this.metaParent = classChild;
+    if (!this.metaParent) { return; }
+    U.ArrayAdd(this.metaParent.instances, this); }*/
+
   fullname(): string { return this.getClass().fullname() + '.' + this.name; }
   midname(): string { return this.getClass().name + '.' + this.name; }
   generateField(): IField { return this.field = new IField(this); }

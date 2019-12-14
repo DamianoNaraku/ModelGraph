@@ -16,10 +16,9 @@ import {
 
 export class Model extends IModel {
   static emptyModel = '{}';
-  metaParent: MetaModel = null;
-  // instances: ModelNone[] = null;
-  childrens: MPackage[] = [];
-
+  metaParent: MetaModel;
+  // instances: ModelNone[];
+  childrens: MPackage[];
   classRoot: MClass = null;
 
   constructor(json: Json, metaModel: MetaModel) {
@@ -38,12 +37,11 @@ export class Model extends IModel {
 
   parse(json: Json, destructive: boolean, metamodel: MetaModel = null) {
     if (!metamodel) {metamodel = Status.status.mm; }
-    this.metaParent = metamodel;
     U.pe(!metamodel, 'parsing a model requires a metamodel linked');
     if (destructive) { this.childrens = []; }
     let key: string;
     let mpackage: MPackage;
-    if (this.childrens.length === 0) { U.ArrayAdd(this.childrens, new MPackage(this, null)); }
+    if (this.childrens.length === 0) { U.ArrayAdd(this.childrens, new MPackage(this, null, metamodel.getDefaultPackage())); }
     mpackage = this.childrens[0];
     for (key in json) {
       if (!json.hasOwnProperty(key)) { continue; }
@@ -102,4 +100,9 @@ export class Model extends IModel {
   isM2(): boolean { return false; }
   isM3(): boolean { return false; }
 
+  duplicate(nameAppend: string = '_Copy'): Model {
+    const m = new Model(null, null);
+    m.copy(this);
+    m.refreshGUI();
+    return m; }
 }

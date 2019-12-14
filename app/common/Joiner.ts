@@ -1,6 +1,18 @@
-export {ShortAttribETypes, Size, U, Json, AttribETypes, InputPopup, DetectZoom, Dictionary, MeasurableArrays} from './util';
+/* NOTE: error in module.extends: devi importare i file rispettando l'ordine di dichiarazioni delle classi, se dichiaro class A nel file A, e class
+ B extensa A nel file B, il file B non può essere importato prima del file A*/
+/* this is undefined in constructors or method calls: likely caused by a reserved class name that is listed in config.ts and is behaving
+ differently.*/
+// /*new*/export {Styles, ModelPieceStyleEntry, SortType, StyleVisibility} from '../GuiStyles/styles';
+// /*new*/export {ViewHtmlSettings, ViewPoint, Vieww, ModelView, PackageView, ClassView, AttributeView, EdgeView, ReferenceView, OperationView,
+// ParameterView} from '../GuiStyles/viewpoint';
+/*new*/export {ViewHtmlSettings, ViewPoint, Vieww, EdgeView} from '../GuiStyles/viewpoint';
+export {LocalStorage} from '../Database/LocalStorage';
+export {ModelPiece, Info, ModelNone, StyleComplexEntry} from '../Model/modelPiece';
+export {ShortAttribETypes, U, Json, AttribETypes,
+  InputPopup, DetectZoom, Dictionary, MeasurableArrays,
+  IPoint, Point, GraphPoint, ISize, Size, GraphSize} from './util';
 export {Status} from '../app.module';
-export {IGraph} from '../guiElements/mGraph/iGraph';
+export {IGraph, ViewPointShell} from '../guiElements/mGraph/iGraph';
 export {IVertex} from '../guiElements/mGraph/Vertex/iVertex';
 export {IField} from '../guiElements/mGraph/Field/iField';
 export {IEdge, EdgeModes} from '../guiElements/mGraph/Edge/iEdge';
@@ -10,13 +22,10 @@ export {ISidebar} from '../guiElements/isidebar/isidebar.component';
 export {PropertyBarr} from '../guiElements/propertyBar/propertyBar';
 export {TopBar} from '../guiElements/top-bar/top-bar.component';
 export {StyleEditor} from '../guiElements/style-editor/style-editor.component';
-export {Point} from '../guiElements/mGraph/iGraph';
-export {GraphSize, GraphPoint} from '../guiElements/mGraph/Vertex/iVertex';
-export {Options} from '../Save/Save';
+// export {Options} from '../Save/Save';
 export {MyConsole} from '../guiElements/console/console.component';
-export {ModelPiece, Info} from '../Model/modelPiece';
-export {IModel, ECoreRoot, ECorePackage, ECoreClass, ECoreReference, ECoreAttribute,
-  ECoreParameter, ECoreOperation, XMIModel } from '../Model/iModel';
+export {IModel, ECoreRoot, ECorePackage, ECoreClass, ECoreReference,
+  ECoreAttribute, ECoreParameter, ECoreOperation, XMIModel } from '../Model/iModel';
 export {MetaMetaModel} from '../Model/MetaMetaModel';
 export {MetaModel} from '../Model/MetaModel';
 export {Model} from '../Model/Model';
@@ -35,11 +44,11 @@ export {MReference} from '../mClass/classChild/Features/References/MReference';
 export {IAttribute, M3Attribute} from '../mClass/classChild/Features/Attributes/iAttribute';
 export {M2Attribute} from '../mClass/classChild/Features/Attributes/MMAttribute';
 export {MAttribute} from '../mClass/classChild/Features/Attributes/MAttribute';
-export {ModelNone} from '../Model/modelPiece';
-export {LocalStorage} from '../Database/LocalStorage';
+/*new*/export {Database} from '../common/Database';
 export {DamContextMenuComponent} from '../guiElements/dam-context-menu/dam-context-menu.component';
 export {EOperation, OperationVisibility} from '../mClass/classChild/Operations/eOperation';
 export {EParameter} from '../mClass/classChild/Operations/eParameter';
+
 
 import { default as AnsiUp } from 'ansi_up';
 export const ansiUp = new AnsiUp(); // https://github.com/drudru/ansi_up // ansi color formatter.
@@ -56,3 +65,4 @@ export const prjson2xml = _pr_json2xml;
 export const prxml2json = _pr_xml2json;
 export const $$$: JQueryStatic = require('jquery-ui');
 export const $ui: JQueryStatic = $$$;
+

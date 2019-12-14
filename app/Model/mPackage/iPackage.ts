@@ -18,9 +18,9 @@ import {
 
 export abstract class IPackage extends ModelPiece {
   metaParent: IPackage;
-  instances: IPackage[] = [];
+  instances: IPackage[];
   parent: IModel;
-  childrens: IClass[] = [];
+  childrens: IClass[];
 
   constructor(mm: IModel, json: Json, metaParent: IPackage) {
     super(mm, metaParent); }
@@ -53,8 +53,9 @@ export abstract class IPackage extends ModelPiece {
   refreshGUI_Alone(debug?: boolean): void {
     let i: number;
     for (i = 0; i < this.childrens.length; i++) { this.childrens[i].refreshGUI_Alone(debug); } }
-
+/*
   LinkToMetaParent(meta: IPackage) {
+    U.pe(true, 'linkToMetaParent: todo.');
     const outObj: any = {};
     const comformability: number = this.comformability(meta, outObj);
     if (comformability !== 1) {
@@ -68,7 +69,7 @@ export abstract class IPackage extends ModelPiece {
     console.log(outObj);
     while (++i < classPermutation.length) {
       this.childrens[i].linkToMetaParent(meta.childrens[classPermutation[i]]); }
-  }
+  }*/
   comformability(meta: IPackage, outObj: any = null/*.classPermutation*/): number {
     // return 1;
     // todo: sbloccalo facendo Mpackage.name conforme a MMPackage.name e abilitando package multipli
@@ -116,9 +117,9 @@ export abstract class IPackage extends ModelPiece {
 
 export class M3Package extends IPackage {
   metaParent: M3Package;
-  instances: M2Package[] = [];
+  instances: M2Package[];
   parent: MetaMetaModel;
-  childrens: M3Class[] = [];
+  childrens: M3Class[];
 
   constructor(model: MetaMetaModel, json: Json) { super(model, json, null); this.parse(json, true); }
 

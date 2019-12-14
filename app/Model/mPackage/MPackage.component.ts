@@ -13,25 +13,37 @@ import {
   ISidebar,
   IGraph,
   IModel,
-  Status, IReference, StringSimilarity, EdgeStyle, IPackage, Model, Dictionary, MClass, ModelNone, M2Package, IClass, M3Attribute, M3Class
+  Status,
+  IReference,
+  StringSimilarity,
+  EdgeStyle,
+  IPackage,
+  Model,
+  Dictionary,
+  MClass,
+  ModelNone,
+  M2Package,
+  IClass,
+  M3Attribute,
+  M3Class, Vieww, ViewPoint
 } from '../../common/Joiner';
 
 
 export class MPackage extends IPackage {
-  metaParent: M2Package = null;
-  // instances: ModelNone[] = [];
-  parent: Model = null;
-  childrens: MClass[] = [];
-  name: string = null;
+  metaParent: M2Package;
+  // instances: ModelNone[];
+  parent: Model;
+  childrens: MClass[];
+  name: string;
 
-  constructor(model: Model, json: Json, metaparent: IPackage = null) {
+  constructor(model: Model, json: Json, metaparent: IPackage) {
     super(model, json, metaparent);
-    if (!this.metaParent) { this.metaParent = model.metaParent.childrens[0]; }
     this.parent = model;
+    // todo: nel parse il json viene ignorato, cerca come vengono costruite le classi.
     // return;
     // this.setName(name);
     // this.setJson(json);
-    // this.parse(json, true);
+    this.parse(json, true);
   }
 
   getClass(name: string, caseSensitive: boolean = false, throwErr: boolean = true, debug: boolean = true): MClass {
@@ -83,6 +95,13 @@ export class MPackage extends IPackage {
           { "-name": "tizio" },
           { "-name": "asd" } ]
   }*/
-    return; }
+    let i: number;/*
+    this.views = [];
+    for(i = 0; i < this.parent.viewpoints.length; i++) {
+      const vp: ViewPoint = this.parent.viewpoints[i];
+      const v = new PackageView(vp.modelView);
+      this.views.push(v);
+      vp.modelView.packageViews.push(v); }*/
+  }
 
 }

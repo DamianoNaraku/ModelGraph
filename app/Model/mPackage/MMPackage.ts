@@ -12,27 +12,38 @@ import {
   MetaModel,
   ISidebar,
   IGraph,
-  IModel, ECorePackage, ECoreClass, GraphPoint,
-  Status, IReference, StringSimilarity, IClass, MPackage, IPackage, M3Package, M3Reference, M3Class
+  IModel,
+  ECorePackage,
+  ECoreClass,
+  GraphPoint,
+  Status,
+  IReference,
+  StringSimilarity,
+  IClass,
+  MPackage,
+  IPackage,
+  M3Package,
+  M3Reference,
+  M3Class,
+  ViewPoint
 } from '../../common/Joiner';
 
 export class M2Package extends IPackage {
   metaParent: M3Package;
-  instances: MPackage[] = [];
+  instances: MPackage[];
   parent: MetaModel;
-  childrens: M2Class[] = [];
+  childrens: M2Class[];
 
-  constructor(mm: MetaModel, json: Json, metaParent: M3Package) {
-    super(mm, json, metaParent);
+  constructor(mm: MetaModel, json: Json) {
+    super(mm, json, Status.status.mmm.getPackage());
     this.parse(json, true); }
 
   getClass(name: string, caseSensitive: boolean = false, throwErr: boolean = true, debug: boolean = true): M3Class {
     return super.getClass(name, caseSensitive, throwErr, debug) as M3Class; }
 
-  addEmptyClass(metaVersion: M3Class): M2Class {
-    if (!metaVersion) { metaVersion = Status.status.mmm.getDefaultPackage().getClass('class'); }
-    const c = new M2Class(this, null, metaVersion);
-    console.log('addEmptyClass(); package:', this, '; metaVersion: ', metaVersion, 'classe:', c);
+  addEmptyClass(): M2Class {
+    const c = new M2Class(this, null);
+    console.log('addEmptyClass(); package:', this, '; classe:', c);
     U.ArrayAdd(this.childrens, c);
     if (Status.status.loadedLogic) { c.generateVertex(); }
     M2Class.updateAllMMClassSelectors();
@@ -55,16 +66,21 @@ export class M2Package extends IPackage {
     this.parent.namespace(nsPrefix);
     /// childrens
     const childs = Json.getChildrens(json);
-    let i;
     if (destructive) { this.childrens = []; }
+    let i: number;
     for (i = 0; i < childs.length; i++) {
       const child = childs[i];
-      let metaParent;
-      metaParent = null;
       // metaParent = U.findMetaParentC(this, child);
-      if (destructive) { U.ArrayAdd(this.childrens, new M2Class(this, child, metaParent)); continue; }
+      if (destructive) { U.ArrayAdd(this.childrens, new M2Class(this, child)); continue; }
       U.pe(true, 'Non-destructive pkg parse: to do');
-    }
+    }/*
+    this.views = [];
+    for(i = 0; i < this.parent.viewpoints.length; i++) {
+      const vp: ViewPoint = this.parent.viewpoints[i];
+      const v = new PackageView(vp.modelView);
+      this.views.push(v);
+      vp.modelView.packageViews.push(v); }*/
+
     M2Class.updateAllMMClassSelectors();
   }
 

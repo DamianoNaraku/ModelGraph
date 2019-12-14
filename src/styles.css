@@ -83,22 +83,56 @@ app-graph-tab-html{
 }
 
 /* horizontal & vertical filler */
-.verticalFiller, .horizontalFiller {
+.verticalFiller, .horizontalFiller, .horizontalChild, .verticalChild{
+  min-width: 0;
+  flex-basis: 0;
   flex-grow: 1;
   overflow: auto;
 }
 
-.verticalFillingContainer {
+.verticalFillingContainer, .verticalContainer{
   height: 100%;
   display: flex;
   flex-flow: column;
 }
-
-.horizontalFillingContainer {
+h1, h2, h3, h4, h5, h6{
+  text-align: center;
+}
+button.duplicate:not(.btn), button.delete:not(.btn), button.remove:not(.btn), button.copy:not(.btn), button.paste:not(.btn), button.edit:not(.btn){
+  border-radius: 50%;
+  border: none;
+  background-size: cover;
+  background-color: black;
+}
+button.delete:not(.btn), button.remove:not(.btn) { background-image: url(../img/black/delete.png); }
+button.duplicate:not(.btn), button.copy:not(.btn) { background-image: url(../img/black/duplicate.png); }
+button.edit:not(.btn) { background-image: url(../img/black/edit.png); }
+.horizontalFillingContainer, .horizontalContainer {
   display: flex;
   flex-flow: row;
 }
-
+.template{
+  display: none;
+}
+.editorShell {
+  position: relative;
+}
+.viewpointShell{
+  padding: 0;
+}
+.viewpointShell * {
+  color: #FFFFFF;
+  text-shadow: 2px 2px 3px #4074b5, 2px -2px 3px #4074b5, -2px 2px 3px #4074b5, -2px -2px 3px #4074b5, 2px 0px 3px #4074b5, 0px 2px 3px #4074b5, -2px 0px 3px #4074b5, 0px -2px 3px #4074b5;
+  text-shadow: 2px 2px 3px #000000, 2px -2px 3px #000000, -2px 2px 3px #000000, -2px -2px 3px #000000, 2px 0px 3px #000000, 0px 2px 3px #000000, -2px 0px 3px #000000, 0px -2px 3px #000000;
+}
+.viewpointShell h6 {
+  color: #FFFFFF;
+  text-shadow: 2px 2px 3px #4074b5, 2px -2px 3px #4074b5, -2px 2px 3px #4074b5, -2px -2px 3px #4074b5, 2px 0px 3px #4074b5, 0px 2px 3px #4074b5, -2px 0px 3px #4074b5, 0px -2px 3px #4074b5;
+}
+.viewpointShell input{
+  margin-top: auto;
+  margin-bottom: auto;
+}
 /*others*/
 ::-webkit-scrollbar-thumb {
   background: #0084ff;

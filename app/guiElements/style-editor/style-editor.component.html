@@ -6,18 +6,236 @@
   <div class="styleTemplates styleEditor">
     <div class="Template model">
       <table><tbody>
-        <tr>
+      <tr>
         <td>Grid</td>
-          <td>X: <input type="number" class="gridX" min="0" step="1" placeholder="off"> Y: <input type="number" class="gridY" min="0" step="1"  placeholder="off"></td>
-        </tr>
-        <tr>
-          <td>Zoom</td>
-          <td>X: <input type="number" class="zoomX" min="0" step="0.01" placeholder="1"> Y: <input type="number" class="zoomY" min="0" step="0.01" placeholder="1"></td>
-        </tr>
-        <tr><td colspan="2"><label><input type="checkbox" class="showGrid">Show grid</label></td></tr>
-        <tr><td colspan="2"><label><input type="color" class="graphColor">Background color</label></td></tr>
-        </tbody></table>
+        <td>X: <input type="number" class="gridX" min="0" step="1" placeholder="off"> Y: <input type="number" class="gridY" min="0" step="1"  placeholder="off"></td>
+      </tr>
+      <tr>
+        <td>Zoom</td>
+        <td>X: <input type="number" class="zoomX" min="0" step="0.01" placeholder="1"> Y: <input type="number" class="zoomY" min="0" step="0.01" placeholder="1"></td>
+      </tr>
+      <tr><td colspan="2"><label><input type="checkbox" class="showGrid">Show grid</label></td></tr>
+      <tr><td colspan="2"><label><input type="color" class="graphColor">Background color</label></td></tr>
+      </tbody></table>
+    </div>
+
+    <div class="Template modelpiece">
+      <!-- https://www.key-shortcut.com/en/writing-systems/35-symbols/arrows -->
+      <div class="arrowContainer">
+        <button class="arrow up btn btn-primary">⇪</button>
+        <h6 class="tsclass">TS_Class</h6>
+        <button class="arrow down btn btn-primary">⇩</button>
       </div>
+      <label class="m1 iclass">
+        <input type="checkbox" class="showAsEdge">
+        <span class="showAsEdgeText">#####</span>
+      </label>
+
+      <div class="style own colContainer">
+        <div class="separatorShell top">
+          <label class="colChild">
+            <div class="roww">
+              <h6 class="vertexStyle separator htmllevel"></h6>
+            </div>
+            <div class="colChild">
+              <span class="stylelabel">Applied view:</span>
+              <select class="stylename"></select>
+            </div>
+          </label>
+          <button class="helpButton btn btn-info" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
+        </div>
+        <label class="allowEdit">This style is being inherited and cannot be modified here.<br>You need a local copy to allow Edit.<button class="allowEdit btn btn-secondary">Make it</button></label>
+        <div contenteditable="true" class="html" placeholder="Html for $##name$ (m2 class)."></div>
+
+        <!---->
+        <div class="roww nowrap">
+          <button target="div.detail.measurable" class="detail measurable btn btn-primary">
+            <span class="closed">
+              <label class="measurable">
+                <input type="checkbox">
+                <span>Measurable</span>
+              </label>
+              <div class="HorizontalContainer"><span class="HorizontalChild">⮟</span><span class="HorizontalChild">⮟</span><span class="HorizontalChild">⮟</span></div>
+            </span>
+            <span class="opened">
+              <label class="measurable">
+              </label>
+              <div class="HorizontalContainer"><span class="HorizontalChild">⮝</span><span class="HorizontalChild">⮝</span><span class="HorizontalChild">⮝</span></div>
+            </span>
+          </button>
+          <button target="div.detail.save" class="detail save btn btn-primary">
+            <span class="closed">Save detail</span>
+            <span class="opened">
+              <div class="HorizontalContainer"><span class="HorizontalChild">⮝</span><span class="HorizontalChild">⮝</span><span class="HorizontalChild">⮝</span></div>
+            </span>
+          </button>
+        </div>
+        <div class="detail measurable" style="display: none">
+          <!--
+          		          left	  right	  eval
+
+            r_		      str	    any	    /     <-- add dataset to name input.
+            d_		      str	    any	    /
+            _		        /	      js	    any
+            _rule		    $##a$  	js	    any
+            _export		  jq	    js	    any
+            _chainFinal	export
+            _chain		  export
+            _constraint	size	  js	    bool	inequality
+            _dstyle		  /	      js->css	str
+            _import		  size	  js	    any
+          -->
+          <div class="template measurable _root roww columnContainer">
+            <button class="deleteRule columnChild btn btn-danger">X</button>
+            <div class="columnChild">
+              <div class="roww hideOn r_ d_">
+                <label>
+                  <span>Name</span>
+                  <span class="nameprefix">_</span>
+                  <input class="fill name" type="text" placeholder="attribute name" pattern="[.]+">
+                </label>
+              </div>
+              <label class="expressionRoot">
+                <input class="leftside hideOn _ _dstyle _chain _chainFinal" type="text" placeholder="Left side">
+                <span class="operatortext hideOn _constraint _ _dstyle operator">=</span>
+                <select class="hideOn _ _dstyle operator"><optgroup label="operator">
+                  <option value="<=">&lt;=</option>
+                  <option value="=">=</option>
+                  <option value=">=">&gt;=</option>
+                </optgroup></select>
+                <input class="rightside hideon_chain _chainFinal " type="text" placeholder="Right side">
+              </label>
+              <div class="roww hideOn r_ d_">
+                <label>
+                  <span>Relative target</span>
+                  <input class="fill relativetarget" type="text" placeholder="jQuery selector">
+                </label>
+              </div>
+              <div class="roww hideOn r_ d_">
+                <label>
+                  <span>Evaluation (debug)</span>
+                  <input readonly class="fill evaluation" type="text" placeholder="empty string">
+                </label>
+              </div>
+              <a class="roww outputerror left"></a>
+              <a class="roww outputerror right"></a>
+            </div>
+          </div>
+          <!-- TEMPLATES END -->
+          <h6 class="addHeader">
+            <button class="btn btn-secondary addmeasurable">Add</button>
+            <select class="attributetypeadd"><optgroup label="Attribute type">
+              <option value="d_">jQueryUI drag option</option>
+              <option value="r_">jQueryUI resize option</option>
+              <option value="_rule">_rule</option>
+              <option value="_dstyle">_dstyle</option>
+              <option value="_export">_export</option>
+              <option value="_constraint">_constraint</option>
+              <option value="_import">_import</option>
+              <option value="_chain">_chain</option>
+              <option value="_chainFinal">_chainFinal</option>
+              <option value="_">_ (Pseudo-variable)</option>
+            </optgroup></select>
+          </h6>
+
+          <h6>_D</h6>
+          <div class="d_Container"></div>
+          <h6>_R</h6>
+          <div class="r_Container"></div>
+          <h6>_ (Pseudo-variables)</h6>
+          <div class="_Container"></div>
+          <h6>_Rule</h6>
+          <div class="_ruleContainer"></div>
+          <h6>_Export</h6>
+          <div class="_exportContainer"></div>
+          <h6>_Constraint</h6>
+          <div class="_constraintContainer"></div>
+          <h6>_Dstyle</h6>
+          <div class="_dstyleContainer"></div>
+          <h6>_Import</h6>
+          <div class="_importContainer"></div>
+          <h6>_Chain</h6>
+          <div class="_chainContainer"></div>
+          <h6>_ChainFinal</h6>
+          <div class="_chainFinalContainer"></div>
+        </div>
+        <div class="detail save" style="display: none">
+          <div class="saveasrow">
+            <button class="delete btn btn-secondary">Delete</button>
+            <button class="saveas btn btn-secondary">Save as</button>
+            <input class="saveas form-control" placeholder="new style name">
+          </div>
+          <h6>Style is compatible with:</h6>
+          <div class="compatibleRow">
+            <label><span>M2 Elements</span><input class="metamodel" type="checkbox"></label>
+            <label><span>M1 Elements</span><input class="model" type="checkbox"></label>
+          </div>
+          <h6>And appliable to:</h6>
+          <div class="compatibleRow">
+            <label><span>Class</span><input class="class" type="checkbox"></label>
+            <label><span>Attributes</span><input class="attribute" type="checkbox"></label>
+            <label><span>References</span><input class="reference" type="checkbox"></label>
+            <label><span>Operations</span><input class="operation" type="checkbox"></label>
+            <label><span>Parameters</span><input class="parameter" type="checkbox"></label>
+          </div>
+        </div>
+
+        <div class="separatorShell">
+          <h6 class="vertexStyle separator">
+            <label><span>Preview&nbsp;of&nbsp;</span>
+              <select class="previewselector"></select>
+            </label></h6>
+          <button class="helpButton vertex btn btn-info" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
+        </div>
+        <!---->
+
+      <div class="style instances colContainer">
+        <div class="separatorShell top">
+          <label class="colChild">
+            <div class="roww">
+              <h6 class="vertexStyle separator htmllevel"></h6>
+            </div>
+            <div class="colChild">
+              <span class="stylelabel">Style:</span>
+              <select class="stylename"></select>
+            </div>
+          </label>
+          <button class="helpButton btn btn-info" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
+        </div>
+        <div contenteditable="true" class="html" placeholder="Html for $##name$ (m2 class)."></div>
+        <button class="detail btn btn-primary">Save detail</button>
+        <div class="detail" style="display: none">
+          <div class="saveasrow">
+            <button class="delete btn btn-secondary">Delete</button>
+            <button class="saveas btn btn-secondary">Save as</button>
+            <input class="saveas form-control" placeholder="new style name">
+          </div>
+          <h6>Style is compatible with:</h6>
+          <div class="compatibleRow">
+            <label><span>M2 Elements</span><input class="metamodel" type="checkbox"></label>
+            <label><span>M1 Elements</span><input class="model" type="checkbox"></label>
+          </div>
+          <h6>And appliable to:</h6>
+          <div class="compatibleRow">
+            <label><span>Class</span><input class="class" type="checkbox"></label>
+            <label><span>Attributes</span><input class="attribute" type="checkbox"></label>
+            <label><span>References</span><input class="reference" type="checkbox"></label>
+            <label><span>Operations</span><input class="operation" type="checkbox"></label>
+            <label><span>Parameters</span><input class="parameter" type="checkbox"></label>
+          </div>
+        </div>
+        <div class="separatorShell">
+          <h6 class="vertexStyle separator">
+            <label><span>Preview&nbsp;of&nbsp;</span>
+              <select class="previewselector"></select>
+            </label></h6>
+          <button class="helpButton vertex btn btn-info" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
+        </div>
+        <div class="preview"></div>
+      </div>
+
+
+    </div>
 
     <div class="Template vertex classe">
       <label class="m2hide">
@@ -26,23 +244,23 @@
       </label>
 
       <div class="separatorShell top">
-        <h2 class="vertexStyle separator">Own Html:</h2>
+        <h6 class="vertexStyle separator"><span>Own Html:</span></h6>
         <button class="helpButton vertex" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
       <div contenteditable="true" class="vertexStyle own html" placeholder="Html for $##name$ (m2 class)."></div>
       <div class="separatorShell">
-        <h2 class="vertexStyle separator">Preview:</h2>
+        <h6 class="vertexStyle separator"><span>Preview:</span></h6>
         <button class="helpButton vertex" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
       <div class="vertexStyle own preview"></div>
 
       <div class="separatorShell top m1hide">
-        <h2 class="vertexStyle separator">Instances Html:</h2>
+        <h6 class="vertexStyle separator"><span>Instances&nbsp;Html:</span></h6>
         <button class="helpButton vertex" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
       <div contenteditable="true" class="vertexStyle instances html m1hide" placeholder="Html for instances of $##name$ (m1 class)."></div>
       <div class="separatorShell m1hide">
-        <h2 class="vertexStyle separator">Preview:</h2>
+        <h6 class="vertexStyle separator"><span>Preview:</span></h6>
         <button class="helpButton vertex" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
       <div class="vertexStyle instances preview m1hide"></div>
@@ -50,23 +268,23 @@
 
     <div class="Template attribute">
       <div class="separatorShell top">
-        <h2 class="attributeStyle separator">Own Html:</h2>
+        <h6 class="attributeStyle separator">Own Html:</h6>
         <button class="helpButton field" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
       <div contenteditable="true" class="attributeStyle own html" placeholder="Html for $##name$ (m2 attribute)."></div>
       <div class="separatorShell">
-        <h2 class="attributeStyle separator">Preview:</h2>
+        <h6 class="attributeStyle separator">Preview:</h6>
         <button class="helpButton field" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
       <div class="attributeStyle own preview"></div>
 
       <div class="separatorShell top m1hide">
-        <h2 class="attributeStyle separator">Instances Html:</h2>
+        <h6 class="attributeStyle separator">Instances Html:</h6>
         <button class="helpButton field" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
       <div contenteditable="true" class="attributeStyle instances html m1hide" placeholder="Html for instances of $##name$ (m1 attribute)."></div>
       <div class="separatorShell m1hide">
-        <h2 class="attributeStyle separator">Preview:</h2>
+        <h6 class="attributeStyle separator">Preview:</h6>
         <button class="helpButton field" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
       <div class="attributeStyle instances preview m1hide"></div>
@@ -74,23 +292,23 @@
 
     <div class="Template reference">
       <div class="separatorShell top">
-        <h2 class="referenceStyle separator">Own Html:</h2>
+        <h6 class="referenceStyle separator">Own Html:</h6>
         <button class="helpButton field" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
       <div contenteditable="true" class="referenceStyle own html" placeholder="Html for $##name$ (m2 reference)."></div>
       <div class="separatorShell">
-        <h2 class="referenceStyle separator">Preview:</h2>
+        <h6 class="referenceStyle separator">Preview:</h6>
         <button class="helpButton field" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
       <div class="referenceStyle own preview"></div>
 
       <div class="separatorShell top m1hide">
-        <h2 class="referenceStyle separator">Instances Html:</h2>
+        <h6 class="referenceStyle separator">Instances Html:</h6>
         <button class="helpButton field" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
       <div contenteditable="true" class="referenceStyle instances html m1hide" placeholder="Html for instances of $##name$ (m1 reference)."></div>
       <div class="separatorShell m1hide">
-        <h2 class="referenceStyle separator">Preview:</h2>
+        <h6 class="referenceStyle separator">Preview:</h6>
         <button class="helpButton field" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
       <div class="referenceStyle instances preview m1hide"></div>
@@ -135,7 +353,7 @@
         <td>Width</td>
         <td><input type="number" class="edgeWidth selected" min="0" step="0.1" placeholder="0"></td>
       </tr>
-    </tbody></table>
+      </tbody></table>
       <h1>EdgePoint style</h1>
       <table><tbody>
       <tr><td colspan="2" class="title">On normal status</td></tr>
@@ -192,7 +410,7 @@
       </tbody></table>
       <div contenteditable="true" class="edgeStyle label html" placeholder="Label of link. Not filled means without label."></div>
       <div class="separatorShell">
-        <h2 class="edgeStyle separator">Preview:</h2>
+        <h6 class="edgeStyle separator">Preview:</h6>
         <button class="helpButton edgeLabel" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
       <div class="edgeStyle preview"></div>
@@ -200,23 +418,23 @@
 
     <div class="Template operation">
       <div class="separatorShell top">
-        <h2 class="operationStyle separator">Own Html:</h2>
+        <h6 class="operationStyle separator">Own Html:</h6>
         <button class="helpButton field" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
       <div contenteditable="true" class="operationStyle own html" placeholder="Html for $##name$ (Operation)."></div>
       <div class="separatorShell">
-        <h2 class="operationStyle separator">Preview:</h2>
+        <h6 class="operationStyle separator">Preview:</h6>
         <button class="helpButton field" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
       <div class="operationStyle own preview"></div>
 
       <div class="separatorShell top m1hide">
-        <h2 class="operationStyle separator">Instances Html:</h2>
+        <h6 class="operationStyle separator">Instances Html:</h6>
         <button class="helpButton field" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
       <div contenteditable="true" class="operationStyle instances html m1hide" placeholder="Html for instances of $##name$ (Operation, m1 view)."></div>
       <div class="separatorShell m1hide">
-        <h2 class="operationStyle separator">Preview:</h2>
+        <h6 class="operationStyle separator">Preview:</h6>
         <button class="helpButton field" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
       <div class="operationStyle instances preview m1hide"></div>
@@ -224,23 +442,23 @@
 
     <div class="Template parameter">
       <div class="separatorShell top">
-        <h2 class="parameterStyle separator">Own Html:</h2>
+        <h6 class="parameterStyle separator">Own Html:</h6>
         <button class="helpButton field" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
       <div contenteditable="true" class="parameterStyle own html" placeholder="Html for $##name$ (m2 parameter)."></div>
       <div class="separatorShell">
-        <h2 class="parameterStyle separator">Preview:</h2>
+        <h6 class="parameterStyle separator">Preview:</h6>
         <button class="helpButton field" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
       <div class="parameterStyle own preview"></div>
 
       <div class="separatorShell top m1hide">
-        <h2 class="parameterStyle separator">Instances Html:</h2>
+        <h6 class="parameterStyle separator">Instances Html:</h6>
         <button class="helpButton field" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
       <div contenteditable="true" class="parameterStyle instances html m1hide" placeholder="Html for instances of $##name$ (Parameter, m1 view)."></div>
       <div class="separatorShell m1hide">
-        <h2 class="parameterStyle separator">Preview:</h2>
+        <h6 class="parameterStyle separator">Preview:</h6>
         <button class="helpButton field" matTooltip="todo: explain .EndPoint, .TypeSelector, .ClassSelector...">?</button>
       </div>
       <div class="parameterStyle instances preview m1hide"></div>

@@ -16,7 +16,7 @@ import {
 
 export abstract class IFeature extends IClassChild {
   metaParent: IFeature;
-  instances: IFeature[] = [];
+  instances: IFeature[];
   parent: IClass;
 
   // linkToMetaParent<T extends IFeature>(feature: T) { this.metaParent = feature; }

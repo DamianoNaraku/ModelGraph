@@ -1,9 +1,9 @@
 import {
   AttribETypes,
-  Dictionary,
+  Dictionary, EOperation, EParameter,
   IAttribute,
   IModel,
-  Json,
+  Json, M3Attribute,
   M3Class,
   M3Package,
   M3Reference,
@@ -116,10 +116,9 @@ export class EType {
 
 export class MetaMetaModel extends IModel {
   static emptyMetaMetaModel: string = '' + 'empty Meta-MetaModel: todo'; // todo
-
-  childrens: M3Package[] = [];
-  metaParent: MetaMetaModel = null;
-  instances: MetaModel[] = [];
+  childrens: M3Package[];
+  metaParent: MetaMetaModel;
+  instances: MetaModel[];
 
   constructor(json?: Json) { super(null); this.parse(json, true); }
 
@@ -127,13 +126,7 @@ export class MetaMetaModel extends IModel {
 
   getAllClasses(): M3Class[] { return super.getAllClasses() as M3Class[]; }
   getAllReferences(): M3Reference[] { return super.getAllReferences() as M3Reference[]; }
-  getClass(fullname: string, throwErr: boolean = true, debug: boolean = true): M3Class {
-    return super.getClass(fullname, throwErr, debug) as M3Class; }
 
-  getDefaultPackage(): M3Package {
-    if (this.childrens.length !== 0) { return this.childrens[0]; }
-    U.ArrayAdd(this.childrens, new M3Package(this, null));
-    return this.childrens[0]; }
 
   generateModel(): Json { return undefined; }
 
@@ -149,4 +142,18 @@ export class MetaMetaModel extends IModel {
 
   refreshGUI_Alone(debug: boolean = true): void { }
 
+  getDefaultPackage(): M3Package {
+    if (this.childrens.length !== 0) { return this.childrens[0]; }
+    U.ArrayAdd(this.childrens, new M3Package(this, null));
+    return this.childrens[0]; }
+
+  getPackage(): M3Package { return this.getDefaultPackage(); }
+
+  getClass(fullname: string = null, throwErr: boolean = true, debug: boolean = true): M3Class { return this.getDefaultPackage().childrens[0]; }
+
+  getAttribute(): M3Attribute { return this.getClass().attributes[0]; }
+  getReference(): M3Reference { return this.getClass().references[0]; }
+  getOperation(): EOperation { return this.getClass().getOperations()[0]; }
+  getParameter(): EParameter { return this.getOperation().childrens[0]; }
+  duplicate(nameAppend: string = '_Copy'): MetaMetaModel { U.pe(true, 'invalid operation: m3.duplicate();'); return this; }
 }

@@ -7,11 +7,12 @@ import {
   IClassChild,
   Info,
   Json,
-  M2Class,
+  M2Class, M3Class,
   ModelPiece,
   ShortAttribETypes,
   U
 } from '../../../common/Joiner';
+import {Vieww} from '../../../GuiStyles/viewpoint';
 // export abstract class EOperation extends IClassChild {}
 /*
 export class OperationVisibility {
@@ -32,17 +33,18 @@ export enum OperationVisibility {
   protectedprivate = 'protected private', }
 
 export class EOperation extends IClassChild {
+  static stylesDatalist: HTMLDataListElement;
   // instances: IClassChild[] = undefined;
   // metaParent: IClassChild = undefined;
   parent: IClass;
-  childrens: EParameter[] = [];
+  childrens: EParameter[];
   exceptionsStr: string; // classlist to be latera processed and linked.
   visibility: OperationVisibility = OperationVisibility.private;
   detailIsOpened: boolean = false && false;
   // exceptions: IClass[];
   // todo: ha davvero senso processarli e creare anche IClass.Object etc? mi conviene tenerli a stringa.
 
-  constructor(parent: M2Class, json: Json) {
+  constructor(parent: M2Class | M3Class, json: Json) {
     super(parent, null);
     this.parse(json); }
 
@@ -103,7 +105,7 @@ export class EOperation extends IClassChild {
     return info; }
 
   parse(json: Json, destructive?: boolean): void {
-    this.setName(Json.read<string>(json, ECoreOperation.namee, 'Func_1'));
+    this.setName( (this.parent instanceof M3Class) ? 'Operation' : Json.read<string>(json, ECoreOperation.namee, 'Func_1'));
     const eType = Json.read<string>(json, ECoreOperation.eType, AttribETypes.void); // '#//' + this.parent.name
     this.parsePrintableTypeName(eType);
     if (!this.primitiveType && !this.classType) { this.setPrimitiveType(EType.get(ShortAttribETypes.void)); }
@@ -119,7 +121,14 @@ export class EOperation extends IClassChild {
     for (i = 0; i < parameters.length; i++) {
       const param: EParameter = new EParameter(this, parameters[i]);
       // U.ArrayAdd(this.arguments, param);
-      U.ArrayAdd(this.childrens, param); }
+      U.ArrayAdd(this.childrens, param); }/*
+    this.views = [];
+    for(i = 0; i < this.parent.views.length; i++) {
+      const pv: ClassView = this.parent.views[i];
+      const v = new OperationView(pv);
+      this.views.push(v);
+      pv.operationViews.push(v); }*/
+
     /*  https://codebeautify.org/xmltojson
 				"Operations": [ {
 						"_name": "EExceptionNameCustom",

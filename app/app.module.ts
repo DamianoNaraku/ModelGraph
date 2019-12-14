@@ -22,15 +22,29 @@ import {
   DetectZoom,
   Dictionary,
   M2Class,
-  GraphPoint, Options, MyConsole, EType, MetaMetaModel, ShortAttribETypes, ECoreRoot
+  GraphPoint,
+  //Options,
+  MyConsole,
+  EType,
+  MetaMetaModel,
+  ShortAttribETypes,
+  ECoreRoot,
+  M3Class,
+  MClass,
+  IClass,
+  IClassChild,
+  EOperation,
+  MPackage,
+  M2Reference, M2Package, M2Attribute, IPackage, M3Package, M3Attribute, EParameter, IAttribute, MReference, IReference, M3Reference, MAttribute
 } from './common/Joiner';
-import { PropertyBarrComponent } from './guiElements/property-barr/property-barr.component';
-import { MGraphHtmlComponent } from './guiElements/m-graph-html/m-graph-html.component';
+import { PropertyBarrComponent }   from './guiElements/property-barr/property-barr.component';
+import { MGraphHtmlComponent }     from './guiElements/m-graph-html/m-graph-html.component';
 import { DamContextMenuComponent } from './guiElements/dam-context-menu/dam-context-menu.component';
-import { StyleEditorComponent } from './guiElements/style-editor/style-editor.component';
-import { ConsoleComponent } from './guiElements/console/console.component';
+import { StyleEditorComponent }    from './guiElements/style-editor/style-editor.component';
+import { ConsoleComponent }        from './guiElements/console/console.component';
 import KeyDownEvent = JQuery.KeyDownEvent;
-import {saveEntries} from './Database/LocalStorage';
+import {saveEntries}               from './Database/LocalStorage';
+import {ViewPoint}                 from './GuiStyles/viewpoint';
 // @ts-ignore
 // @ts-ignore
 // @ts-ignore
@@ -73,6 +87,7 @@ import {saveEntries} from './Database/LocalStorage';
 export class AppModule { }
 export class Status {
   static status: Status = null;
+  static userid: string;
   mmm: MetaMetaModel;
   mm: MetaModel = null;
   m: Model = null;
@@ -110,6 +125,17 @@ export class Status {
 
   isM(): boolean {return this.getActiveModel() === this.m; }
   isMM(): boolean {return this.getActiveModel() === this.mm; }
+
+  enableAutosave(timer: number): void {
+    $(window).off('beforeunload.unload_autosave').on('beforeunload.unload_autosave', () => { this.autosave(); });
+    localStorage.setItem('autosave', 'true');
+    setInterval(() => { this.autosave(); }, timer);
+  }
+  autosave(): void {
+    this.mm.save(true, null);
+    this.m.save(true, null);
+    console.log('autosave completed.');
+  }
 }
 
 
@@ -129,7 +155,7 @@ function main0(tentativi: number = 0) {
   // U.loadScript('./app/common/jquery-ui-1.12.1/jquery-ui.structure.js');
   U.loadScript('https://code.jquery.com/ui/1.12.1/jquery-ui.min.js');
   main();
-  console.log('main(), $ loaded:', $ !== undefined, 'status: ', status);
+  // console.log('main(), $ loaded:', $ !== undefined, 'status: ', Status.status);
 }
 /*function mainForceTabChange(tentativi: number = 0) {
   let retry = false;
@@ -166,14 +192,41 @@ function globalevents(): void {
     console.log('documentKeyDown: ', e.key, e.keyCode);
     if (e.key === 'Escape') { Status.status.getActiveModel().graph.edgeChangingAbort(e); }
   });
+  window['' + 'U'] = U;
+  window['' + 'IModel'] = IModel;
+  window['' + 'Status'] = Status;
+  window['' + 'M3Model'] = MetaMetaModel;
+  window['' + 'M2Model'] = MetaModel;
+  window['' + 'MModel'] = Model;
+  window['' + 'IPackage'] = IPackage;
+  window['' + 'M3Package'] = M3Package;
+  window['' + 'M2Package'] = M2Package;
+  window['' + 'MPackage'] = MPackage;
+  window['' + 'IClass'] = IClass;
+  window['' + 'M3Class'] = M3Class;
+  window['' + 'M2Class'] = M2Class;
+  window['' + 'MClass'] = MClass;
+  window['' + 'IClassChild'] = IClassChild;
+  window['' + 'EOperation'] = EOperation;
+  window['' + 'EParameter'] = EParameter;
+  window['' + 'IReference'] = IReference;
+  window['' + 'M3Reference'] = M3Reference;
+  window['' + 'M2Reference'] = M2Reference;
+  window['' + 'MReference'] = MReference;
+  window['' + 'IAttribute'] = IAttribute;
+  window['' + 'M3Attribute'] = M3Attribute;
+  window['' + 'M2Attribute'] = M2Attribute;
+  window['' + 'MAttribute'] = MAttribute;
   window['' + 'help'] = [
-    'setBackup (backup <= save)',
-    'backupSave (save <= backup)',
+    'setBackup (backup <= saveToDB)',
+    'backupSave (saveToDB <= backup)',
     'destroy (the backup)',
     'discardSave (stop autosave)'];
   window['' + 'destroy'] = () => {
     localStorage.setItem('m1_' + saveEntries.lastOpened, null);
     localStorage.setItem('m2_' + saveEntries.lastOpened, null);
+    localStorage.setItem('m1_' + saveEntries.lastOpenedView, null);
+    localStorage.setItem('m2_' + saveEntries.lastOpenedView, null);
     localStorage.setItem('backupMM', null);
     localStorage.setItem('backupGUI', null);
     localStorage.setItem('backupM', null);
@@ -201,6 +254,18 @@ function main() {
   (window as any).U = U;
   (window as any).status = Status.status;
   U.tabSetup();
+  $('app-mm-graph-html .propertyBarContainer .UtabHeader').on('click', (e) =>  {
+    if (e.currentTarget.innerText === 'Style') { Status.status.mm.graph.propertyBar.styleEditor.onShow(); } else
+    if (e.currentTarget.innerText === 'Structured') { Status.status.mm.graph.propertyBar.onShow(); } else
+    if (e.currentTarget.innerText === 'Raw')  { Status.status.mm.graph.propertyBar.onShow(true); }
+    else { U.pe(true, 'unrecognized right-side tab:', e.currentTarget); }
+  });
+  $('app-m-graph-html .propertyBarContainer .UtabHeader').on('click', (e) =>  {
+    if (e.currentTarget.innerText === 'Style') { Status.status.m.graph.propertyBar.styleEditor.onShow(); } else
+    if (e.currentTarget.innerText === 'Structured') { Status.status.m.graph.propertyBar.onShow(); } else
+    if (e.currentTarget.innerText === 'Raw')  { Status.status.m.graph.propertyBar.onShow(true); }
+    else { U.pe(true, 'unrecognized right-side tab:', e.currentTarget); }
+  });
   U.resizableBorderSetup();
   ECoreRoot.initializeAllECoreEnums();
   globalevents();
@@ -208,7 +273,8 @@ function main() {
   const mconsole: MyConsole = new MyConsole($('.mconsole')[0]);
 
   let tmp: any;
-  let useless;
+  let useless: any;
+  let i: number;
   U.pw((tmp = +DetectZoom.device()) !== 1, 'Current zoom level is different from 100%.',
     'The graph part of this website may be graphically misplaced due to a bug with Svg\'s <foreignObject> content.',
     'current zoom:' + (+tmp * 100) + '%',
@@ -240,19 +306,29 @@ function main() {
   EType.staticInit();
   DamContextMenuComponent.staticInit();
 
+  let m2Viewpoints: Json[] = [];
+  let m1Viewpoints: Json[] = [];
   tmp = localStorage.getItem('m2_' + saveEntries.lastOpened);
   if (tmp && tmp !== '' && tmp !== 'null' && tmp !== 'undefined') { MetaModelinputStr = tmp; }
 
   tmp = localStorage.getItem('m1_' + saveEntries.lastOpened);
   if (tmp && tmp !== '' && tmp !== 'null' && tmp !== 'undefined') { ModelInputStr = tmp; }
 
+  tmp = localStorage.getItem('m2_' + saveEntries.lastOpenedView);
+  if (tmp && tmp !== '' && tmp !== 'null' && tmp !== 'undefined') { m2Viewpoints = tmp; }
+  tmp = localStorage.getItem('m1_' + saveEntries.lastOpenedView);
+  if (tmp && tmp !== '' && tmp !== 'null' && tmp !== 'undefined') { m1Viewpoints = tmp; }
+
   console.log('loading MMM:', MetaMetaModelStr);
   console.log('loading MM:', MetaModelinputStr);
   console.log('loading M:', ModelInputStr);
+  console.log('loading MM_viewpoints:', m2Viewpoints);
+  console.log('loading M_viewpoints:', m1Viewpoints);
   // inputStr = atob(inputStr);
   Status.status.mmm = new MetaMetaModel(null);
   useless = new TopBar();
   Status.status.mm = new MetaModel(JSON.parse(MetaModelinputStr), Status.status.mmm);
+  // console.log('m3:', Status.status.mmm, 'm2:', Status.status.mm, 'm1:', Status.status.m); return;
   Status.status.mm.fixReferences();
   Status.status.m = new Model(JSON.parse(ModelInputStr), Status.status.mm);
   console.log('m3:', Status.status.mmm, 'm2:', Status.status.mm, 'm1:', Status.status.m);
@@ -264,8 +340,8 @@ function main() {
   useless = new IGraph(Status.status.mm, document.getElementById('metamodel_editor'));
   useless = new IGraph(Status.status.m, document.getElementById('model_editor'));
   Status.status.loadedGUI = true;
-  Status.status.mm.graph.propertyBar.show(Status.status.mm, false);
-  Status.status.m.graph.propertyBar.show(Status.status.m, false);
+  Status.status.mm.graph.propertyBar.show(Status.status.mm, null, false);
+  Status.status.m.graph.propertyBar.show(Status.status.m, null, false);
   M2Class.updateAllMMClassSelectors();
   EType.fixPrimitiveTypeSelectors();
   // M2Class.updateAllMClassSelectors();
@@ -273,7 +349,36 @@ function main() {
   // per evitare di perdere oltre X minuti di lavoro.
   // In condizioni normali non è necessario perchè il salvataggio è effettuato al cambio di pagina asincronamente
   // e con consegna dei dati garantita dal browser anche a pagina chiusa (navigator.beacon)
-  Options.enableAutosave(2 * 60 * 1000);
+  let marr: IModel[] = [Status.status.mm, Status.status.m];
+  let vpmatjson: Json[][] = [m2Viewpoints, m1Viewpoints];
+  console.log(m2Viewpoints, m1Viewpoints, Status.status.mm.graph.viewPointShell);
+  let j: number;
+  for (j = 0; j < marr.length; j++) {
+    const vparr: Json[] = vpmatjson[j];
+    const m: IModel = marr[j];
+    let v: ViewPoint;
+    for (i = 0; i < vparr.length; i++) {
+      const jsonvp: ViewPoint = vparr[i] as any;
+      v = new ViewPoint(m);
+      v.clone(jsonvp);
+      v.updateTarget(m);
+      m.graph.viewPointShell.add(v, false); // [persistent isApplied] STEP 1: qui setto checked sulla gui in base al v.isApplied salvato.
+      v.isApplied = false; // STEP 2: qui affermo che non è stato ancora applicato
+    }
+    if (vparr.length === 0) {
+      v = new ViewPoint(m); // m.getPrefix() + '_VP autogenerated');
+      v.isApplied = true;
+      m.graph.viewPointShell.add(v, false); // [persistent isApplied] STEP 1: qui setto checked sulla gui in base al v.isApplied salvato.
+      v.isApplied = false; }
+    m.graph.viewPointShell.refreshApplied(); // STEP 3: qui vedo che non è stato applicato, ma è stato ordinato dalla gui di applicarlo -> lo applico.
+  }/*
+  ViewPoint.deserializeAndApply(m1Viewpoints, Status.status.m);
+  ViewPoint.deserializeAndApply(m2Viewpoints, Status.status.mm);
+  if (!m2Viewpoints.length) new ViewPoint(Status.status.mm.fullname(),  Status.status.mm).apply(Status.status.mm);
+  if (!m1Viewpoints.length) new ViewPoint(Status.status.m.fullname(),  Status.status.m).apply(Status.status.m);*/
+  // U.pe(true,'');
+  Status.status.enableAutosave(2 * 60 * 1000);
+  //Options.enableAutosave(2 * 60 * 1000);
   // Options.Load(Status.status);
 
 }

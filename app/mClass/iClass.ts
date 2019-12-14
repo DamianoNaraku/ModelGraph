@@ -38,17 +38,18 @@ import {
   M3Attribute,
   M3Feature,
   EdgeModes,
-  EdgePointStyle, EOperation
+  EdgePointStyle, EOperation, EParameter, IClassChild,
 } from '../common/Joiner';
+import {first} from 'rxjs/operators';
 
 export abstract class IClass extends ModelPiece {
   parent: IPackage;
-  childrens: IFeature[];
+  childrens: IClassChild[];
   attributes: IAttribute[];
   references: IReference[];
   metaParent: IClass;
   instances: IClass[];
-  referencesIN: IReference[] = null; // external pointers to this class.
+  referencesIN: IReference[] = []; // external pointers to this class.
   shouldBeDisplayedAsEdgeVar: boolean = false && false;
   vertex: IVertex = null;
 
@@ -112,23 +113,32 @@ export abstract class IClass extends ModelPiece {
   }
 
   getReferencePointingHere(): IReference[] { return this.referencesIN; }
-  getStyle(): SVGForeignObjectElement {
-    const html: HTMLElement | SVGElement = super.getStyle(); // U.removeemptynodes(super.getStyle(), true);
-    const container: SVGForeignObjectElement = U.newSvg<SVGForeignObjectElement>('foreignObject');
+  getStyle_oldhtml(): SVGForeignObjectElement {
+    const html: Element = super.getStyle().html; // U.removeemptynodes(super.getStyle(), true);
+    const container: SVGForeignObjectElement = html as SVGForeignObjectElement; //U.newSvg<SVGForeignObjectElement>('foreignObject');
     const size: Size = new Size(0, 0, 0, 0);
     // todo: devi specificarlo che x, y, width, height sono attributi speciali assegnabili agli HTMLElement non-svg e vengono trasmessi.
     // todo: pondera l'uso di U.cloneAllAttributes(html, container); per trasferire gli attributi dell' userStyle-root nell'SvgForeignElem.
+
+    const firstChild: HTMLElement = container.firstChild as HTMLElement;
+    if (!firstChild.style.height || firstChild.style.height === '') { firstChild.style.height = 'auto'; }
+    if (firstChild.style.height === 'auto') { container.dataset.autosize = 'true'; }
+    else if (container.dataset.autosize === 'true') { firstChild.style.height = 'auto'; }
+    // (html.firstChild as HTMLElement).style.height = 'auto'; // allows autosize.
+
+
+    container.classList.add('Class');
+    container.setAttributeNS(null, 'dinamico', 'true');
+    /*
     size.x = +html.getAttribute('x');
     size.y = +html.getAttribute('y');
     size.w = +html.getAttribute('width');
     size.h = +html.getAttribute('height');
-    container.classList.add('Class');
-    container.appendChild(html);
-    container.setAttributeNS(null, 'dinamico', 'true');
-    /*container.setAttributeNS(null, 'x', isNaN(size.x) ? '0' : '' + size.x);
+    container.setAttributeNS(null, 'x', isNaN(size.x) ? '0' : '' + size.x);
     container.setAttributeNS(null, 'y', isNaN(size.y) ? '0' : '' + size.y);
     container.setAttributeNS(null, 'width', isNaN(size.w) ? '200' : '' + size.w);
-    container.setAttributeNS(null, 'height', isNaN(size.h) ? '100' : '' + size.h);*/
+    container.setAttributeNS(null, 'height', isNaN(size.h) ? '100' : '' + size.h);
+    container.appendChild(html);*/
     return container; }
 
   getAttribute(name: string, caseSensitive: boolean = false): IAttribute {
@@ -178,7 +188,7 @@ export abstract class IClass extends ModelPiece {
     this.edgeStyleSelected = other.edgeStyleSelected.clone();
     let i: number;
     for ( i = 0; i < this.childrens.length; i++) {
-      const child: IFeature = this.childrens[i];
+      const child: IClassChild = this.childrens[i];
       if (child instanceof IReference) { this.references.push(child); continue; }
       if (child instanceof IAttribute) { this.attributes.push(child); continue; }
       U.pe(true, 'found class.children not reference neither attribute: ', child);
@@ -195,7 +205,8 @@ export abstract class IClass extends ModelPiece {
     if (!this.edges) { this.generateEdge(); }
     return this.edges; }*/
 
-  linkToMetaParent(meta: IClass): void {
+  /*linkToMetaParent(meta: IClass): void {
+    U.pe(true, 'linkToMetaParent: todo.');
     const outObj: any = {};
     const comformability: number = this.conformability(meta, outObj);
     if (comformability !== 1) {
@@ -209,7 +220,7 @@ export abstract class IClass extends ModelPiece {
     while (++i < attrPermutation.length) { this.attributes[i].linkToMetaParent(meta.attributes[attrPermutation[i]]); }
     i = -1;
     while (++i < refPermutation.length) { this.references[i].linkToMetaParent(meta.references[refPermutation[i]]); }
-  }
+  }*/
 
   conformability(meta: IClass, outObj: any = null/*.refPermutation, .attrPermutation*/, debug: boolean = true): number {
     if (this.attributes > meta.attributes) { return 0; }
@@ -288,7 +299,12 @@ export abstract class IClass extends ModelPiece {
     return ret; }
 
   getOperations(): EOperation[] {
-    if (this instanceof M3Class) { return []; }
+    if (this instanceof M3Class) {
+      let i: number;
+      for (i = 0; i < this.childrens.length; i++) {
+        const c: IClassChild = this.childrens[i];
+        if (c instanceof EOperation) { return [c]; } }
+      U.pe(true, 'failed to find m3Operation'); }
     if (this instanceof M2Class) { return this.operations; }
     if (this instanceof MClass) { return this.metaParent.operations; }
     U.pe(true, 'unexpected class:' + U.getTSClassName(this) + ': ', this);
@@ -299,23 +315,28 @@ export class M3Class extends IClass {
   // childrens: M3Feature[];
   attributes: M3Attribute[];
   references: M3Reference[];
-  referencesIN: M3Reference[] = null; // external pointers to this class.
-  metaParent: M3Class = null;
-  instances: M2Class[] = []; //  | M3Class[] = null;
+  referencesIN: M3Reference[]; // external pointers to this class.
+  metaParent: M3Class;
+  instances: M2Class[]; //  | M3Class[] = null;
 
-  constructor(parent: M3Package, json: Json = null, meta: M3Class = null) {
-    super(parent, meta);
+  constructor(parent: M3Package, json: Json = null) {
+    super(parent, null);
     this.parse(json, true); }
 
-  duplicate(nameAppend?: string, newParent?: ModelPiece): ModelPiece {
-    return undefined;
-  }
+  duplicate(nameAppend?: string, newParent?: ModelPiece): ModelPiece { U.pe(true, 'Invalid operation: m3Class.duplicate()'); return this; }
 
-  generateModel(): Json {
-    return undefined;
-  }
+  generateModel(): Json { U.pe(true, 'Invalid operation: m3Class.generateModel()'); return this; }
 
-  parse(json: Json, destructive?: boolean): void { this.name = 'Class'; }
+  parse(json: Json, destructive?: boolean): void {
+    this.name = 'Class';
+    const a: M3Attribute = new M3Attribute(this, null);
+    const r: M3Reference = new M3Reference(this, null);
+    const o: EOperation = new EOperation(this, null);
+    const p: EParameter = new EParameter(o, null);
+    this.childrens = [a, r, o];
+    this.attributes = [a];
+    this.references = [r];
+  }
 
   refreshGUI_Alone(debug: boolean = true): void { }
 }

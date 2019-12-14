@@ -420,15 +420,15 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
       (e: MouseDownEvent) => { Status.status.getActiveModel().graph.propertyBar.styleEditor.showE(this.logic); });*/
     $html.off('mousedown.startSetMidPoint').on('mousedown.startSetMidPoint',
       (e: MouseDownEvent) => {
-        // const mp: M2Class | IReference = ModelPiece.getLogic(e.currentTarget) as M2Class | IReference;
-        // U.pe( mp === null || mp === undefined, 'unable to get logic of:', e.currentTarget);
+        // const ownermp: M2Class | IReference = ModelPiece.getLogic(e.currentTarget) as M2Class | IReference;
+        // U.pe( ownermp === null || ownermp === undefined, 'unable to get logic of:', e.currentTarget);
         const edge: IEdge = IEdge.get(e);
         U.pe( !e , 'unable to get edge of:', e.currentTarget);
         edge.onMouseDown(e); } );
     $html.off('mousemove.startSetMidPoint').on('mousemove.startSetMidPoint',
       (e: MouseMoveEvent) => {
-        // const mp: M2Class | IReference = ModelPiece.getLogic(e.currentTarget) as M2Class | IReference;
-        // U.pe( mp === null || mp === undefined, 'unable to get logic of:', e.currentTarget);
+        // const ownermp: M2Class | IReference = ModelPiece.getLogic(e.currentTarget) as M2Class | IReference;
+        // U.pe( ownermp === null || ownermp === undefined, 'unable to get logic of:', e.currentTarget);
         const edge: IEdge = IEdge.getByHtml(e.target, true);
         edge.onMouseMove(e); } );
     $html.off('click.addEdgePoint').on('click.addEdgePoint', (e: ClickEvent) => { IEdge.get(e).onClick(e); });

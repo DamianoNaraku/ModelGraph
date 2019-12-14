@@ -9,12 +9,13 @@ import {
   MClass,
   ModelPiece,
   ShortAttribETypes, M2Attribute,
-  U, StringSimilarity, M3Attribute, IVertex, IField, MetaModel, Model, Status, Info
+  U, StringSimilarity, M3Attribute, IVertex, IField, MetaModel, Model, Status, Info,
 } from '../../../../common/Joiner';
 import {del} from 'selenium-webdriver/http';
 
 
 export class MAttribute extends IAttribute {
+  static stylesDatalist: HTMLDataListElement;
   parent: MClass;
   metaParent: M2Attribute;
   // instances: ModelNone[];
@@ -54,6 +55,11 @@ export class MAttribute extends IAttribute {
     super(parent, meta);
     this.parse(json, true); }
 
+    test(){
+      // var topp={x:'$##@WallTopX.values.0$',y:0};var bot={x:'$##@WallBotX.values.0$',y:'$##@WallHeight.values.0$'};if(bot.y<=topp.y){return}e.B9=90+DEGREE(Math.atan((topp.x-bot.x)/(topp.y-bot.y)));
+
+    }
+
   getModelRoot(): Model { return super.getModelRoot() as Model; }
 
   parse(json: Json, destructive: boolean): void {
@@ -64,7 +70,19 @@ export class MAttribute extends IAttribute {
       U.pw(true, 'marked attribute (' + this.metaParent.name + ') with type ', this.getType(), 'values:', this.values, 'this:', this);
       this.mark(true, 'errorValue');
     } else { this.mark(false, 'errorValue'); }
+/*
+    this.views = [];
+    let i: number;
+    for(i = 0; i < this.parent.views.length; i++) {
+      const pv: ClassView = this.parent.views[i];
+      const v = new AttributeView(pv);
+      this.views.push(v);
+      pv.attributeViews.push(v); }*/
   }
+
+  endingName(valueMaxLength: number = 10): string {
+    if (this.values && this.values.length > 0) { return (this.values[0] + '').substr(0, valueMaxLength); }
+    return ''; }
 
   getType(): EType { return (this.metaParent ? this.metaParent.primitiveType : null); }
 

@@ -154,15 +154,15 @@ export class M3Reference extends IReference {
     super(parent, meta);
     this.parse(null); }
 
-  canBeLinkedTo(hoveringTarget: M3Class): boolean { U.pe(true, 'should not be called in m3.'); return true; }
+  canBeLinkedTo(hoveringTarget: M3Class): boolean { U.pe(true, 'Invalid operation: m3Reference.canBeLinkedTo()'); return true; }
 
-  conformability(meta: IReference, debug?: boolean): number { U.pe(true, 'should not be called in m3.'); return 0; }
+  conformability(meta: IReference, debug?: boolean): number { U.pe(true, 'Invalid operation: m3Reference.comformability()'); return 0; }
 
-  duplicate(nameAppend?: string, newParent?: IClass): M3Reference { U.pe(true, 'should not be called in m3.'); return this; }
+  duplicate(nameAppend?: string, newParent?: IClass): M3Reference {  U.pe(true, 'Invalid operation: m3Reference.duplicate()'); return this; }
 
-  generateEdge(): IEdge[] { U.pe(true, 'should not be called in m3.'); return []; }
+  generateEdge(): IEdge[] { U.pe(true, 'Invalid operation: m3Reference.generateEdge()'); return []; }
 
-  generateModel(): Json { U.pe(true, 'should not be called in m3.'); return {}; }
+  generateModel(): Json { U.pe(true, 'Invalid operation: m3Reference.generateModel()'); return {}; }
 
   parse(json: Json, destructive?: boolean): void { this.name = 'Reference'; }
 

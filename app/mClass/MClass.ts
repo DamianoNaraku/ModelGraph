@@ -27,18 +27,19 @@ import {
   Size,
   StringSimilarity,
   EdgeStyle, MFeature, M2Attribute, M3Class, IClass,
-  Dictionary, GraphSize, MPackage, MReference, MAttribute, M2Reference, M2Feature
+  Dictionary, GraphSize, MPackage, MReference, MAttribute, M2Reference, M2Feature,
 } from '../common/Joiner';
 
 export class MClass extends IClass {
+  static stylesDatalist: HTMLDataListElement;
   metaParent: M2Class;
   // instances: ModelNone[];
   parent: MPackage;
   childrens: MFeature[];
   attributes: MAttribute[];
   references: MReference[];
-
-  referencesIN: MReference[] = null; // external pointers to this class.
+  referencesIN: MReference[];
+  // external pointers to this class.
   // id: number;
   // instances: ModelPiece[];
   // metaParent: M2Class;
@@ -58,8 +59,12 @@ export class MClass extends IClass {
     super(pkg, metaVersion);
     if (!pkg && !json && !metaVersion) { return; } // empty constructor for .duplicate();
     U.pe(!metaVersion, 'null metaparent?');
-    this.parse(json, true);
-  }
+    this.parse(json, true); }
+
+  endingName(valueMaxLength: number = 10): string {
+    if (this.attributes.length > 0) { return this.attributes[0].endingName(valueMaxLength); }
+    if (this.references.length > 0) { return this.references[0].endingName(valueMaxLength); }
+    return ''; }
 
   getModelRoot(): Model { return super.getModelRoot() as Model; }
 
@@ -75,10 +80,12 @@ export class MClass extends IClass {
   }
 
   duplicate(nameAppend: string = null, newParent: IPackage | ModelPiece = null): MClass {
-    throw new Error('M.duplicate() todo');
-  }
+    const c = new MClass(null, null, null);
+    c.copy(this);
+    c.refreshGUI_Alone();
+    return c; }
 
-  linkToMetaParent(meta: M2Class): void { return super.linkToMetaParent(meta); }
+  // linkToMetaParent(meta: M2Class): void { return super.linkToMetaParent(meta); }
   generateModel(root: boolean = false): Json {
     /*
        { "-name": "tizio", "attrib2": value2, ...}
@@ -176,7 +183,14 @@ export class MClass extends IClass {
           break;
       }
     }
-    this.refreshGUI_Alone();
+/*
+    this.views = [];
+    for(i = 0; i < this.parent.views.length; i++) {
+      const pv: PackageView = this.parent.views[i];
+      const v = new ClassView(pv);
+      this.views.push(v);
+      pv.classViews.push(v); }*/
+    // this.refreshGUI_Alone();
   }
   modify_Old(json: Json, destructive: boolean = true): void {
     /*{                                                                                           <-- :classroot

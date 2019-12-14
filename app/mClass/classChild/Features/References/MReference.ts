@@ -1,5 +1,7 @@
 import {
-  AttribETypes, GraphPoint, GraphSize,
+  AttribETypes,
+  GraphPoint,
+  GraphSize,
   IAttribute,
   M2Class,
   IEdge,
@@ -7,13 +9,31 @@ import {
   IField,
   IModel,
   IVertex,
-  Json, Model,
+  Json,
+  Model,
   ModelPiece,
-  PropertyBarr, Size, Status, StringSimilarity, MClass, MAttribute,
-  U, ECoreAttribute, ECoreReference, ShortAttribETypes, EType, IReference, Dictionary, MPackage, M3Reference, M2Reference, IClass, Info
+  PropertyBarr,
+  Size,
+  Status,
+  StringSimilarity,
+  MClass,
+  MAttribute,
+  U,
+  ECoreAttribute,
+  ECoreReference,
+  ShortAttribETypes,
+  EType,
+  IReference,
+  Dictionary,
+  MPackage,
+  M3Reference,
+  M2Reference,
+  IClass,
+  Info,
 } from '../../../../common/Joiner';
 
 export class MReference extends IReference {
+  static stylesDatalist: HTMLDataListElement;
   private static loopDetection: Dictionary<number /*MClass id*/, MClass> = {};
 
   parent: MClass;
@@ -33,15 +53,23 @@ export class MReference extends IReference {
     super(classe, metaParent);
     if (!classe && !json && !metaParent) { return; } // empty constructor for .duplicate();
     this.parse(json, true); }
-
+/*
   getStyle(): HTMLElement | SVGElement {
     const htmlRaw: HTMLElement | SVGElement = super.getStyle();
     const $html = $(htmlRaw);
     const $selector = $html.find('select.ClassSelector');
     M2Class.updateMMClassSelector($selector[0] as HTMLSelectElement, this.getm2Target());
-    return htmlRaw; }
+    return htmlRaw; }*/
 
   getm2Target(): M2Class { return this.metaParent.classType; }
+
+  endingName(valueMaxLength: number = 10): string {
+    if (this.mtarget.length > 0) {
+      const t: MClass = this.mtarget[0];
+      if (t instanceof MClass && t.attributes.length > 0) {
+        const a: MAttribute = t.attributes[0];
+        return a.endingName(valueMaxLength); } }
+    return ''; }
 
   conformability(meta: M2Reference, debug: boolean = true): number {
     let comformability = 0;
@@ -137,7 +165,13 @@ export class MReference extends IReference {
       const t: MClass = new MClass(pkg, json[i], targetMM);
       U.ArrayAdd(pkg.childrens, t);
       if (destructive) { U.ArrayAdd(this.mtarget, t); /* this.edges.push(null); */ }
-    }
+    }/*
+    this.views = [];
+    for(i = 0; i < this.parent.views.length; i++) {
+      const pv: ClassView = this.parent.views[i];
+      const v = new ReferenceView(pv);
+      this.views.push(v);
+      pv.referenceViews.push(v); }*/
   }
 
   validate(): boolean { return true; }

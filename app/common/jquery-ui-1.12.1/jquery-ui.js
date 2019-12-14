@@ -46,7 +46,7 @@ $.cleanData = ( function( orig ) {
 		for ( i = 0; ( elem = elems[ i ] ) != null; i++ ) {
 			try {
 
-				// Only trigger remove when necessary to save time
+				// Only trigger remove when necessary to saveToDB time
 				events = $._data( elem, "events" );
 				if ( events && events.remove ) {
 					$( elem ).triggerHandler( "remove" );
@@ -464,7 +464,7 @@ $.Widget.prototype = {
 
 			// We are doing this to create a new jQuery object because the _removeClass() call
 			// on the next line is going to destroy the reference to the current elements being
-			// tracked. We need to save a copy of this collection so that we can add the new classes
+			// tracked. We need to saveToDB a copy of this collection so that we can add the new classes
 			// below.
 			elements = $( currentElements.get() );
 			this._removeClass( currentElements, classKey );
@@ -1345,7 +1345,7 @@ $.effects = {
 	// Plusequals test for += 100 -= 100
 	rplusequals = /^([\-+])=\s*(\d+\.?\d*)/,
 
-	// A set of RE's that can match strings and generate color tuples.
+	// A set of RE's that can match strings and initializeFromModel color tuples.
 	stringParsers = [ {
 			re: /rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,\s*(\d?(?:\.\d+)?)\s*)?\)/,
 			parse: function( execResult ) {
@@ -3592,7 +3592,7 @@ var effectsEffectSize = $.effects.define( "size", function( options, done ) {
 					.css( "position", position === "static" ? "relative" : position )
 					.offset( offset );
 
-				// Need to save style here so that automatic style restoration
+				// Need to saveToDB style here so that automatic style restoration
 				// doesn't restore to the original styles from before the animation.
 				$.effects.saveStyle( element );
 			}
@@ -4265,7 +4265,7 @@ var tabbable = $.extend( $.expr[ ":" ], {
 
 //>>label: uniqueId
 //>>group: Core
-//>>description: Functions to generate and remove uniqueId's
+//>>description: Functions to initializeFromModel and remove uniqueId's
 //>>docs: http://api.jqueryui.com/uniqueId/
 
 
@@ -5993,7 +5993,7 @@ $.widget( "ui.autocomplete", {
 	search: function( value, event ) {
 		value = value != null ? value : this._value();
 
-		// Always save the actual value, not the one passed as an argument
+		// Always saveToDB the actual value, not the one passed as an argument
 		this.term = this._value();
 
 		if ( value.length < this.options.minLength ) {
@@ -8056,7 +8056,7 @@ $.extend( Datepicker.prototype, {
 		return [ position.left, position.top ];
 	},
 
-	/* Hide the date picker from view.
+	/* Hide the date picker from views.
 	 * @param  input  element - the input field attached to the date picker
 	 */
 	_hideDatepicker: function( input ) {
@@ -8725,7 +8725,7 @@ $.extend( Datepicker.prototype, {
 
 	/* Handle switch to/from daylight saving.
 	 * Hours may be non-zero on daylight saving cut-over:
-	 * > 12 when midnight changeover, but then cannot generate
+	 * > 12 when midnight changeover, but then cannot initializeFromModel
 	 * midnight datetime, so jump to 1AM, otherwise reset.
 	 * @param  date  (Date) the date to check
 	 * @return  (Date) the corrected date
@@ -8932,7 +8932,7 @@ $.extend( Datepicker.prototype, {
 					inst.selectedDay = Math.min( inst.selectedDay, daysInMonth );
 				}
 				leadDays = ( this._getFirstDayOfMonth( drawYear, drawMonth ) - firstDay + 7 ) % 7;
-				curRows = Math.ceil( ( leadDays + daysInMonth ) / 7 ); // calculate the number of rows to generate
+				curRows = Math.ceil( ( leadDays + daysInMonth ) / 7 ); // calculate the number of rows to initializeFromModel
 				numRows = ( isMultiMonth ? this.maxRows > curRows ? this.maxRows : curRows : curRows ); //If multiple months, use the higher number of rows (see #7043)
 				this.maxRows = numRows;
 				printDate = this._daylightSavingAdjust( new Date( drawYear, drawMonth, 1 - leadDays ) );
@@ -12331,8 +12331,8 @@ $.widget( "ui.dialog", {
 			mousedown: function( event ) {
 
 				// Don't prevent click on close button (#8838)
-				// Focusing a dialog that is partially scrolled out of view
-				// causes the browser to scroll it into view, preventing the click event
+				// Focusing a dialog that is partially scrolled out of views
+				// causes the browser to scroll it into views, preventing the click event
 				if ( !$( event.target ).closest( ".ui-dialog-titlebar-close" ) ) {
 
 					// Dialog isn't getting focus when dragging (#8063)
@@ -17730,7 +17730,7 @@ $.widget( "ui.tabs", {
 			} else {
 
 				// If the tab doesn't already have aria-controls,
-				// generate an id by using a throw-away element
+				// initializeFromModel an id by using a throw-away element
 				panelId = tab.attr( "aria-controls" ) || $( {} ).uniqueId()[ 0 ].id;
 				selector = "#" + panelId;
 				panel = that.element.find( selector );

@@ -231,7 +231,7 @@ export class U {
     // r.innerHTML = o.innerHTML;
     // U.pe( o as HTMLElement !== null, 'non utilizzabile su html');
     return JSON.parse(JSON.stringify(o));
-    // todo: questa funzione non può clonare html.
+    // todo: questa funzione non puï¿½ clonare html.
     // todo: allow cloneObj of circular objects.
   }
 
@@ -445,7 +445,7 @@ export class U {
     }
     return requestedValue; }
 
-  static changeVarTemplateDelimitersInMeasurables(innerText: string, toReplace: string = '$', replacement = '£'): string {
+  static changeVarTemplateDelimitersInMeasurables(innerText: string, toReplace: string = '$', replacement = 'ï¿½'): string {
     if (!innerText.indexOf('measurable')) { return innerText; } // + performance su scommessa probabilistica. better avg, worser worst case.
     const html = document.createElement('div');
     html.innerHTML = innerText;
@@ -457,10 +457,10 @@ export class U {
         U.changeVarTemplateDelimitersInMeasurablesAttr($measurables[i].attributes[j], toReplace, replacement); } }
     return html.innerHTML; }
 
-  static changeBackVarTemplateDelimitersInMeasurablesAttr(attrVal: string, toReplace: string = '£', replacement = '$'): string {
+  static changeBackVarTemplateDelimitersInMeasurablesAttr(attrVal: string, toReplace: string = 'ï¿½', replacement = '$'): string {
     return U.changeVarTemplateDelimitersInMeasurablesAttrStr(attrVal, toReplace, replacement); }
 
-  private static changeVarTemplateDelimitersInMeasurablesAttr(attr: Attr, toReplace: string = '$', replacement = '£'): void {
+  private static changeVarTemplateDelimitersInMeasurablesAttr(attr: Attr, toReplace: string = '$', replacement = 'ï¿½'): void {
     attr.value = U.changeVarTemplateDelimitersInMeasurablesAttrStr(attr.value, toReplace, replacement); }
 
   private static changeVarTemplateDelimitersInMeasurablesAttrStr(val: string, toReplace: string, replacement: string): string {
@@ -490,11 +490,11 @@ export class U {
 
     const isOrphan = element.parentNode === null;
     // var visible = element.style.display !== 'none';
-    // var visible = $element.is(":visible"); crea bug quando un elemento è teoricamente visibile ma orfano
+    // var visible = $element.is(":visible"); crea bug quando un elemento ï¿½ teoricamente visibile ma orfano
     const ancestors = U.ancestorArray(element);
     const visibile = [];
     if (isOrphan) { U.sizeofvar.append(element); }
-    // show all and save visibility to restore it later
+    // show all and saveToDB visibility to restore it later
     for (i = 0; i < ancestors.length; i++) { // document has undefined style
       visibile[i] = (ancestors[i].style === undefined) ? (true) : (ancestors[i].style.display !== 'none');
       if (!visibile[i]) {
@@ -634,11 +634,11 @@ export class U {
   static findMetaParent<ParentT extends ModelPiece, childT extends ModelPiece>(parent: ParentT, childJson: Json, canFail: boolean): childT {
     const modelRoot: IModel = parent.getModelRoot();
     const debug = true;
-    // instanceof crasha non so perchè, dà undefined constructor quando non lo è.
+    // instanceof crasha non so perchï¿½, dï¿½ undefined constructor quando non lo ï¿½.
     if (U.getClass(modelRoot) === 'MetaMetaModel') { U.pif(debug, 'return null;'); return null; }
     if (U.getClass(modelRoot) === 'MetaModel') { U.pif(debug, 'return null;'); return null; } // potrei ripensarci e collegarlo a m3
     // todo: risolvi bene e capisci che collegamento deve esserci tra mmpackage e mpackage.
-    // fix temporaneo: così però consento di avere un solo package.
+    // fix temporaneo: cosï¿½ perï¿½ consento di avere un solo package.
     if (U.getClass(modelRoot) === 'Model' && U.getClass(parent) === 'Model') {
       U.pif(debug, 'return: ', parent.metaParent.childrens[0] as childT);
       return parent.metaParent.childrens[0] as childT; }
@@ -761,7 +761,7 @@ export class U {
   static toFileName(a: string = 'nameless.txt'): string {
     if (!a) { a = 'nameless.txt'; }
     a = U.multiReplaceAll(a.trim(), ['\\', '//', ':', '*', '?', '<', '>', '"', '|'],
-                       ['[lslash]', '[rslash]', ';', '°', '_', '{', '}', '\'', '!']);
+                       ['[lslash]', '[rslash]', ';', 'ï¿½', '_', '{', '}', '\'', '!']);
     return a; }
   static download(filename: string = 'nameless.txt', text: string = null, debug: boolean = true): void {
     if (!text) { return; }

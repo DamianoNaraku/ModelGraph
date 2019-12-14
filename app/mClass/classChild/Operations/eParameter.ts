@@ -8,15 +8,32 @@ import {
   Json,
   MClass,
   ModelPiece,
-  ShortAttribETypes, M2Attribute, ECoreParameter,
-  U, StringSimilarity, M3Attribute, IVertex, IField, MetaModel, Model, Status, EOperation, ECoreOperation, IClassChild, IClass, Info
+  ShortAttribETypes,
+  M2Attribute,
+  ECoreParameter,
+  U,
+  StringSimilarity,
+  M3Attribute,
+  IVertex,
+  IField,
+  MetaModel,
+  Model,
+  Status,
+  EOperation,
+  ECoreOperation,
+  IClassChild,
+  IClass,
+  Info,
+  M3Class,
 } from '../../../common/Joiner';
 // export abstract class EParameter extends IClassChild {}
 export class EParameter extends IClassChild {
+  static stylesDatalist: HTMLDataListElement;
   parent: EOperation;
 
   constructor(parent: EOperation, json: Json) {
     super(parent, null);
+    if (!parent) { return; } // fake constructor will allow to travel fake -> original. can't original -> fake.
     this.parse(json); }
 
   static GetTypeName(param: EParameter): string {
@@ -71,7 +88,8 @@ export class EParameter extends IClassChild {
 				"_lowerBound": "1",
 				"_upperBound": "2",
 				"_eType": "ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDouble" }*/
-    this.setName(Json.read<string>(json, ECoreParameter.namee, 'Param_1'));
+    U.pe(!this.parent || !this.parent.parent, 'json:', json, 'this: ', this, 'this.parent:', this.parent, 'this.p.p:', this.parent ? this.parent.parent : undefined);
+    this.setName(this.parent.parent instanceof M3Class ? 'Parameter' : Json.read<string>(json, ECoreParameter.namee, 'Param_1'));
     this.setLowerbound(+Json.read<number>(json, ECoreOperation.lowerBound, 'NAN_Trigger'));
     this.setUpperbound(+Json.read<number>(json, ECoreOperation.upperBound, 'NAN_Trigger'));
     this.ordered = 'true' === '' + Json.read<boolean>(json, ECoreOperation.ordered, 'false');
@@ -79,6 +97,15 @@ export class EParameter extends IClassChild {
     const eType = Json.read<string>(json, ECoreParameter.eType, AttribETypes.EString);
     // (this.parent && this.parent.parent ? '#//' + this.parent.parent.name : AttribETypes.EString)
     this.parsePrintableTypeName(eType);
-    this.linkClass(); }
+    this.linkClass();
+    let i: number;/*
+    this.views = [];
+    for(i = 0; i < this.parent.views.length; i++) {
+      const pv: OperationView = this.parent.views[i];
+      const v = new ParameterView(pv);
+      this.views.push(v);
+      pv.parameterView.push(v); }*/
+
+  }
 
 }

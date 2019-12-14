@@ -1,4 +1,5 @@
-import { Status,
+import {
+  Status,
   IVertex,
   IEdge,
   IField,
@@ -11,20 +12,22 @@ import { Status,
   U,
   ModelPiece,
   ISidebar, MetaMetaModel, LocalStorage,
-  IGraph, IReference, MetaModel, MClass, Options, TopBar, ModelNone, IClass, Model, M3Package, M3Class
+  IGraph, IReference, MetaModel, MClass, TopBar, ModelNone, IClass, Model, M3Package, M3Class, ViewPoint, //, Options
 } from '../common/Joiner';
 
 export abstract class IModel extends ModelPiece {
-  parent: ModelNone = null;
-  childrens: IPackage[] = [];
-  metaParent: IModel = null;
-  instances: IModel[] = [];
+  parent: ModelNone;
+  childrens: IPackage[];
+  metaParent: IModel;
+  instances: IModel[];
 
   graph: IGraph = null;
   sidebar: ISidebar = null;
   storage: LocalStorage = null;
   namespaceVar: string = null;
   uriVar: string = null;
+  viewpoints: ViewPoint[] = [];
+  // viewpoint: ViewPoint;
   /*
   constructor(json: Json, metaParent: MetaModel, skipParse: boolean = false) {
     super(null, metaParent);
@@ -113,29 +116,30 @@ export abstract class IModel extends ModelPiece {
 
   // fieldChanged(e: JQuery.ChangeEvent) { U.pe(true, 'should never happen', e); }
 
-  duplicate(newname: string = ''): ModelPiece {
-    if (newname) { newname = IModel.removeInvalidNameChars(newname); }
-    while (!newname || newname === '' || this.isNameTaken(newname)) { newname += '_Forked'; }
-    U.pe(true, 'IModel duplicate: to do.');
-    return undefined; }
+  abstract duplicate(nameAppend?: string): IModel;
 
-  delete(): void { this.storage.remove(this.name); this.storage.autosave(false); U.refreshPage(); }
+  delete(): void { this.storage.remove(this.name, false); this.storage.autosave(false); U.refreshPage(); }
 
   refreshGUI_Alone(debug: boolean = true): void {
     let i: number;
     for (i = 0; i < this.childrens.length; i++ ) { this.childrens[i].refreshGUI_Alone(debug); } }
 
-  isNameTaken(name: string): boolean { return this.storage.contains(name); }
+  isNameTaken(name: string): boolean { return this.storage.contains(name, false); }
 
   setName(value: string, refreshGUI: boolean = false): string {
     const oldname: string = this.name;
-    if (this.isNameTaken(value)) { U.pw(true, 'tryed to save a model with a name already in use'); return oldname; }
+    if (this.isNameTaken(value)) { U.pw(true, 'tryed to saveToDB a model with a name already in use'); return oldname; }
     super.setName(value);
-    this.storage.rename(oldname, this.name);
+    this.storage.rename(oldname, this.name, false);
     this.graph.propertyBar.refreshGUI();
     return this.name; }
 
-  save(isAutosave: boolean, saveAs: boolean = null): void { this.storage.save(this, isAutosave, saveAs); }
+  saveView(viewPoint: ViewPoint, isAutosave: boolean, saveas:boolean = null) { this.storage.save(this, isAutosave, saveas, viewPoint); }
+  save(isAutosave: boolean, saveAs: boolean = null): void {
+    this.storage.save(this, isAutosave, saveAs); }
+
+  getKey(): number[] { return null; }
+  getKeyStr(): string { return this.fullname(); }
 
   abstract getDefaultPackage(): IPackage;
   abstract isM3(): boolean;
@@ -147,7 +151,8 @@ export abstract class IModel extends ModelPiece {
   isM(): boolean { return this.isM1(); }
 
 
-  linkToMetaParent(meta: IModel) {
+  /*linkToMetaParent(meta: IModel) {
+    U.pe(true, 'linkToMetaParent: todo.');
     const outObj: any = {};
     const comformability: number = this.comformability(meta, outObj);
     if (comformability !== 1) {
@@ -158,7 +163,7 @@ export abstract class IModel extends ModelPiece {
     const pkgPermutation: number[] = outObj.pkgPermutation;
     i = -1;
     while (++i < pkgPermutation.length) { this.childrens[i].LinkToMetaParent(meta.childrens[pkgPermutation[i]]); }
-  }
+  }*/
 
   comformability(meta: IModel, outObj: any = null/*.classPermutation*/): number {
     // todo: abilita package multipli e copia da IPackage e M2Class.conformability();
@@ -179,6 +184,20 @@ export abstract class IModel extends ModelPiece {
     if (this instanceof Model) { return 'Model'.toLowerCase(); }
     U.pe(true, 'unexpected'); return 'error'; }
 
+    getLastView(): ViewPoint {
+      let i: number;
+      for (i = this.viewpoints.length; --i >= 0; ) {
+        const vp: ViewPoint = this.viewpoints[i];
+        if (vp.isApplied) return vp; }
+      return null;
+    }
+
+  public static getByKey(key: string) { return IModel.getByName(key); }
+  public static getByName(name: string): IModel {
+    if (Status.status.mmm.fullname() === name) return Status.status.mmm;
+    if (Status.status.mm.fullname() === name) return Status.status.mm;
+    if (Status.status.m.fullname() === name) return Status.status.m;
+    return null; }
 }
 
 

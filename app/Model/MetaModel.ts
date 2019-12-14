@@ -12,7 +12,7 @@ import {
   ModelPiece,
   ISidebar,
   IGraph, MetaMetaModel,
-  IModel, ModelNone, MPackage, Model, M2Package, IReference, MReference, M2Reference, M3Package, ECoreRoot, M3Class, M3Reference, Status
+  IModel, ModelNone, MPackage, Model, M2Package, IReference, MReference, M2Reference, M3Package, ECoreRoot, M3Class, M3Reference, Status, ViewPoint
 } from '../common/Joiner';
 
 
@@ -27,9 +27,9 @@ export class MetaModel extends IModel {
   '  }' +
   '}';
 
-  metaParent: MetaMetaModel = null;
-  instances: Model[] = [];
-  childrens: M2Package[] = [];
+  metaParent: MetaMetaModel;
+  instances: Model[];
+  childrens: M2Package[];
 
   constructor(json: Json, metaParent: MetaMetaModel) { super(metaParent); this.parse(json, true); }
 
@@ -63,6 +63,7 @@ export class MetaModel extends IModel {
       U.pe(!arr[i].classType, arr[i], Status.status.loadedLogic);
     } }
 
+
   parse(json: Json, destructive: boolean = true): void {
     if (destructive) { this.childrens = []; }
     const childrens = Json.getChildrens(json);
@@ -71,7 +72,7 @@ export class MetaModel extends IModel {
       const child = childrens[i];
       const metaParent: M3Package = null;
       // metaParent = U.findMetaParentP(this, child);
-      if (destructive) { U.ArrayAdd(this.childrens, new M2Package(this, child, metaParent)); continue; }
+      if (destructive) { U.ArrayAdd(this.childrens, new M2Package(this, child)); continue; }
       U.pe(true, 'Non-destructive m2-model parse: to do');
     }
   }
@@ -89,7 +90,7 @@ export class MetaModel extends IModel {
 
   getDefaultPackage(): M2Package {
     if (this.childrens.length !== 0) { return this.childrens[0]; }
-    U.ArrayAdd(this.childrens, new M2Package(null, null, this.metaParent.getDefaultPackage()) );
+    U.ArrayAdd(this.childrens, new M2Package(this, null) );
     return this.childrens[0]; }
 
   conformability(metaparent: MetaMetaModel, outObj?: any, debug?: boolean): number { return 1; }
@@ -99,6 +100,12 @@ export class MetaModel extends IModel {
   isM1(): boolean { return false; }
   isM2(): boolean { return true; }
   isM3(): boolean { return false; }
+
+  duplicate(nameAppend: string = '_Copy'): MetaModel {
+    const m = new MetaModel(null, null);
+    m.copy(this);
+    m.refreshGUI();
+    return m; }
 
 
 }

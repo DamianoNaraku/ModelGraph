@@ -29,7 +29,7 @@ import {
   M2Reference,
   EOperation,
   EParameter,
-  MAttribute, MeasurableArrays
+  MAttribute, MeasurableArrays, IPoint, GraphSize, GraphPoint, StyleComplexEntry
 } from '../../../common/Joiner';
 import MouseMoveEvent = JQuery.MouseMoveEvent;
 import MouseDownEvent = JQuery.MouseDownEvent;
@@ -46,277 +46,6 @@ import ResizableOptions = JQueryUI.ResizableOptions;
 import DraggableOptions = JQueryUI.DraggableOptions;
 import ResizableUIParams = JQueryUI.ResizableUIParams;
 import DraggableEventUIParams = JQueryUI.DraggableEventUIParams;
-
-export class GraphPoint {
-  x: number;
-  y: number;
-  dontmixwithPoint: any;
-  static getM(firstPt: GraphPoint, secondPt: GraphPoint): number { return (firstPt.y - secondPt.y) / (firstPt.x - secondPt.x); }
-  static getQ(firstPt: GraphPoint, secondPt: GraphPoint): number { return firstPt.y - GraphPoint.getM(firstPt, secondPt) * firstPt.x; }
-  static fromEvent(e: ClickEvent | MouseMoveEvent | MouseUpEvent | MouseDownEvent | MouseEnterEvent | MouseLeaveEvent | MouseEvent)
-    : GraphPoint {
-    if (!e) { return null; }
-    const p: Point = new Point(e.pageX, e.pageY);
-    const g: IGraph = Status.status.getActiveModel().graph;
-    return g.toGraphCoord(p); }
-
-  constructor(x: number, y: number) {
-    if (isNaN(+x)) { x = 0; }
-    if (isNaN(+y)) { y = 0; }
-    this.x = x;
-    this.y = y; }
-
-  toString(): string { return '(' + this.x + ', ' + this.y + ')'; }
-
-  clone(): GraphPoint { return new GraphPoint(this.x, this.y); }
-
-  subtract(p2: GraphPoint, newInstance: boolean): GraphPoint {
-    U.pe(!p2, 'subtract argument must be a valid point: ', p2);
-    let p1: GraphPoint;
-    if (!newInstance) { p1 = this; } else { p1 = this.clone(); }
-    p1.x -= p2.x;
-    p1.y -= p2.y;
-    return p1; }
-
-  add(p2: GraphPoint, newInstance: boolean): GraphPoint {
-    U.pe(!p2, 'add argument must be a valid point: ', p2);
-    let p1: GraphPoint;
-    if (!newInstance) { p1 = this; } else { p1 = this.clone(); }
-    p1.x += p2.x;
-    p1.y += p2.y;
-    return p1; }
-
-  multiply(scalar: number, newInstance: boolean): GraphPoint {
-    U.pe( isNaN(+scalar), 'scalar argument must be a valid number: ', scalar);
-    let p1: GraphPoint;
-    if (!newInstance) { p1 = this; } else { p1 = this.clone(); }
-    p1.x *= scalar;
-    p1.y *= scalar;
-    return p1; }
-
-  divide(scalar: number, newInstance: boolean): GraphPoint {
-    U.pe( isNaN(+scalar), 'scalar argument must be a valid number: ', scalar);
-    let p1: GraphPoint;
-    if (!newInstance) { p1 = this; } else { p1 = this.clone(); }
-    p1.x /= scalar;
-    p1.y /= scalar;
-    return p1; }
-
-  isInTheMiddleOf(firstPt: GraphPoint, secondPt: GraphPoint, tolleranza: number): boolean {
-    const ret = this.isInTheMiddleOf0(firstPt, secondPt, tolleranza);
-    // console.log('this ', this, 'is in middle of(', firstPt, ', ', secondPt, ') ? ', ret);
-    return ret; }
-
-  isInTheMiddleOf0(firstPt: GraphPoint, secondPt: GraphPoint, tolleranza: number): boolean {
-    const rectangle: GraphSize = GraphSize.fromPoints(firstPt, secondPt);
-    const tolleranzaX = tolleranza; // actually should be cos * arctan(m);
-    const tolleranzaY = tolleranza; // actually should be sin * arctan(m);
-    if (this.x < rectangle.x - tolleranzaX || this.x > rectangle.x + rectangle.w + tolleranzaX) { return false; }
-    if (this.y < rectangle.y - tolleranzaX || this.y > rectangle.y + rectangle.h + tolleranzaY) { return false; }
-    const m = GraphPoint.getM(firstPt, secondPt);
-    const q = GraphPoint.getQ(firstPt, secondPt);
-    const lineDistance = this.distanceFromLine(firstPt, secondPt);
-    // console.log('distance:', lineDistance, ', this:', this, ', p1:', firstPt, ', p2:', secondPt);
-    if (lineDistance <= tolleranza) { return true; }
-    return false; }
-
-  isInTheMiddleOfOld(firstPt: GraphPoint, secondPt: GraphPoint, tolleranza: number): boolean {
-    const rectangle: GraphSize = GraphSize.fromPoints(firstPt, secondPt);
-    const tolleranzaX = tolleranza; // actually should be cos * arctan(m);
-    const tolleranzaY = tolleranza; // actually should be sin * arctan(m);
-    if (this.x < rectangle.x - tolleranzaX || this.x > rectangle.x + rectangle.w + tolleranzaX) { return false; }
-    if (this.y < rectangle.y - tolleranzaX || this.y > rectangle.y + rectangle.h + tolleranzaY) { return false; }
-    let m1Max = GraphPoint.getM( new GraphPoint(this.x + tolleranzaX, this.y + tolleranzaY), firstPt);
-    let m1Min = GraphPoint.getM( new GraphPoint(this.x - tolleranzaX, this.y - tolleranzaY), firstPt);
-    if (m1Min > m1Max) { const tmp = m1Min; m1Min = m1Max; m1Max = tmp; }
-    const m2 = GraphPoint.getM(firstPt, secondPt);
-    return !( m2 >= m1Min && m2 <= m1Max); }
-
-  distanceFromLine(p1: GraphPoint, p2: GraphPoint) {
-    const top: number =
-      + (p2.y - p1.y) * this.x
-      - (p2.x - p1.x) * this.y
-      + p2.x * p1.y
-      - p1.x * p2.y;
-    const bot =
-      (p2.y - p1.y) * (p2.y - p1.y) +
-      (p2.x - p1.x) * (p2.x - p1.x);
-    return Math.abs(top) / Math.sqrt(bot);  }
-
-  equals(pt: GraphPoint, tolleranzaX: number = 0, tolleranzaY: number = 0) {
-    if (pt === null) { return false; }
-    return Math.abs(this.x - pt.x) <= tolleranzaX && Math.abs(this.y - pt.y) <= tolleranzaY; }
-
-  moveOnNearestBorder(startVertexSize: GraphSize, clone: boolean, debug: boolean = true) {
-    const pt: GraphPoint = clone ? this.clone() : this;
-    const tl: GraphPoint = startVertexSize.tl();
-    const tr: GraphPoint = startVertexSize.tr();
-    const bl: GraphPoint = startVertexSize.bl();
-    const br: GraphPoint = startVertexSize.br();
-    const L: number = pt.distanceFromLine(tl, bl);
-    const R: number = pt.distanceFromLine(tr, br);
-    const T: number = pt.distanceFromLine(tl, tr);
-    const B: number = pt.distanceFromLine(bl, br);
-    const min: number = Math.min(L, R, T, B);
-    if (min === L) { pt.x = tl.x; }
-    if (min === R) { pt.x = tr.x; }
-    if (min === T) { pt.y = tr.y; }
-    if (min === B) { pt.y = br.y; }
-    if (debug) { Status.status.getActiveModel().graph.markg(pt, false, 'purple'); }
-    return pt;
-  }
-
-  getM(pt2: GraphPoint): number { return GraphPoint.getM(this, pt2); }
-  degreeWith(pt2: GraphPoint, toRadians: boolean) {
-    const directionVector: GraphPoint = this.subtract(pt2, true);
-    const ret: number = Math.atan2(directionVector.y, directionVector.x);
-    return toRadians ? ret : U.RadToDegree(ret); }
-
-}
-
-export class GraphSize {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  dontmixwithSize: any;
-
-  constructor(x: number, y: number, w: number, h: number) {
-    if (isNaN(+x)) { x = 0; }
-    if (isNaN(+y)) { y = 0; }
-    if (isNaN(+w)) { w = 0; }
-    if (isNaN(+h)) { h = 0; }
-    this.x = x;
-    this.y = y;
-    this.w = w;
-    this.h = h; }
-
-  static fromPoints(firstPt: GraphPoint, secondPt: GraphPoint): GraphSize {
-    const minX = Math.min(firstPt.x, secondPt.x);
-    const maxX = Math.max(firstPt.x, secondPt.x);
-    const minY = Math.min(firstPt.y, secondPt.y);
-    const maxY = Math.max(firstPt.y, secondPt.y);
-    return new GraphSize(minX, minY, maxX - minX, maxY - minY); }
-
-  static closestIntersection(vertexGSize: GraphSize, prevPt: GraphPoint, pt0: GraphPoint, gridAlign: GraphPoint = null): GraphPoint {
-    let pt = pt0.clone();
-    const m = GraphPoint.getM(prevPt, pt);
-    const q = GraphPoint.getQ(prevPt, pt);
-    U.pe( Math.abs((pt.y - m * pt.x) - (prevPt.y - m * prevPt.x)) > .001,
-      'wrong math in Q:', (pt.y - m * pt.x), ' vs ', (prevPt.y - m * prevPt.x));
-    /*const isL = prevPt.x < pt.x;
-    const isT = prevPt.y < pt.y;
-    const isR = !isL;
-    const isB = !isT; */
-    if (m === Number.POSITIVE_INFINITY && q === Number.NEGATIVE_INFINITY) { // bottom middle
-      return new GraphPoint(vertexGSize.x + vertexGSize.w / 2, vertexGSize.y + vertexGSize.h); }
-    // console.log('pt:', pt, 'm:', m, 'q:', q);
-    let L: GraphPoint = new GraphPoint(0, 0);
-    let T: GraphPoint = new GraphPoint(0, 0);
-    let R: GraphPoint = new GraphPoint(0, 0);
-    let B: GraphPoint = new GraphPoint(0, 0);
-    L.x = vertexGSize.x;
-    L.y = m * L.x + q;
-    R.x = vertexGSize.x + vertexGSize.w;
-    R.y = m * R.x + q;
-    T.y = vertexGSize.y;
-    T.x = (T.y - q) / m;
-    B.y = vertexGSize.y + vertexGSize.h;
-    B.x = (B.y - q) / m;
-    // prendo solo il compreso pt ~ prevPt (escludo così il "pierce" sulla faccia opposta), prendo il più vicino al centro.
-    // console.log('4 possibili punti di intersezione (LTBR):', L, T, B, R);
-    /* this.owner.mark(this.owner.toHtmlCoord(T), true, 'blue');
-    this.owner.mark(this.owner.toHtmlCoord(B), false, 'violet');
-    this.owner.mark(this.owner.toHtmlCoord(L), false, 'red');
-    this.owner.mark(this.owner.toHtmlCoord(R), false, 'orange');*/
-    if ( (B.x >= pt.x && B.x <= prevPt.x) || (B.x >= prevPt.x && B.x <= pt.x) ) { } else { B = null; }
-    if ( (T.x >= pt.x && T.x <= prevPt.x) || (T.x >= prevPt.x && T.x <= pt.x) ) { } else { T = null; }
-    if ( (L.y >= pt.y && L.y <= prevPt.y) || (L.y >= prevPt.y && L.y <= pt.y) ) { } else { L = null; }
-    if ( (R.y >= pt.y && R.y <= prevPt.y) || (R.y >= prevPt.y && R.y <= pt.y) ) { } else { R = null; }
-    // console.log('superstiti step1: (LTBR):', L, T, B, R);
-    const vicinanzaT = !T ? Number.POSITIVE_INFINITY : ((T.x - pt.x) * (T.x - pt.x)) + ((T.y - pt.y) * (T.y - pt.y));
-    const vicinanzaB = !B ? Number.POSITIVE_INFINITY : ((B.x - pt.x) * (B.x - pt.x)) + ((B.y - pt.y) * (B.y - pt.y));
-    const vicinanzaL = !L ? Number.POSITIVE_INFINITY : ((L.x - pt.x) * (L.x - pt.x)) + ((L.y - pt.y) * (L.y - pt.y));
-    const vicinanzaR = !R ? Number.POSITIVE_INFINITY : ((R.x - pt.x) * (R.x - pt.x)) + ((R.y - pt.y) * (R.y - pt.y));
-    const closest = Math.min(vicinanzaT, vicinanzaB, vicinanzaL, vicinanzaR);
-    // console.log( 'closest:', closest);
-    // succede quando pt e prevPt sono entrambi all'interno del rettangolo del vertice.
-    // L'edge non è visibile e il valore ritornato è irrilevante.
-    if (closest === Number.POSITIVE_INFINITY) {
-      /* top center */
-      pt = vertexGSize.tl();
-      pt.x += vertexGSize.w / 2; } else
-    if (closest === Number.POSITIVE_INFINITY) {
-      /* bottom center */
-      pt = vertexGSize.br();
-      pt.x -= vertexGSize.w / 2; } else
-    if (closest === vicinanzaT) { pt = T; } else
-    if (closest === vicinanzaB) { pt = B; } else
-    if (closest === vicinanzaR) { pt = R; } else
-    if (closest === vicinanzaL) { pt = L; }
-
-    if (!gridAlign) { return pt; }
-    if ((pt === T || pt === B || isNaN(closest)) && gridAlign.x) {
-      const floorX: number = Math.floor(pt.x / gridAlign.x) * gridAlign.x;
-      const ceilX: number = Math.ceil(pt.x / gridAlign.x) * gridAlign.x;
-      let closestX;
-      let farthestX;
-      if (Math.abs(floorX - pt.x) < Math.abs(ceilX - pt.x)) {
-        closestX = floorX; farthestX = ceilX;
-      } else { closestX = ceilX; farthestX = floorX; }
-
-      // todo: possibile causa del bug che non allinea punti fake a punti reali. nel calcolo realPT questo non viene fatto.
-      // if closest grid intersection is inside the vertex.
-      if (closestX >= vertexGSize.x && closestX <= vertexGSize.x + vertexGSize.w) { pt.x = closestX; } else
-      // if 2° closer grid intersection is inside the vertex.
-      if (closestX >= vertexGSize.x && closestX <= vertexGSize.x + vertexGSize.w) { pt.x = farthestX;
-        // if no intersection are inside the vertex (ignore grid)
-      } else { pt = pt; }
-    } else if ((pt === L || pt === R) && gridAlign.y) {
-      const floorY: number = Math.floor(pt.y / gridAlign.y) * gridAlign.y;
-      const ceilY: number = Math.ceil(pt.y / gridAlign.y) * gridAlign.y;
-      let closestY;
-      let farthestY;
-      if (Math.abs(floorY - pt.y) < Math.abs(ceilY - pt.y)) {
-        closestY = floorY; farthestY = ceilY;
-      } else { closestY = ceilY; farthestY = floorY; }
-
-      // if closest grid intersection is inside the vertex.
-      if (closestY >= vertexGSize.y && closestY <= vertexGSize.y + vertexGSize.h) { pt.y = closestY; } else
-      // if 2° closer grid intersection is inside the vertex.
-      if (closestY >= vertexGSize.y && closestY <= vertexGSize.y + vertexGSize.h) { pt.y = farthestY;
-        // if no intersection are inside the vertex (ignore grid)
-      } else { pt = pt; }
-    }
-    return pt; }
-
-  tl(): GraphPoint { return new GraphPoint(this.x + 0,      this.y + 0); }
-  tr(): GraphPoint { return new GraphPoint(this.x + this.w, this.y + 0); }
-  bl(): GraphPoint { return new GraphPoint(this.x + 0,      this.y + this.h); }
-  br(): GraphPoint { return new GraphPoint(this.x + this.w, this.y + this.h); }
-
-  clone(): GraphSize { return new GraphSize(this.x, this.y, this.w, this.h); }
-
-  equals(size: GraphSize) { return this.x === size.x && this.y === size.y && this.w === size.w && this.h === size.h; }
-
-  /// field-wise Math.min()
-  min(minSize: GraphSize, clone: boolean): GraphSize {
-    const ret: GraphSize = clone ? this.clone() : this;
-    if (!isNaN(minSize.x) && ret.x < minSize.x) { ret.x = minSize.x; }
-    if (!isNaN(minSize.y) && ret.y < minSize.y) { ret.y = minSize.y; }
-    if (!isNaN(minSize.w) && ret.w < minSize.w) { ret.w = minSize.w; }
-    if (!isNaN(minSize.h) && ret.h < minSize.h) { ret.h = minSize.h; }
-    return ret; }
-
-  max(maxSize: GraphSize, clone: boolean): GraphSize {
-    const ret: GraphSize = clone ? this.clone() : this;
-    if (!isNaN(maxSize.x) && ret.x > maxSize.x) { ret.x = maxSize.x; }
-    if (!isNaN(maxSize.y) && ret.y > maxSize.y) { ret.y = maxSize.y; }
-    if (!isNaN(maxSize.w) && ret.w > maxSize.w) { ret.w = maxSize.w; }
-    if (!isNaN(maxSize.h) && ret.h > maxSize.h) { ret.h = maxSize.h; }
-    return ret; }
-  // end of GraphSize
-}
 
 export class IVertex {
   static all: Dictionary = {};
@@ -373,7 +102,7 @@ export class IVertex {
     const html: HTMLElement | SVGElement = e.currentTarget;
     const modelPiece: ModelPiece = ModelPiece.getLogic(html);
     modelPiece.fieldChanged(e);
-    modelPiece.getModelRoot().graph.propertyBar.show(null, false, true);
+    modelPiece.getModelRoot().graph.propertyBar.show(null, html,false, true);
     // $(html).trigger('click'); // updates the propertyBar
     // const m: IModel = modelPiece.getModelRoot();
     const mm: IModel = Status.status.mm;
@@ -386,7 +115,7 @@ export class IVertex {
     const model: IModel = modelPiece.getModelRoot();
     U.pe(!modelPiece, 'failed to get modelPiece from html:', html);
     const pbar: PropertyBarr = model.graph.propertyBar;
-    pbar.show(modelPiece, isEdge, false); }
+    pbar.show(modelPiece, html, isEdge, false); }
 
   static GetMarkedWith(markKey: string, colorFilter: string = null): IVertex[] {
     const ret: IVertex[] = [];
@@ -513,7 +242,10 @@ export class IVertex {
     for (i = 0; i < refStart.length; i++) { if (refStart[i]) { refStart[i].refreshGui(); } } }
 
   draw(): void {
-    const htmlRaw: SVGForeignObjectElement = this.classe.getStyle();
+    /*const htmlRaw: SVGForeignObjectElement = U.newSvg('foreignObject');
+    htmlRaw.appendChild(this.classe.getStyleObj().html);*/
+    const style: StyleComplexEntry = this.classe.getStyle();
+    const htmlRaw: SVGForeignObjectElement = style.html as SVGForeignObjectElement;
     this.drawC(this.classe, htmlRaw);
     this.addEventListeners();
     U.fixHtmlSelected($(htmlRaw));
@@ -523,6 +255,7 @@ export class IVertex {
     const html: HTMLElement = this.getHtml();
     const autosize: string = html.dataset.autosize;
     // console.log('autosize() ? ', modelPiece.html, ' dataset.autosize:', autosize);
+    U.pe(autosize !== '1' && autosize !== 't' && autosize !== 'true', 'html:', html, 'foreign:', this.htmlForeign);
     if (autosize !== '1' && autosize !== 't' && autosize !== 'true') { return this; }
     // console.log('autosize() started');
     if (html.style.height !== 'auto') {
@@ -538,12 +271,13 @@ export class IVertex {
 
   private drawC(data: IClass, htmlRaw: SVGForeignObjectElement): void { return this.drawC0(data, htmlRaw); }
   // todo: attiva questo in produzione
+  /*
   private drawC_NonDebug(data: IClass, htmlRaw: SVGForeignObjectElement): void {
     try {
       this.drawC0(data, htmlRaw);
     } catch (e) {
       let level: number;
-      if (this.classe.customStyle) { level = 1;
+      if (this.classe.customStyleToErase) { level = 1;
       } else {
         if (this.classe.metaParent.styleOfInstances) { level = 2;
         } else { level = 3; } }
@@ -558,13 +292,12 @@ export class IVertex {
         default: U.pe(true, 'unexpected level.', this, data, htmlRaw); break; }
       this.draw();
     } finally {}
-  }
+  }*/
   private drawC0(data: IClass, htmlRaw: SVGForeignObjectElement): void {
     // console.log('drawC()');
     U.pe(!this.classe, 'class null?', data, htmlRaw);
     this.setHtmls(data, htmlRaw);
-    const htmlForeign: SVGForeignObjectElement = this.htmlForeign;
-    const html: HTMLElement = this.html;
+    const html: SVGForeignObjectElement = this.htmlForeign;
     /// append childrens:
     const $attContainer = $(html).find('.AttributeContainer');
     const $refContainer = $(html).find('.ReferenceContainer');
@@ -605,24 +338,40 @@ export class IVertex {
   private setHtmls(data: IClass, htmlRaw: SVGForeignObjectElement): SVGForeignObjectElement {
     // console.log('drawCV()');
     const graphHtml: HTMLElement | SVGElement = this.owner.vertexContainer;
+    const $graphHtml: JQuery<HTMLElement | SVGElement> = $(graphHtml);
     if (graphHtml.contains(this.htmlForeign)) { graphHtml.removeChild<SVGElement>(this.htmlForeign); }
     // console.log('drawing Vertex[' + data.name + '] with style:', htmlRaw, 'logic:', data);
     // console.log('drawVertex: template:', htmlRaw);
-    const foreign: SVGForeignObjectElement = this.htmlForeign = U.replaceVars<SVGForeignObjectElement>(data, htmlRaw, true);
+    const foreign: SVGForeignObjectElement = this.htmlForeign = U.textToSvg(U.replaceVars<SVGForeignObjectElement>(data, htmlRaw, true).outerHTML);
+    const $foreign = $(foreign);
     data.linkToLogic(foreign);
-    graphHtml.appendChild<HTMLElement | SVGElement>(foreign);
+    const $elementWithID = $foreign.find('[id]');
+    let i: number;
+    // duplicate prevention.
+    for (i = 0; i < $elementWithID.length; i++) {
+      const elem = $elementWithID[i];
+      const id = '#' + elem.id;
+      const $duplicate = $graphHtml.find(id);
+      if ($duplicate.length) { $foreign.remove(id); }
+    }
+    graphHtml.appendChild(foreign);
+    // graphHtml.innerHTML += foreign.outerHTML;
+    // unica soluzione: chiedi a stack e crea manualmente il foreignobject copiando tutti gli attributi.
+    // graphHtml.appendChild<HTMLElement | SVGElement>(foreign); problema: non renderizza gli svg che non sono stati creati con document.createElementNS()
+    // $(graphHtml).append(foreign.outerHTML); doesn't work either
     // console.log('this.style:', this.style);
     // console.log('this.size? (' + (!!this.size) + ': setSize() : ', U.getSvgSize(this.style));
     // console.log('drawC_Vertex. size:', this.size, data.html, this.size = U.getSvgSize(data.html as SVGForeignObjectElement));
     if (!this.size) { this.size = this.getSize(); } else { this.setSize(this.size, false, false); }
 
     foreign.dataset.vertexID = '' + this.id;
-    if (this.htmlForeign.childNodes.length !== 1) { throw new Error('The custom style must have a single root node.'); }
-    this.html = this.htmlForeign.firstChild as HTMLElement;
+    U.pe(this.htmlForeign.tagName.toLowerCase() !== 'foreignobject', 'The custom style root must be a foreignObject node.', this.htmlForeign);
+    U.pe(this.htmlForeign.childNodes.length !== 1, 'The custom style must have a single root node.', this.htmlForeign);
+    // this.html = this.htmlForeign.firstChild as HTMLElement;
     return foreign; }
 
-  drawO(data: EOperation): HTMLElement | SVGElement {
-    const html: HTMLElement | SVGElement =  this.drawTerminal(data);
+  drawO(data: EOperation): Element {
+    const html: Element =  this.drawTerminal(data);
     const $html = $(html);
     const $signature = $html.find('.specialjs.signature');
     let i: number;
@@ -665,9 +414,9 @@ export class IVertex {
     $addParamButton.off('click.add').on('click.add', (e: Event) => { data.addParameter(); this.refreshGUI(); });
     return html; }
 
-  drawParam(data: EParameter): HTMLElement | SVGElement {
+  drawParam(data: EParameter): Element {
     let i: number;
-    const html: HTMLElement | SVGElement = this.drawTerminal(data);
+    const html: Element = this.drawTerminal(data);
     const $html = $(html);
     const $typeHtml: JQuery<HTMLSelectElement> = $html.find('select.fullType') as JQuery<HTMLSelectElement>;
     for (i = 0; i < $typeHtml.length; i++) { PropertyBarr.makeFullTypeSelector($typeHtml[0], data.primitiveType, data.classType); }
@@ -675,16 +424,17 @@ export class IVertex {
     $nameHtml.val(data.name);
     return html; }
 
-  drawA(data: IAttribute): HTMLElement | SVGElement { return this.drawTerminal(data); }
-  drawR(data: IReference): HTMLElement | SVGElement { return this.drawTerminal(data); }
+  drawA(data: IAttribute): Element { return this.drawTerminal(data); }
+  drawR(data: IReference): Element { return this.drawTerminal(data); }
 
-  drawTerminal(data: IClassChild): HTMLElement | SVGElement {
+  drawTerminal(data: IClassChild): Element {
     data.replaceVarsSetup();
-    const htmlRaw: HTMLElement | SVGElement = data.getStyle();
+    const style: StyleComplexEntry = data.getStyle();
+    const htmlRaw: Element = style.html;
     U.pe(!htmlRaw, 'failed to get attribute style:', data);
     // todo: sposta l'opearzione nei Graph.Field
-    const html: HTMLElement | SVGElement = U.replaceVars<HTMLElement | SVGElement>(data, htmlRaw, true);
-    data.linkToLogic(html);
+    const html: Element = U.replaceVars<Element>(data, htmlRaw, true);
+    data.linkToLogic(html as any);
     return html; }
 
   toEdge(start: IVertex, end: IVertex): IEdge {
@@ -731,7 +481,7 @@ export class IVertex {
     defaultDragConfig.drag = (e: Event, ui: DraggableEventUIParams) => this.measuringChanging(ui, e);
     defaultResizeConfig.stop = (e: Event, ui: ResizableUIParams) => this.measuringChanged(ui, e);
     defaultDragConfig.stop = (e: Event, ui: DraggableEventUIParams) => this.measuringChanged(ui, e);
-    console.log('measurableElementSetup:', defaultResizeConfig, defaultDragConfig);
+//     console.log('measurableElementSetup:', defaultResizeConfig, defaultDragConfig);
     U.measurableElementSetup($html, defaultResizeConfig, defaultDragConfig); }
 
   measuringInit(ui: ResizableUIParams | DraggableEventUIParams, e: Event): void {
@@ -751,6 +501,9 @@ export class IVertex {
     console.log('Changing.measurableHtml parsed special attributes:', m);
     m.imports = [];
     m.chainFinal = [];
+    // m.dstyle = [];
+    // m.rules = [];
+    // m.variables = [];
     U.processMeasuring(this.logic(), m, ui);
   }
 
@@ -897,15 +650,16 @@ export class IVertex {
 
   moveTo(graphPoint: GraphPoint, gridIgnore: boolean = false): void {
     // console.log('moveTo(', graphPoint, '), gridIgnore:', gridIgnore, ', grid:');
-    const size: GraphSize = this.size; // U.getSvgSize(this.logic().html as SVGForeignObjectElement);
+    const oldsize: GraphSize = this.size; // U.getSvgSize(this.logic().html as SVGForeignObjectElement);
     if (!gridIgnore) { graphPoint = this.owner.fitToGrid(graphPoint); }
-    this.setSize(new GraphSize(graphPoint.x, graphPoint.y, size.w, size.h), false, true); }
+    this.setSize(new GraphSize(graphPoint.x, graphPoint.y, oldsize.w, oldsize.h), false, true); }
 
   logic(set: IClass = null): IClass {
     if (set) { return this.classe = set; }
     return this.classe; }
+    // todo: elimina differenze html e htmlforeign o almeno controlla e riorganizza
   getHtmlRawForeign(): SVGForeignObjectElement { return this.htmlForeign; }
-  getHtml(): HTMLElement { return this.html; }
+  getHtml(): HTMLElement { return this.htmlForeign.firstChild as HTMLElement; }
   minimize(): void {
     U.pe(true, 'minimize() to do.');
   }

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import {AttribETypes, IModel, Json,
-  MClass, MetaModel, Model, Options, prjson2xml, Status, U, EType,
+  MClass, MetaModel, Model, prjson2xml, Status, U, EType, // Options,
   ShortAttribETypes, InputPopup} from '../../common/Joiner';
 import ChangeEvent = JQuery.ChangeEvent;
 import ClickEvent = JQuery.ClickEvent;

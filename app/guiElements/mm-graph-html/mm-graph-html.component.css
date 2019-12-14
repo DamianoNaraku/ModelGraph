@@ -1,14 +1,66 @@
-/************************************************** dinamici */
-::ng-deep foreignObject{
-  position: relative;
+::ng-deep foreignObject.Class *{
+  cursor: default;
 }
-::ng-deep .vertexShell{
-  background-color: white;
-  border: 2px solid black;
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
+::ng-deep foreignObject.Class input, foreignObject.Class *[contenteditable="true"], foreignObject.Class textarea{
+  cursor: text;
 }
+::ng-deep foreignObject.Class select{
+  cursor: pointer;
+}
+::ng-deep .addFieldButtonContainer{ display: flex; max-height: 20px; min-height: 20px; overflow: hidden;}
+::ng-deep .addFieldButtonContainer{ opacity: 0; padding-top: 20px; }
+::ng-deep foreignObject.Class:hover .addFieldButtonContainer{ opacity: 1; padding-top: 0; }
+
+/* viewpoint */
+::ng-deep .viewpointShell{
+  max-width: 107px;
+  overflow: visible;
+  position: absolute;
+  right: 10px;
+  top: 10px; }
+::ng-deep .viewpointrow.template { display: none; }
+::ng-deep .viewpointrow button {
+  display: none;
+  height: 21px;
+  width: 21px;
+  min-width: 21px;
+  float: right;
+  margin-left: 5px; }
+::ng-deep .viewpointrow:hover button { display: inline-block; }
+::ng-deep .viewpointrow{ background-color: transparent; display: flex; position: relative; }
+/*::ng-deep .viewpointrow .buttons{ display: none }*/
+::ng-deep .viewpointrow:hover .buttons{
+  z-index: 1;
+  position: absolute;
+  display: flex;
+  top: 100%;
+  right: 0; }
+
+::ng-deep .viewpointrow > label{
+  display: inline-flex;
+  margin: auto;
+  margin-left: 0; }
+::ng-deep .viewpointrow > label.checkbox{ }
+::ng-deep .viewpointrow > label.name{
+  flex-grow: 1;
+  flex-basis: 0;
+  min-width: 0;
+}
+::ng-deep .viewpointrow input[type="text"]{ min-width: 0; height: 21px; background: transparent; border: none; }
+/* ::ng-deep .viewpointrow:hover input[type="text"]{ box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25); }*/
+::ng-deep .viewpointrow input[type='checkbox'], .viewpointrow input[type='radio']{
+  width: 17px;
+  min-width: 17px;
+  height: 17px;/*
+  width: 21px;
+  min-width: 21px;
+  height: 21px;
+  margin-right: 5px;*/
+}
+::ng-deep .viewpointrow button{ margin: auto; background-color: transparent }
+::ng-deep .viewpointrow input[readonly]{ background-color: transparent; border: none; }
+::ng-deep .viewpointrow[islastvp='true'] input.name{ opacity: 0.75; }
+
 /************************************************** statici */
 .Template, .MMDefaultStyles{
   display: none;

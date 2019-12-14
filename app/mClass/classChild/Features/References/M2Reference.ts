@@ -27,21 +27,22 @@ import {
   M3Reference,
   EdgeStyle,
   EdgeModes,
-  EdgePointStyle, MetaModel, Info, IClass
+  EdgePointStyle, MetaModel, Info, IClass,
 } from '../../../../common/Joiner';
 
 export class M2Reference extends IReference {
+  static stylesDatalist: HTMLDataListElement;
   parent: M2Class;
   metaParent: M3Reference;
   instances: MReference[];
 
-  upperbound: number = 0 - 1;
-  lowerbound: number = 0 - 1;
+  upperbound: number;
+  lowerbound: number;
   containment: boolean = false && false;
 
-  constructor(classe: M2Class, json: Json, metaParent: IReference) {
-    super(classe, metaParent);
-    if (!classe && !json && !metaParent) { return; } // empty constructor for .duplicate();
+  constructor(classe: M2Class, json: Json) {
+    super(classe, Status.status.mmm.getReference());
+    if (!classe && !json) { return; } // empty constructor for .duplicate();
     this.parse(json, true); }
 
   getModelRoot(): MetaModel { return super.getModelRoot() as MetaModel; }
@@ -65,7 +66,15 @@ export class M2Reference extends IReference {
     this.linkClass();
     this.containment = Json.read<boolean>(json, ECoreReference.containment, false);
     this.setLowerbound(Json.read<number>(json, ECoreReference.lowerbound, 0));
-    this.setUpperbound(Json.read<number>(json, ECoreReference.upperbound, 1)); }
+    this.setUpperbound(Json.read<number>(json, ECoreReference.upperbound, 1));
+    let i: number;/*
+    this.views = [];
+    for(i = 0; i < this.parent.views.length; i++) {
+      const pv: ClassView = this.parent.views[i];
+      const v = new ReferenceView(pv);
+      this.views.push(v);
+      pv.referenceViews.push(v); }*/
+  }
 
   generateModel(): Json {
     const model = new Json(null);
@@ -111,16 +120,16 @@ export class M2Reference extends IReference {
     if (linkStart === null && linkEnd === null) {
       U.arrayRemoveAll(this.classType.referencesIN, this);
       return; } }
-
+/*
   getStyle(debug: boolean = true): HTMLElement | SVGElement {
     const raw: HTMLElement | SVGElement = super.getStyle(debug);
     const $raw = $(raw);
     const $selector = $raw.find('select.ClassSelector');
     M2Class.updateMMClassSelector($selector[0] as HTMLSelectElement, this.classType);
-    return raw; }
+    return raw; }*/
 
   duplicate(nameAppend: string = '_Copy', newParent: M2Class = null): M2Reference {
-    const r: M2Reference = new M2Reference(null, null, null);
+    const r: M2Reference = new M2Reference(null, null);
     return r.copy(this, nameAppend, newParent); }
 
   copy(r: M2Reference, nameAppend: string = '_Copy', newParent: M2Class = null): M2Reference {

@@ -34,7 +34,7 @@ export abstract class IAttribute extends IFeature {
   }
 */
 
-
+/*
   getStyle(): HTMLElement | SVGElement {
     const htmlRaw: HTMLElement | SVGElement = super.getStyle();
     const $html = $(htmlRaw);
@@ -42,7 +42,7 @@ export abstract class IAttribute extends IFeature {
     let i: number;
     for (i = 0; i < $selector.length; i++) { PropertyBarr.makePrimitiveTypeSelector($selector[0], this.getType()); }
     // EType.updateTypeSelector($selector[0] as HTMLSelectElement, this.getType());
-    return htmlRaw; }
+    return htmlRaw; }*/
 
   copy(other: IAttribute, nameAppend: string = '_Copy', newParent: IClass = null): void {
     super.copy(other, nameAppend, newParent);
@@ -54,13 +54,13 @@ export abstract class IAttribute extends IFeature {
 export class M3Attribute extends IAttribute {
   parent: M3Class;
   metaParent: M3Attribute;
-  instances: M2Attribute[] = []; // | M3Attribute[]
+  instances: M2Attribute[]; // | M3Attribute[]
 
   constructor(parent: M3Class, meta: IAttribute) {
     super(parent, meta);
     this.parse(null, true); }
 
-  duplicate(nameAppend: string = '_', newParent: M3Class = null): M3Attribute { U.pe(true, 'm3Attr.duplicate()'); return this; }
+  duplicate(nameAppend: string = '_', newParent: M3Class = null): M3Attribute { U.pe(true, 'Invalid operation: m3Attr.duplicate()'); return this; }
 
   generateModel(): Json {
     U.pe(true, 'm3Attr.generateModel()');

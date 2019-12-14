@@ -14,19 +14,217 @@ import {
   Status,
   Size,
   IReference, GraphPoint, GraphSize,
-  PropertyBarr, Dictionary, IClass
+  PropertyBarr, Dictionary, IClass, ViewPoint, EOperation, EParameter, Point
 } from '../../common/Joiner';
 import MouseDownEvent = JQuery.MouseDownEvent;
 import MouseUpEvent = JQuery.MouseUpEvent;
 import MouseMoveEvent = JQuery.MouseMoveEvent;
 import ClickEvent = JQuery.ClickEvent;
 import KeyDownEvent = JQuery.KeyDownEvent;
+import BlurEvent = JQuery.BlurEvent;
+import ChangeEvent = JQuery.ChangeEvent;
+
+
+export class ViewPointShell {
+  graph: IGraph;
+  model: IModel;
+  html: HTMLElement;
+  $html: JQuery<HTMLElement>;
+  $template: JQuery<HTMLLIElement>;
+  template: HTMLLIElement;
+  lastVP: ViewPoint = null; // se ne sono attivi multipli e modifichi lo stile di qualcosa, questo sarà quello che viene aggiornato.
+  defaultCheckbox: HTMLInputElement;
+  checkboxes: HTMLInputElement[];
+  ignoreEvents: boolean;
+  getViewpointGUI: Dictionary<number /*Viewpoint.id*/, HTMLLIElement> = {};
+  constructor(g: IGraph) {
+    this.graph = g;
+    this.model = g.model;
+    this.$html = $(g.container.parentElement).find('.viewpointShell');
+    this.html = this.$html[0];
+    this.$template = this.$html.find('li.viewpointrow.template') as JQuery<HTMLLIElement>;
+    this.template = this.$template[0];
+    const $checkboxlidefault = this.$html.find('li.viewpointrow.default');
+    const $defaultCheckbox = $checkboxlidefault.find('input[type="radio"]') as JQuery<HTMLInputElement>;
+    this.defaultCheckbox = $defaultCheckbox[0];
+    this.checkboxes = [];
+    this.getViewpointGUI = {};
+    let i: number;
+    // this.ignoreEvents = false;
+    $defaultCheckbox.on('click', (e: ClickEvent) => { this.undoAll(true); });
+    $checkboxlidefault.find('button.duplicate').on('click', (e: ClickEvent) => this.duplicateEvent(e, null, this.defaultCheckbox) );
+  }
+  undoAllOld(model :IModel): void {
+    let i1: number;
+    let i2: number;
+    let i3: number;
+    let i4: number;
+    model.graph.gridDisplay = IGraph.defaultGridDisplay;
+    model.graph.scroll = new GraphPoint(0, 0);
+    model.graph.setZoom(IGraph.defaultZoom);
+    model.graph.setGrid(IGraph.defaultGrid);
+    const undostyle = (m: ModelPiece) => { m.resetViews(); };
+    for (i1 = 0; i1 < model.childrens.length; i1++) {
+      const pkg: IPackage = model.childrens[i1];
+      undostyle(pkg);
+      for (i2 = 0; i2 < pkg.childrens.length; i2++) {
+        const c: IClass = pkg.childrens[i2];
+        undostyle(c);
+        c.shouldBeDisplayedAsEdge(false);
+        for (i3 = 0; i3 < c.attributes.length; i3++) {
+          const a: IAttribute = c.attributes[i3];
+          undostyle(a); }
+        for (i3 = 0; i3 < c.references.length; i3++) {
+          const r: IReference = c.references[i3];
+          undostyle(r); }
+        const operations = c.getOperations();
+        for (i3 = 0; i3 < operations.length; i3++) {
+          const o: EOperation = operations[i3];
+          undostyle(o);
+          for (i4 = 0; i4 < o.childrens.length; i4++) {
+            const p: EParameter = o.childrens[i4];
+            undostyle(p); }
+        }
+      }
+    }
+    model.refreshGUI_Alone();
+  }
+  undoAll(changingGuiChecked: boolean): void {
+    let i: number;
+    // de-apply all
+    for (i = 0; i < this.model.viewpoints.length; i++) { this.model.viewpoints[i].detach(); }
+    // update gui
+    this.ignoreEvents = true;
+    if (changingGuiChecked) {
+      for (i = 0; i < this.checkboxes.length; i++) { this.checkboxes[i].checked = false; }
+      this.graph.model.refreshGUI_Alone();
+    }
+    const defaultradio: HTMLInputElement = this.$html.find('input[type="radio"]')[0] as HTMLInputElement;
+    defaultradio.checked = true;
+    this.ignoreEvents = false;
+  }
+  refreshApplied(): void {
+    // this.undoAll(false);
+    let i: number;
+    let stylecustomized: boolean = false;
+    const makeSureAllCheckboxesAreProcessed: HTMLInputElement[] = this.checkboxes.slice();
+    for (i = this.model.viewpoints.length; --i >= 0; ) {
+      const vp: ViewPoint = this.model.viewpoints[i];
+      const checkbox: HTMLInputElement = this.getCheckbox(vp);
+      U.pe(!checkbox, 'failed to get checkbox of:', vp, this);
+      U.arrayRemoveAll(makeSureAllCheckboxesAreProcessed, checkbox);
+      stylecustomized = stylecustomized || checkbox.checked;
+      if (vp.isApplied === checkbox.checked) { continue; }
+      if (vp.isApplied) { vp.detach(); } else { vp.apply(); }
+    }/*
+    for (i = 0; i < makeSureAllCheckboxesAreProcessed.length; i++) {
+      const cbox: HTMLInputElement = makeSureAllCheckboxesAreProcessed[i];
+      const vp = ViewPoint.getbyID(+cbox.dataset.vpid);
+      if (vp.isApplied === checkbox.checked) { continue; }
+      if (vp.isApplied) { vp.detach(); } else { vp.apply(); }
+    }*/
+    U.pe(!!makeSureAllCheckboxesAreProcessed.length, 'Error: some checkbox are not yet processed.', makeSureAllCheckboxesAreProcessed, this);
+    // U.pe(true, 'stopped here still works? 2');
+    const defaultradio: HTMLInputElement = this.$html.find('input[type="radio"]')[0] as HTMLInputElement;
+    defaultradio.checked = !stylecustomized;
+    this.updatelastvp();
+    this.graph.model.refreshGUI_Alone();
+    this.graph.propertyBar.refreshGUI();
+  }
+  duplicateEvent(e: ClickEvent, oldvp: ViewPoint, oldvpCheckbox: HTMLInputElement, debug: boolean = false): void {
+    U.pif(debug, 'duplicate(' + (oldvp ? oldvp.name : null) + ') Start:', this.model.viewpoints);
+    // const vp: ViewPoint = ViewPoint.get($input[0].value);
+    let newvp: ViewPoint = new ViewPoint(this.model, oldvp ? oldvp.name : null);
+    if (oldvp) { newvp.clone(oldvp); newvp.updateTarget(this.model); }
+    this.ignoreEvents = true;
+    this.add(newvp, false);
+    if (oldvpCheckbox) { oldvpCheckbox.checked = false; }
+    this.ignoreEvents = false;
+    this.refreshApplied();
+    U.pif(debug, 'duplicate() End:', this.model.viewpoints);
+  }
+
+  add(v: ViewPoint, allowApply: boolean): void {
+    const $li: JQuery<HTMLLIElement> = this.$template.clone();
+    const li: HTMLLIElement = $li[0];
+    const $checkbox: JQuery<HTMLInputElement> = $li.find('input[type="checkbox"]') as any;
+    const checkbox: HTMLInputElement = $checkbox[0];
+    this.checkboxes.push(checkbox);
+    this.getViewpointGUI[v.id] = li;
+    const $input: JQuery<HTMLInputElement> = $li.find('input.name') as any;
+    const input: HTMLInputElement = $input[0];
+    const $duplicate: JQuery<HTMLButtonElement> = $li.find('button.duplicate') as any;
+    const $delete: JQuery<HTMLButtonElement> = $li.find('button.remove') as any;
+    const $rename: JQuery<HTMLButtonElement> = $li.find('button.edit') as any;
+
+    $duplicate.on('click', (e: ClickEvent) => this.duplicateEvent(e, v, checkbox));
+    $delete.on('click', (e: ClickEvent) => {
+      this.html.removeChild(li);
+      U.arrayRemoveAll(this.checkboxes, checkbox);
+      delete this.getViewpointGUI[v.id];
+      v.delete(); });
+    $rename.on('click', (e: ClickEvent) => {
+      input.readOnly = false;
+      input.focus();
+      //
+      //
+      // $rename.hide(); $delete.hide(); $duplicate.hide();
+    });
+    const inputConfirm = (confirm: boolean = true) => {
+      if (confirm) { v.setname(input.name); }
+      input.value = v.name;
+      input.readOnly = true;
+      // $rename.show();
+      // $delete.show();
+      // $duplicate.show();
+    };
+    $input.on('keydown', (e: KeyDownEvent) => { if (e.key === 'return') { inputConfirm(true); } else if (e.key === 'escape') { inputConfirm(false); }});
+    $input.on('blur', (e: BlurEvent) => { inputConfirm(false); });
+    $input.on('click', (e: ClickEvent) => {
+      // todo: se non lo fa già di suo: (per triggerare default.click() = this.undoAll();
+      // if (input.readOnly) { this.undoAll(true); }
+    });
+    checkbox.dataset.vpid = '' + v.id;
+    input.value = v.name;
+    checkbox.checked = v.isApplied;
+    $checkbox.on('change', (e: ChangeEvent): boolean => {
+      if (this.ignoreEvents) { e.preventDefault(); return false; }
+      this.refreshApplied();
+      return true; });
+    if (allowApply && v.isApplied) {
+      $checkbox.trigger('change');
+    }
+    li.classList.remove('template');
+    this.html.appendChild(li);
+  }
+  updatelastvp(): void {
+    this.$html.find('li[islastvp]').removeAttr('islastvp');
+    const vp: ViewPoint = this.model.getLastView();
+    console.log('updatelastvp() ', this.model.viewpoints, this.getViewpointGUI, this);
+    if (!vp) return;
+    this.lastVP = vp;
+    const li: HTMLLIElement = this.getViewpointGUI[vp.id];
+    li.setAttribute('islastvp', 'true');
+  }
+
+  getCheckbox(vp: ViewPoint): HTMLInputElement {
+    let i: number;
+    for (i = 0; i < this.checkboxes.length; i++) {
+      const cbox: HTMLInputElement = this.checkboxes[i];
+      if (cbox.dataset.vpid === '' + vp.id) return cbox;
+    }
+    return null;
+  }
+}
 
 export class IGraph {
 // todo: this.vertex non è mai aggiornato reealmente.
   static all: Dictionary<number, IGraph> = {};
   static ID = 0;
   private static allMarkp: HTMLElement[] = []; // campo per robe di debug
+  static defaultGridDisplay: boolean = true;
+  static defaultGrid: GraphPoint = new GraphPoint(20, 20);
+  static defaultZoom: Point = new Point(1, 1);
   id: number = null;
   container: HTMLElement = null;
   model: IModel = null;
@@ -45,6 +243,7 @@ export class IGraph {
   private markp: HTMLElement;
   private markgp: SVGCircleElement;
   private svg: SVGElement;
+  public viewPointShell: ViewPointShell;
 
   static getByID(id: string): IGraph { return IGraph.all[id]; }
   static getByHtml(html: HTMLElement | SVGElement): IGraph {
@@ -89,6 +288,8 @@ export class IGraph {
     const arrReferences: IReference[] = this.model.getAllReferences();
     for (i = 0; i < arrReferences.length; i++) { this.edges.concat(arrReferences[i].generateEdge()); }
     this.propertyBar = new PropertyBarr(this.model);
+
+    this.viewPointShell = new ViewPointShell(this);
     this.addGraphEventListeners();
     this.ShowGrid(); }
 
@@ -99,28 +300,28 @@ export class IGraph {
     if (fitVertical && !isNaN(this.grid.y) && this.grid.y > 0) { pt.y = U.trunc(pt.y / this.grid.y) * this.grid.y; }
     U.pif(debug, 'fitToGrid(', pt0, '); this.grid:', this.grid, ' = ', pt);
     return pt; }
-/*
-  addv(v: IVertex, position: GraphPoint = null) {
-    // if (!position ) { position = new Point(0, 0); }
-    U.pe(!v, 'vertex is null;');
-    this.vertex.push(v);
-    const html: HTMLElement = v.createGUI();
-    this.shell.append(html);
-    if (position) {
-      html.setAttribute('x', '' + position.x);
-      html.setAttribute('y', '' + position.y); }
-    IVertex.addEventListeners(html); }
-  adde(e: IEdge, position: GraphPoint = null) {
-    this.edges.push(e);
-    const html: HTMLElement = e.createGUI();
-    e.refreshGui();
-    this.shell.append(html);
-    if (position) {
-      html.setAttribute('x', '' + position.x);
-      html.setAttribute('y', '' + position.y); }
-    IEdge.addEventListeners(html);
-  }
-*/
+  /*
+    addv(v: IVertex, position: GraphPoint = null) {
+      // if (!position ) { position = new Point(0, 0); }
+      U.pe(!v, 'vertex is null;');
+      this.vertex.push(v);
+      const html: HTMLElement = v.createGUI();
+      this.shell.append(html);
+      if (position) {
+        html.setAttribute('x', '' + position.x);
+        html.setAttribute('y', '' + position.y); }
+      IVertex.addEventListeners(html); }
+    adde(e: IEdge, position: GraphPoint = null) {
+      this.edges.push(e);
+      const html: HTMLElement = e.createGUI();
+      e.refreshGui();
+      this.shell.append(html);
+      if (position) {
+        html.setAttribute('x', '' + position.x);
+        html.setAttribute('y', '' + position.y); }
+      IEdge.addEventListeners(html);
+    }
+  */
 
   addGraphEventListeners() {
     const $graph = $(this.container);
@@ -301,64 +502,9 @@ export class IGraph {
     U.ArrayAdd(this.vertex, v);
     // todo: aggiungi edges tra i vertici. in matrix edgeMatrix[vertex][vertex] = edge
   }
-}
 
-export class Point {
-  x: number;
-  y: number;
-  dontMixWithGraphPoint: any;
-
-  constructor(x: number | string, y: number | string) {
-    if (isNaN(+x)) { x = 0; }
-    if (isNaN(+y)) { y = 0; }
-    this.x = +x;
-    this.y = +y; }
-
-  clone(): Point { return new Point(this.x, this.y); }
-
-  subtract(p2: Point, newInstance: boolean): Point {
-    U.pe(!p2, 'subtract argument must be a valid point: ', p2);
-    let p1: Point;
-    if (!newInstance) { p1 = this; } else { p1 = this.clone(); }
-    p1.x -= p2.x;
-    p1.y -= p2.y;
-    return p1; }
-
-  add(p2: Point, newInstance: boolean): Point {
-    U.pe(!p2, 'add argument must be a valid point: ', p2);
-    let p1: Point;
-    if (!newInstance) { p1 = this; } else { p1 = this.clone(); }
-    p1.x += p2.x;
-    p1.y += p2.y;
-    return p1; }
-
-  addAll(p: Point[], newInstance: boolean): Point {
-    let i;
-    let p0: Point;
-    if (!newInstance) { p0 = this; } else { p0 = this.clone(); }
-    for (i = 0; i < p.length; i++) { p0.add(p[i], true); }
-    return p0; }
-
-  subtractAll(p: Point[], newInstance: boolean): Point {
-    let i;
-    let p0: Point;
-    if (!newInstance) { p0 = this; } else { p0 = this.clone(); }
-    for (i = 0; i < p.length; i++) { p0.subtract(p[i], true); }
-    return p0; }
-
-  multiply(scalar: number, newInstance: boolean): Point {
-    U.pe( isNaN(+scalar), 'scalar argument must be a valid number: ', scalar);
-    let p1: Point;
-    if (!newInstance) { p1 = this; } else { p1 = this.clone(); }
-    p1.x *= scalar;
-    p1.y *= scalar;
-    return p1; }
-
-  divide(scalar: number, newInstance: boolean): Point {
-    U.pe( isNaN(+scalar), 'scalar argument must be a valid number: ', scalar);
-    let p1: Point;
-    if (!newInstance) { p1 = this; } else { p1 = this.clone(); }
-    p1.x /= scalar;
-    p1.y /= scalar;
-    return p1; }
+  setGrid(grid: GraphPoint): void {
+    this.grid = grid;
+    this.model.refreshGUI_Alone(); // reallinea tutti i vertici.
+  }
 }

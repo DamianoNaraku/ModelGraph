@@ -31,7 +31,9 @@ input:disabled{
   opacity : .75;
   filter  : alpha(opacity=75); /* IE<9 */
 }
-
+::ng-deep .styleEditorSelected{
+  outline: 3px dashed red !important;
+}
 /*olds*/
 
 /****************** attributeEditor.css */

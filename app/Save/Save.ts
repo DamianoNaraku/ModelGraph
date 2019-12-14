@@ -1,4 +1,4 @@
-import {
+/*import {
   Dictionary,
   EdgeModes,
   EdgePoint, EdgePointStyle,
@@ -11,9 +11,10 @@ import {
   Point,
   Status, InputPopup, ShortAttribETypes,
   U, IClass, MetaModel, M2Attribute, M2Reference, Model,
-} from '../common/Joiner';
+}                  from '../common/Joiner';
 
 import ClickEvent = JQuery.ClickEvent;
+import {ViewPoint} from '../GuiStyles/viewpoint';
 
 export class StatusOptions {
   typeAliasDictionary: Dictionary<ShortAttribETypes, string> = {};
@@ -53,11 +54,11 @@ export class EdgeOptions {
     // if (!e) { return; }
     U.pe(e.midNodes.length > 0, 'failed to load midpoints: the edge already have some points, even before the loading of savefile.');
     while (++i < this.midPoints.length) {
-      const mp: EdgePointOption = this.midPoints[i];
-      e.midNodes.push(new EdgePoint(e, mp.pos));
+      const ownermp: EdgePointOption = this.midPoints[i];
+      e.midNodes.push(new EdgePoint(e, ownermp.pos));
     }
     e.refreshGui();
-  }*/
+  }* /
 }
 export class ModelPieceOptions {
   fullnameTarget: string = null;
@@ -65,11 +66,11 @@ export class ModelPieceOptions {
   instancesStyle: string = null;
 
   /*loadModelPieceOptions(m: ModelPiece): void {
-    m.customStyle = this.ownStyle;
+    m.customStyleToErase = this.ownStyle;
     m.styleOfInstances = this.instancesStyle;
     const namePos = this.fullnameTarget.lastIndexOf('.');
     m.setName(this.fullnameTarget.substr(namePos + 1));
-  }*/
+  }* /
 }
 export class ClassOptions extends ModelPieceOptions {
   displayAsEdge = false;
@@ -119,7 +120,7 @@ export class ClassOptions extends ModelPieceOptions {
     }
     classe.refreshGUI();
     return; }
-*/
+* /
 }
 export class AttributeOptions extends ModelPieceOptions {
   static findTargeting(fullnameTarget: string, classe: M2Class): IAttribute {
@@ -151,23 +152,26 @@ export class ReferenceOptions extends ModelPieceOptions {
 }
 export class EdgePointOption {
   pos: GraphPoint;
-}
-export class Options {
+}* /
+
+import {Status} from '../common/Joiner';
+
+export class Options {/*
   status: StatusOptions;
   mm: ModelOptions;
   m: ModelOptions;
-  version: number;
-
-
-
+  version: number;* /
 
 
   static Save(isAutosave: boolean, saveAs: boolean) {
     if (localStorage.getItem('autosave') !== 'true') { return; }
-    Options.generateSaveJson().save(isAutosave, saveAs);
+    Options.generateSaveJson().saveToDB(isAutosave, saveAs);
     console.log('autosave style done: ', this);
-    Status.status.mm.save(isAutosave, null);
-    Status.status.m.save(isAutosave, null);
+    Status.status.mm.saveToDB(isAutosave, null);
+    Status.status.m.saveToDB(isAutosave, null);
+    // for (let i = 0; i < Status.status.m.viewpoints.length; i++) { Status.status.m.saveView(Status.status.m.viewpoints[i], isAutosave, null); }
+    // incluso in model.saveToDB() for (let i = 0; i < Status.status.mm.viewpoints.length; i++) {
+    // Status.status.mm.saveView(Status.status.mm.viewpoints[i], isAutosave, null); }
     console.log('autosave fully finished.'); }
 
   static Load(s: Status) {
@@ -176,18 +180,18 @@ export class Options {
     if (key === null ) { key = 'modelGraphSave_GUI_Damiano'; }
     const value = localStorage.getItem(key);
     if (!value || value === '') { return; }
-    const save: Options = JSON.parse(value);
-    // save = Options.fromJson(save);
+    const saveToDB: Options = JSON.parse(value);
+    // saveToDB = Options.fromJson(saveToDB);
     // console.clear();
-    console.log('save.version:', save.version, ', saveRaw:', value, 'save:', save);
+    console.log('saveToDB.version:', saveToDB.version, ', saveRaw:', value, 'saveToDB:', saveToDB);
     try {
-      switch (save.version) {
-        default: U.pe(true, 'unrecognized optionSave version:', save.version); break;
-        case 1: Options.LoadV1(save, s); break;
+      switch (saveToDB.version) {
+        default: U.pe(true, 'unrecognized optionSave version:', saveToDB.version); break;
+        case 1: Options.LoadV1(saveToDB, s); break;
       }
     } catch (e) {
-      U.pw(true, 'the style save had some errors, it will be resetted. Only style customizations will be lost.');
-      // disable save on exit to avoid error survival.
+      U.pw(true, 'the style saveToDB had some errors, it will be resetted. Only style customizations will be lost.');
+      // disable saveToDB on exit to avoid error survival.
       $(window).off('beforeunload.unload_autosave');
       localStorage.setItem(key, null); }
   }
@@ -222,7 +226,7 @@ export class Options {
     m.shouldBeDisplayedAsEdge(o.displayAsEdge);
     let namepos: number = o.fullnameTarget.lastIndexOf('.');
     m.setName(o.fullnameTarget.substr(namepos + 1));
-    m.customStyle = U.toHtml(o.ownStyle);
+    m.customStyleToErase = U.toHtml(o.ownStyle);
     m.styleOfInstances = U.toHtml(o.instancesStyle);
     console.log('eoc:', o.edgeOptions, o);
     Options.LoadV1EdgeOptions(o.edgeOptions, m);
@@ -233,7 +237,7 @@ export class Options {
       namepos = oa.fullnameTarget.lastIndexOf('.');
       a.setName(oa.fullnameTarget.substr(namepos + 1));
       a.styleOfInstances = U.toHtml(oa.instancesStyle);
-      a.customStyle = U.toHtml(oa.ownStyle);
+      a.customStyleToErase = U.toHtml(oa.ownStyle);
     }
     i = -1;
     while (++i < o.references.length) {
@@ -242,7 +246,7 @@ export class Options {
       namepos = or.fullnameTarget.lastIndexOf('.');
       r.setName(or.fullnameTarget.substr(namepos + 1));
       r.styleOfInstances = U.toHtml(or.instancesStyle);
-      r.customStyle = U.toHtml(or.ownStyle);
+      r.customStyleToErase = U.toHtml(or.ownStyle);
       console.log('eor:', or.edgeOptions, or);
       Options.LoadV1EdgeOptions(or.edgeOptions, r);
     }
@@ -370,7 +374,7 @@ export class Options {
   private static load(st: Status, oJson: Options): void {
 
   }
-  */
+  * /
   private static MakeEdgeOptions(logic: IClass | IReference): EdgeOptions[] {
     const edges: IEdge[] = logic.edges;
     let j = -1;
@@ -397,7 +401,7 @@ export class Options {
     const co: ClassOptions = new ClassOptions();
     co.fullnameTarget = classe.fullname();
     co.instancesStyle = classe.styleOfInstances ? classe.styleOfInstances.outerHTML : null;
-    co.ownStyle = classe.customStyle ? classe.customStyle.outerHTML : null;
+    co.ownStyle = classe.customStyleToErase ? classe.customStyleToErase.outerHTML : null;
     co.displayAsEdge = classe.shouldBeDisplayedAsEdge();
     co.edgeOptions = co.displayAsEdge && classe.edges ? Options.MakeEdgeOptions(classe) : null;
     co.size = classe.vertex.size;
@@ -407,7 +411,7 @@ export class Options {
       const attribute: IAttribute = attributes[j];
       const ca: AttributeOptions = new AttributeOptions();
       ca.fullnameTarget = attribute.fullname();
-      ca.ownStyle = attribute.customStyle ? attribute.customStyle.outerHTML : null;
+      ca.ownStyle = attribute.customStyleToErase ? attribute.customStyleToErase.outerHTML : null;
       ca.instancesStyle = attribute.styleOfInstances ? attribute.styleOfInstances.outerHTML : null;
       co.attributes.push(ca);
     }
@@ -417,7 +421,7 @@ export class Options {
       const reference: IReference = references[j];
       const cr: ReferenceOptions = new ReferenceOptions();
       cr.fullnameTarget = reference.fullname();
-      cr.ownStyle = reference.customStyle ? reference.customStyle.outerHTML : null;
+      cr.ownStyle = reference.customStyleToErase ? reference.customStyleToErase.outerHTML : null;
       cr.instancesStyle = reference.styleOfInstances ? reference.styleOfInstances.outerHTML : null;
       cr.edgeOptions = reference.edges ? Options.MakeEdgeOptions(reference) : null;
       co.references.push(cr);
@@ -469,13 +473,13 @@ export class Options {
     this.status = new StatusOptions();
   }
 
-  private save(isAutosave: boolean, saveAs: boolean) {
+  private saveToDB(isAutosave: boolean, saveAs: boolean) {
     U.pe(saveAs, 'style.SaveAs() to do.');
     this.saveInBrowserMemory(saveAs);
   }
   private saveInBrowserMemory(saveAs: boolean, key: string = null, value: string = null): void {
     if (key === null ) { key = 'modelGraphSave_GUI_Damiano'; }
-    U.pe(!key || key === '', 'cannot save with null or empty name.');
+    U.pe(!key || key === '', 'cannot saveToDB with null or empty name.');
     if (value === null) { value = JSON.stringify(this); }
     localStorage.setItem(key, value);
   }
@@ -504,7 +508,7 @@ export class Options {
     let i: number;
 
     i = -1;
-    console.log('save:', this);
+    console.log('saveToDB:', this);
     while (++i < this.mm.class.length) {
       oclasse = this.mm.class[i];
       classe = oclasse.findTargetingClass(s.mm);
@@ -524,6 +528,7 @@ export class Options {
     s.m.refreshGUI();
     s.mm.refreshGUI();
   }
-*/
+* /
 
 }
+*/

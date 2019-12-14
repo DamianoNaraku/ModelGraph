@@ -11,14 +11,16 @@ import {
   IReference,
   IVertex,
   Json, Model, Status,
-  U, EType, IClass, MClass, MetaModel, MetaMetaModel, EOperation, EParameter
-} from '../common/Joiner';
+  U, EType, IClass, MClass, MetaModel, MetaMetaModel, EOperation, EParameter, MAttribute, MReference, ViewHtmlSettings
+}              from '../common/Joiner';
 
 import ClickEvent = JQuery.ClickEvent;
 import MouseMoveEvent = JQuery.MouseMoveEvent;
 import MouseDownEvent = JQuery.MouseDownEvent;
 import MouseUpEvent = JQuery.MouseUpEvent;
-
+import {Vieww} from '../GuiStyles/viewpoint';
+import {Style} from '@angular/cli/lib/config/schema';
+export type StyleComplexEntry = {html: Element, htmlobj:ViewHtmlSettings, view: Vieww, ownermp: ModelPiece, isownhtml: boolean, isinstanceshtml: boolean, isGlobalhtml: boolean};
 export class Info {
   static forConsole(obj: any): any {}
 
@@ -57,8 +59,8 @@ export class Info {
     for (key in targetinfo) {
       if (!targetinfo.hasOwnProperty(key)) { continue; }
       if (!prefixc) { switch (key[0]) {
-        default: prefixc = ''; break;
-        case '#': case '_': case '@': prefixc = key[0]; break; } }
+      default: prefixc = ''; break;
+      case '#': case '_': case '@': prefixc = key[0]; break; } }
       // console.log('Info.set(' + info + ', ' + key + ', ' + targetinfo[key] + ', ' + prefixc);
       Info.set(info, key, targetinfo[key], prefixc); }
   }
@@ -73,8 +75,11 @@ export abstract class ModelPiece {
   metaParent: ModelPiece = null;
   instances: ModelPiece[] = [];
   name: string = null;
-  styleOfInstances: HTMLElement | SVGElement = null;
-  customStyle: HTMLElement | SVGElement;
+  // styleOfInstances:Element = null;
+  // customStyleToErase: Element = null;
+//  styleobj: ModelPieceStyleEntry = null;
+  key: number[] = null;
+  views: Vieww[] = null;
 
   static GetStyle(model: IModel, tsClass: string, checkCustomizedFirst: boolean = true): HTMLElement | SVGElement {
     let rootSelector: string;
@@ -84,14 +89,14 @@ export abstract class ModelPiece {
 
     let $html: JQuery<HTMLElement | SVGElement>;
     const $root: JQuery<HTMLElement | SVGElement> = $((checkCustomizedFirst ? '.customized' : '.immutable') + rootSelector);
-
+    if (tsClass.indexOf('M1') === 0 || tsClass.indexOf('M2') === 0) { tsClass = tsClass.substr(2); }
     switch (tsClass) {
-      default: U.pe(true, 'unrecognized TS Class: ' + tsClass); return null;
-      case 'Class': $html = $root.find('.Template.Class'); break;
-      case 'Attribute': $html = $root.find('.Template.Attribute'); break;
-      case 'Reference': $html = $root.find('.Template.Reference'); break;
-      case 'EOperation': $html = $root.find('.Template.Operation'); break;
-      case 'EParameter': $html = $root.find('.Template.Parameter'); break; }
+    default: U.pe(true, 'unrecognized TS Class: ' + tsClass); return null;
+    case 'Class': $html = $root.find('.Template.Class'); break;
+    case 'Attribute': $html = $root.find('.Template.Attribute'); break;
+    case 'Reference': $html = $root.find('.Template.Reference'); break;
+    case 'EOperation': $html = $root.find('.Template.Operation'); break;
+    case 'EParameter': $html = $root.find('.Template.Parameter'); break; }
     U.pw(checkCustomizedFirst && $html.length > 1,
       'found more than one match for custom global style, should there be only 0 or 1.', $html, $root, this);
     if (checkCustomizedFirst && $html.length === 0) { return ModelPiece.GetStyle(model, tsClass, false); }
@@ -108,9 +113,14 @@ export abstract class ModelPiece {
   static get(e: JQuery.ChangeEvent | ClickEvent | MouseMoveEvent | MouseDownEvent | MouseUpEvent): ModelPiece {
     return ModelPiece.getLogic(e.target); }
 
-  static getLogic(html: HTMLElement | SVGElement): ModelPiece {
+  public static getLogicalRootOfHtml(html0: Element): Element {
+    let html: HTMLElement | SVGElement = html0 as any;
     if (!html) { return null; }
     while ( html && (!html.dataset || !html.dataset.modelPieceID)) { html = html.parentNode as HTMLElement | SVGElement; }
+    return html; }
+
+  static getLogic(html: HTMLElement | SVGElement): ModelPiece {
+    html = this.getLogicalRootOfHtml(html) as any;
     const ret: ModelPiece = html ? ModelPiece.getByID(+html.dataset.modelPieceID) : null;
     // U.pe(!(ret instanceof T), 'got logic with unexpected class type:', this);
     return ret; }
@@ -123,8 +133,8 @@ export abstract class ModelPiece {
     this.metaParent = metaVersion;
     this.instances = [];
     this.childrens = [];
+    this.views = [];
     if (this.parent) { U.ArrayAdd(this.parent.childrens, this); }
-    U.pe(this.metaParent && !this.metaParent.instances, '', this.metaParent);
     if (this.metaParent) { U.ArrayAdd(this.metaParent.instances, this); }
   }
 
@@ -132,6 +142,16 @@ export abstract class ModelPiece {
     this.id = ModelPiece.idMax++;
     ModelPiece.idToLogic[this.id] = this;
     return this.id; }
+
+  //todo: devo stare attento ogni volta che aggiungo-elimino un elemento a chiamare updateKey()
+  // le views si salvano perchè usano la chiave all avvio e poi la rigenerano ad ogni salvataggio e non la usano ulteriormente se non per generare
+  // la savestring.
+  getKey(): number[] { return this.key ? this.key : this.updateKey(); }
+  getKeyStr(): string { return JSON.stringify(this.getKey()); }
+
+  updateKey(): number[] {
+    const pathIndex: number[] = U.getIndexesPath(this, 'parent', 'childrens');
+    return this.key = pathIndex; }
 
   replaceVarsSetup(): void { return; }
 
@@ -226,6 +246,13 @@ export abstract class ModelPiece {
 
   abstract refreshGUI_Alone(debug?: boolean): void;
   abstract fullname(): string;
+  endingName(valueMaxLength: number = 10): string { return ''; }
+
+  public printableName(valueMaxLength: number = 5): string {
+    if (this.name !== null) { return this.fullname(); }
+    const ending: String = this.endingName(valueMaxLength);
+    return this.metaParent.fullname() + ':' + this.id + (ending && ending !== '' ? ':' + ending : ''); }
+
   abstract midname(): string;
   abstract parse(json: Json, destructive?: boolean): void;
   abstract getVertex(): IVertex;
@@ -243,6 +270,9 @@ export abstract class ModelPiece {
     console.log('setName.valid ? ' + regexp.test(value) + ' |' + value + '|');
     if (!regexp.test(value)) {
       value = value.replace(/([^a-zA-Z_$0-9])/g, '');
+      let i: number = 0;
+      while (value[i] && value[i] >= '0' && value[i] <= '9') i++;
+      value = value.substr(i);
       let remainder: string = value;
       let firstChar: string = '' || '';
       while (remainder.length > 0 && firstChar === '') {
@@ -271,11 +301,15 @@ export abstract class ModelPiece {
 
   copy(other: ModelPiece, nameAppend: string = '_Copy', newParent: ModelPiece = null): void {
     this.setName(other.name + nameAppend);
-    this.styleOfInstances = other.styleOfInstances;
-    this.customStyle = other.customStyle;
+    let i: number;
+    this.views = [];
+    for (i = 0; i < other.views.length; i++) {
+      const v: Vieww = other.views[i];
+      this.views.push(v.duplicate());
+    }
     this.parent = newParent ? newParent : other.parent;
     if (this.parent) { U.ArrayAdd(this.parent.childrens, this); }
-    let i: number;
+
     this.childrens = [];
     for (i = 0; i < other.childrens.length; i++) { this.childrens.push(other.childrens[i].duplicate('', this)); }
     this.metaParent = other.metaParent;
@@ -307,30 +341,30 @@ export abstract class ModelPiece {
       child.validate();
       names[name] = child; }
     return true; }
+  /*
+    setStyle_SelfLevel_1(html: Element): void { this.customStyleToErase = html; }
+    setStyle_InstancesLevel_2(html: Element): void { this.styleOfInstances = html; }
+    setStyle_GlobalLevel_3(html: HTMLElement | SVGElement): void {
+      const oldCustomStyle: HTMLElement | SVGElement = this.getGlobalLevelStyle(true);
+      if (oldCustomStyle) { oldCustomStyle.parentNode.removeChild(oldCustomStyle); }
+      const model: IModel = this.getModelRoot();
+      let rootSelector: string;
+      if (model.isM()) { rootSelector = '.MDefaultStyles';
+      } else if (model.isMM()) { rootSelector = '.MMDefaultStyles';
+      } else { U.pe(true, 'm3 objects should not call getStyle()'); }
+      let selectorClass: string = '' + '_ERROR_';
+      if (false && false) {
+      } else if (this instanceof IClass) { selectorClass = ('Class');
+      } else if (this instanceof IReference) { selectorClass = ('Reference');
+      } else if (this instanceof IAttribute) { selectorClass = ('Attribute'); }
 
-  setStyle_SelfLevel_1(html: HTMLElement | SVGElement): void { this.customStyle = html; }
-  setStyle_InstancesLevel_2(html: HTMLElement | SVGElement): void { this.styleOfInstances = html; }
-  setStyle_GlobalLevel_3(html: HTMLElement | SVGElement): void {
-    const oldCustomStyle: HTMLElement | SVGElement = this.getGlobalLevelStyle(true);
-    if (oldCustomStyle) { oldCustomStyle.parentNode.removeChild(oldCustomStyle); }
-    const model: IModel = this.getModelRoot();
-    let rootSelector: string;
-    if (model.isM()) { rootSelector = '.MDefaultStyles';
-    } else if (model.isMM()) { rootSelector = '.MMDefaultStyles';
-    } else { U.pe(true, 'm3 objects should not call getStyle()'); }
-    let selectorClass: string = '' + '_ERROR_';
-    if (false && false) {
-    } else if (this instanceof IClass) { selectorClass = ('Class');
-    } else if (this instanceof IReference) { selectorClass = ('Reference');
-    } else if (this instanceof IAttribute) { selectorClass = ('Attribute'); }
+      let $root: JQuery<HTMLElement | SVGElement>;
+      $root = $('.customized' + rootSelector);
+      const container: HTMLElement | SVGElement = $root[0];
+      html.classList.add('Template', selectorClass, (this instanceof IClass ? 'Vertex' : ''));
+      container.appendChild(html); }*/
 
-    let $root: JQuery<HTMLElement | SVGElement>;
-    $root = $('.customized' + rootSelector);
-    const container: HTMLElement | SVGElement = $root[0];
-    html.classList.add('Template', selectorClass, (this instanceof IClass ? 'Vertex' : ''));
-    container.appendChild(html); }
-
-  private getGlobalLevelStyle(checkCustomizedFirst: boolean): HTMLElement | SVGElement {
+  getGlobalLevelStyle(checkCustomizedFirst: boolean = true): HTMLElement | SVGElement {
     let tsClass: string;
     if (false && false ) {
     } else if (this instanceof IClass) { tsClass = 'Class';
@@ -341,10 +375,56 @@ export abstract class ModelPiece {
     } else { tsClass = 'ERROR: ' + U.getTSClassName(this); }
     return ModelPiece.GetStyle(this.getModelRoot(), tsClass, checkCustomizedFirst); }
 
-  getStyle(debug: boolean = true): HTMLElement | SVGElement {
+  getStyleOfInstances(): StyleComplexEntry {
+    let i: number;
+    const ret: StyleComplexEntry = {html:null, htmlobj:null, view:null, ownermp:null, isownhtml:null, isinstanceshtml:null, isGlobalhtml:null};
+    for (i = this.views.length; --i >= 0;) {
+      let v: Vieww = this.views[i];
+      if (!v.htmli || !v.htmli.getHtml()) continue;
+      ret.html = v.htmli.getHtml();
+      ret.htmlobj = v.htmli;
+      ret.view = v;
+      ret.ownermp = this;
+      ret.isGlobalhtml = false;
+      ret.isinstanceshtml = true;
+      ret.isownhtml = false;
+      return ret; }
+    return null; }
+
+  getInstancesInheritedStyle(): StyleComplexEntry { return this.metaParent ? this.metaParent.getStyleOfInstances() : null; }
+  getStyle(): StyleComplexEntry {
+    let j: number;
+    let i: number;
+    const ret: StyleComplexEntry = {html:null, htmlobj:null, view:null, ownermp:null, isownhtml:null, isinstanceshtml:null, isGlobalhtml:null};
+    for (j = this.views.length; --j >=0 ;){
+      const v: Vieww = this.views[j];
+      if (!v.htmlo || !v.htmlo.getHtml()) continue;
+      ret.html = v.htmlo.getHtml();
+      ret.htmlobj = v.htmlo;
+      ret.view = v;
+      ret.ownermp = this;
+      ret.isGlobalhtml = false;
+      ret.isinstanceshtml = false;
+      ret.isownhtml = true;
+      return ret; }
+    const tmpret = this.getInstancesInheritedStyle();
+    if (tmpret) return tmpret;
+    ret.html = this.getGlobalLevelStyle();
+    ret.htmlobj = null;
+    ret.view = null;
+    ret.ownermp = null;
+    ret.isGlobalhtml = true;
+    ret.isinstanceshtml = false;
+    ret.isownhtml = false;
+    return ret; }
+
+  /*
+  getStyleOld(): ViewHtmlSettings { return this.views.getHtml(this); }
+  getStyleOldOld(): Element { return this.views.getHtml(this); }
+  getStyleOldissimo(debug: boolean = true): Element {
     // prima precedenza: stile personale.
-    let ret: HTMLElement | SVGElement;
-    if (this.customStyle) { ret = this.customStyle; ret.id = '' + this.id; return ret; }
+    let ret: Element;
+    if (this.customStyleToErase) { ret = this.customStyleToErase; ret.id = '' + this.id; return ret; }
     // seconda precedenza: stile del meta-parent.
     const metap1 = this.metaParent;
     if (metap1 && metap1.styleOfInstances) { ret = metap1.styleOfInstances; ret.id = '' + this.id; return ret; }
@@ -352,6 +432,9 @@ export abstract class ModelPiece {
     ret = this.getGlobalLevelStyle(true);
     ret.id = '' + this.id;
     return ret; }
+    getStyleObj(): ModelPieceStyleEntry {
+      if (this.styleobj) { return this.styleobj; }
+      return this.styleobj = ModelPieceStyleEntry.load(this.getStyle(), null); }*/
 
   getInfo(toLower: boolean = false): Info {
     let i: number;
@@ -370,10 +453,26 @@ export abstract class ModelPiece {
     for (i = 0; this.childrens && i < this.childrens.length; i++) {
       const child = this.childrens[i];
       const name = model.isM1() && child.metaParent ? child.metaParent.name : child.name;
+      U.pe(!name, 'error: probably some metparent is null.', this, child);
       Info.setc(info, name.toLowerCase(), child);
       Info.setraw(childrenInfo, name.toLowerCase(), child); }
     for (i = 0; this.instances && i < this.instances.length; i++) { Info.seti(instancesInfo,  '' + i, this.instances[i]); }
     return info; }
 
+  getHtmlOnGraph(): HTMLElement | SVGElement {
+    let html: HTMLElement | SVGElement = this.getVertex().getHtml();
+    if (this instanceof IClass) return html;
+    html = $(html).find('*[data-modelPieceID="' + this.id + '"]')[0];
+    return html ? html : null; }
+
+  getLastView(): Vieww { return this.views[this.views.length - 1];
+    // todo: deve diventare una array.
+  }
+
+  addView(v: Vieww): void {
+    // if (!v.viewpoint.viewsDictionary[this.id]) {  v.viewpoint.viewsDictionary[this.id] = []; }
+    v.viewpoint.viewsDictionary[this.id] = v;
+    U.ArrayAdd(this.views, v); }
+  resetViews(): void { this.views = []; }
 }
 export abstract class ModelNone extends ModelPiece {}
