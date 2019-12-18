@@ -77,23 +77,21 @@ export class StyleEditor {
   updateClickedGUIHighlight() {
     $(this.propertyBar.model.graph.container).find('.styleEditorSelected').removeClass('styleEditorSelected');
     if (this.isVisible() && this.clickedLevel) { this.clickedLevel.classList.add('styleEditorSelected'); } }
-  private getCopyOfTemplate(m: ModelPiece, s: string): HTMLElement {
-    const $html: JQuery<HTMLElement> = this.$templates.find('.Template' + s);
+  private getCopyOfTemplate(m: ModelPiece, s: string, appendTo: HTMLElement, clear: boolean): HTMLElement {
+    let $html: JQuery<HTMLElement> = this.$templates.find('.template' + s);
     const html: HTMLElement = U.cloneHtml<HTMLElement>($html[0]);
+    html.classList.remove('template');
     html.dataset.modelPieceID = '' + m.id;
-    U.clear(this.display);
-    this.display.appendChild(html);
     html.style.display = 'block';
-    console.log($html, '.' + (m.getModelRoot().isM() ? 'm1' : 'm2') + 'hide',
-      $html.find('.' + (m.getModelRoot().isM() ? 'm1' : 'm2') + 'hide').hide());
-
-    $html.find('.' + (m.getModelRoot().isM() ? 'm1' : 'm2') + 'hide').hide();
-    return html;
-  }
+    if (appendTo) {
+      if (clear) U.clear(appendTo);
+      appendTo.appendChild(html); }
+    $html = $(html).find('.' + (m.getModelRoot().isM() ? 'm1' : 'm2') + 'hide').hide();
+    return html; }
 
   showM(m: IModel) {
     console.log('styleShowM(', m, ')');
-    const html: HTMLElement = this.getCopyOfTemplate(m, '.model');
+    const html: HTMLElement = this.getCopyOfTemplate(m, '.model', this.display, true);
     const $html = $(html);
     const gridX: HTMLInputElement = $html.find('.gridX')[0] as HTMLInputElement;
     const gridY: HTMLInputElement = $html.find('.gridY')[0] as HTMLInputElement;
@@ -140,10 +138,24 @@ export class StyleEditor {
 
   showP(m: IPackage) { U.pe(true, 'styles of Package(', m, '): unexpected.'); }
 
-  setStyleEditor($styleown, model: IModel, mp: ModelPiece, style: StyleComplexEntry, templateLevel: Element, indexedPath: number[] = null): number[] {
-    if (!style) return null;
-    const forinstances: boolean = !!indexedPath;
+  setStyleEditor($styleown: JQuery<HTMLElement>, model: IModel, mp: ModelPiece, style: StyleComplexEntry, templateLevel: Element, indexedPath: number[] = null): number[] {
+    /// getting the template to fill.
+    const debug: boolean = true;
     let i: number;
+    let styleowntemplate: HTMLElement = $styleown[0];
+    const isInherited: boolean = styleowntemplate.classList.contains('inherited');
+    const isInheritable: boolean = styleowntemplate.classList.contains('inheritable');
+    const isOwn: boolean = styleowntemplate.classList.contains('own');
+    U.pe((isInheritable ? 1 : 0 || isInherited ? 1 : 0 || isOwn ? 1 : 0) !== 1, 'failed to get html styleEditor template');
+    let tmp: any = this.getCopyOfTemplate(mp, '.htmlstyle', null, false);
+    styleowntemplate.appendChild(tmp);
+    styleowntemplate.classList.remove('template');
+    // styleowntemplate.parentElement.insertBefore(tmp, styleowntemplate);
+    // styleowntemplate.parentElement.removeChild(styleowntemplate);
+    styleowntemplate = tmp;
+    U.pe(!styleowntemplate.parentElement, 'null parent: ',  styleowntemplate, $styleown);
+    $styleown = $(styleowntemplate);
+    console.log('styleComplexEntry:', style, 'mp:', mp, styleowntemplate, $styleown);
     const obj: {
       editLabel: HTMLLabelElement;
       editAllowed: HTMLButtonElement;
@@ -185,7 +197,9 @@ export class StyleEditor {
       delete: null,
       saveasName: null
     };
-
+    //// setting up labelAllowEdit (checking if the (own, inherited or inheritable) style exist or a modelpiece local copy is needed.)
+    obj.editAllowed = $styleown.find('button.allowEdit')[0] as HTMLButtonElement;
+    obj.editLabel = $styleown.find('label.allowEdit')[0] as HTMLLabelElement;
     obj.selectstyle = $styleown.find('select.stylename')[0] as HTMLSelectElement;
     obj.detailButton = $styleown.find('button.detail')[0] as HTMLButtonElement;
     obj.detailPanel = $styleown.find('div.detail')[0] as HTMLElement;
@@ -203,8 +217,53 @@ export class StyleEditor {
     obj.saveasName = $detail.find('input.saveas')[0] as HTMLInputElement;
     obj.delete = $detail.find('button.delete')[0] as HTMLButtonElement;
     obj.forkButton = $detail.find('button.saveas')[0] as HTMLButtonElement;
-    obj.editAllowed = $styleown.find('button.allowEdit')[0] as HTMLButtonElement;
-    obj.editLabel = $styleown.find('label.allowEdit')[0] as HTMLLabelElement;
+    // let inheritableStyle: StyleComplexEntry = isInheritable ? mp.getInheritableStyle() : null;
+    // let inheritedStyle: StyleComplexEntry = isInherited ? mp.getInheritedStyle() : null;
+    const lastvp: ViewPoint = model.getLastView();
+    U.pif(debug, 'isOwn && !style.isownhtml || isInherited && !inheritedStyle.html || isInheritable && !inheritableStyle.html)', style);
+    U.pif(debug, !style ? '' : isOwn + ' && ' + style.isownhtml + ' || ' + isInherited + ' && ' + style.html + ' || ' + isInheritable + ' && ' + style.html);
+    if (!!style && !(isOwn && !style.isownhtml || isInherited && !style.html || isInheritable && !style.html)) {
+      $(obj.editLabel).hide();
+    } else {
+      obj.selectstyle.disabled = obj.detailButton.disabled = true;
+      obj.input.setAttribute('disabled', 'true');
+      obj.input.contentEditable = 'false';
+      if (!lastvp) {
+        obj.editLabel.innerText = 'Is required to have at least one non-default viewpoint applied to customize styles.';
+        obj.editAllowed.style.display = 'none';
+      } else
+      $(obj.editAllowed).on('click', (e: ClickEvent) => {
+        const mptarget: ModelPiece = isInherited ? mp.metaParent : mp;
+        let v: Vieww = lastvp.viewsDictionary[mptarget.id];
+        if (!v) v = new Vieww(lastvp);
+        if (isOwn) {
+          U.pe(!!v.htmlo, 'htmlo should be undefined at this point.');
+          v.htmlo = new ViewHtmlSettings();
+          v.htmlo.setHtmlStr( (style ? style.html : mptarget.getStyle().html).outerHTML ); }
+        if (isInheritable) {
+          U.pe(!!v.htmli, 'htmli should be undefined at this point.');
+          v.htmli = new ViewHtmlSettings();
+          const instanceCurrentStyle: Element = ModelPiece.GetStyle(Status.status.m, mp.getInstanceClassName());
+          v.htmli.setHtmlStr( instanceCurrentStyle.outerHTML ); }
+        if (isInherited) {
+          U.pe(!!v.htmli, 'htmli should be undefined at this point.');
+          v.htmli = new ViewHtmlSettings();
+          v.htmli.setHtmlStr( (style ? style.html : mp.getStyle().html).outerHTML );
+        }
+        v.apply(mptarget);
+        this.showMP(mp);
+        // todo: se stylecomplexEntry è null mostra un altro button.editAllowed per inserire lo stile ereditabile che generi htmli.
+      });
+
+      if (!style) {
+        if (isInheritable) { obj.editLabel.innerHTML = 'This element does not have a inheritable style.'; }
+        if (isInherited) { obj.editLabel.innerHTML = 'The metaParent of this element does not have a inheritable style appliable to this element.'; }
+        obj.editLabel.appendChild(obj.editAllowed);
+        U.clear(styleowntemplate);
+        styleowntemplate.appendChild(obj.editLabel);
+        return null; }
+    }
+    /// start!
 
     // obj.is...
     if (model.isM1()) { obj.isM1.disabled = obj.isM1.checked = true; }
@@ -259,83 +318,20 @@ export class StyleEditor {
               obj.isAttribute.disabled =
                 obj.isOperation.disabled =
                   obj.isParameter.disabled = true; }
-    /*
-    $(obj.saveasName).on('input', (e: ChangeEvent) => {
-      Database.deleteStyle(styleown, () => {
-        styleown.name = obj.saveasName.value;
-        styleown.saveToDB();
-      });
-    })
-    $(obj.forkButton).on('click', () => {
-      m.styleobj = styleown = styleown.duplicate();
-      obj.saveasName.value = styleown.name;
-    });
-    $(obj.delete).on('click', (e: ClickEvent) => { m.styleobj = null; style.delete(); });*/
-
-    // htmlInput.value = (m.getStyle().firstChild as HTMLElement).outerHTML;
-    /*const clickedRoot: Element = ModelPiece.getLogicalRootOfHtml(clickedLevel);
-    const templateRoot: HTMLElement | SVGElement = m.styleobj.html;// m.getStyle();
-    // let templateLevel: HTMLElement | SVGElement = templateRoot;
-    const indexedPath: number[] = U.getIndexesPath(clickedRoot, clickedLevel);
-    console.log('clickedRoot', clickedRoot, 'clickedLevel', clickedLevel, 'path:', indexedPath);
-    let templateLevel: Element = U.followIndexesPath(templateRoot, indexedPath);
-    console.log('templateRoot', templateRoot, 'templateLevel', templateLevel);*/
-    // obj.input
+    // main input (html); setup input
     obj.input.setAttribute('placeholder', U.replaceVarsString(mp, obj.input.getAttribute('placeholder')));
-    obj.input.setAttribute('templated', 'true'); // debug, todo: remove
+    // obj.input.setAttribute('templated', 'true'); // debug, todo: remove
+    console.log('error here after making a instanceStyleObj. mp:', mp, 'htmlTemplateObj', obj, 'templateLevel:', templateLevel,
+      'isInheritable', isInheritable, 'isInherited', isInherited);
     obj.input.innerText = templateLevel.outerHTML;
-    const lastvp: ViewPoint = model.getLastView();
-    console.log('styleComplexEntry:', style, 'mp:', mp);
-    if (style.ownermp !== mp) {
-      obj.selectstyle.disabled = obj.detailButton.disabled = true;
-      obj.input.setAttribute('disabled', 'true');
-      obj.input.contentEditable = 'false';
-      if (!lastvp) {
-        obj.editLabel.innerText = 'Is required to have at least one non-default viewpoint applied to customize styles.';
-        obj.editAllowed.style.display = 'none';
-      }
-      $(obj.editAllowed).on('click', (e: ClickEvent) => {
-        const v: Vieww = new Vieww(lastvp);
-        v.htmlo = new ViewHtmlSettings();
-        v.htmlo.setHtmlStr(style.html.outerHTML);
-        v.apply(mp);
-        this.showMP(mp);
-      });
-    } else {
-      $(obj.editLabel).hide();
-    }
-    $styleown.find('button.detail').on('click', (e: ClickEvent) => {
-      const btn = e.currentTarget as HTMLButtonElement;
-      const $btn = $(btn);
-      const $detailPanel = $styleown.find(btn.getAttribute('target'));
-      const $otherPanels: Element[] = $styleown.find('div.detail').toArray().filter(x => x != $detailPanel[0]);
-      // $styleown.find('div.detail:not(' + btn.getAttribute('target') + ')');
 
-      const b: boolean = btn.dataset.on === '1';
-      if (b) {
-        btn.style.width = '';
-        btn.dataset.on = '0';
-        btn.style.borderBottom = '';
-        $btn.find('.closed').show();
-        $btn.find('.opened').hide();
-        // $detailcontainers.show();
-        $detailPanel.hide();
-      } else {
-        const size: Size = U.sizeof(btn);
-        btn.style.width = size.w + 'px';
-        btn.dataset.on = '1';
-        btn.style.borderBottom = '3px solid #252525';
-        $btn.find('.closed').hide();
-        $btn.find('.opened').show()[0].style.width = (size.w - 15 * 2) + 'px';
-        for (i = 0; i < $otherPanels.length; i++) { $($otherPanels).trigger('click'); }
-        $detailPanel.show();
-      }
-    });
-    const updatePreview = () => { obj.preview.innerHTML = obj.input.innerText; };
-
-    $styleown.find('.htmllevel').html((forinstances ? 'Instances Html' : 'Own html')
+    $styleown.find('.htmllevel').html((isInherited ? 'Instances Html' : 'Own html')
       + ' (' + (indexedPath && indexedPath.length ? 'Level&nbsp;' + indexedPath.length : 'Root&nbsp;level') + ')');
-    let optgroup: HTMLOptGroupElement = U.toHtml('<optgroup label="' + U.getTSClassName(mp) + '"></optgroup>');
+    let optgroup: HTMLOptGroupElement;
+    /*
+    preview removed.
+    const updatePreview = () => { obj.preview.innerHTML = obj.input.innerText; };
+    optgroup = U.toHtml('<optgroup label="' + U.getTSClassName(mp) + '"></optgroup>');
     obj.previewselect.appendChild(optgroup);
     for (i = 0; i < mp.metaParent.instances.length; i++) {
       const peer: ModelPiece = mp.metaParent.instances[i];
@@ -343,7 +339,7 @@ export class StyleEditor {
       optgroup.appendChild(opt);
       opt.value = '' + peer.id;
       opt.innerText = peer.printableName();
-    }
+    }*/
 
     optgroup = U.toHtml('<optgroup label="Compatible Styles"></optgroup>');
     let o: HTMLOptionElement = document.createElement('option');
@@ -378,27 +374,30 @@ export class StyleEditor {
         }
 
     */
-    const onStyleChangeI = () => { U.pe(true, 'onStyleChangeI() todo.'); };
     const onStyleChange = () => {
       const inputHtml: Element = U.toHtml(obj.input.innerText);
       // console.log('PRE: ', inputHtml, 'outer:', inputHtml.outerHTML, 'innertext:', obj.input.innerText);
+      console.log('*** setting inheritable PRE. style.htmlobj', style.htmlobj, 'style:', style, ' templateLevel:', templateLevel, 'templ.parent:', templateLevel.parentElement);
       if (templateLevel.parentElement) {
         templateLevel.parentElement.insertBefore(inputHtml, templateLevel);
         templateLevel.parentElement.removeChild(templateLevel);
         templateLevel = inputHtml;
       } else {
         U.pe(!style.view || style.isGlobalhtml, 'default html cannot be modified.', style, 'todo: automatically make new ClassVieww');
-        // todo: se tutto va bene qui deve dare errore, crea una nuova ClassVieww e applicalo al modelpiece ed edita quello.
+        // ??old message?: se tutto va bene qui deve dare errore, crea una nuova ClassVieww e applicalo al modelpiece ed edita quello.
         style.htmlobj.setHtml(templateLevel = inputHtml);
+        console.log('*** setting inheritable POST. style.htmlobj', style.htmlobj, 'style:', style);
       }
-      mp.refreshGUI();
-      this.clickedLevel = U.followIndexesPath(mp.getHtmlOnGraph(), indexedPath);
+      if (isOwn) { mp.refreshGUI(); }
+      if (isInheritable) { mp.refreshInstancesGUI(); }
+      if (isInherited) { mp.metaParent.refreshInstancesGUI(); }
+      if (!isInheritable && indexedPath) this.clickedLevel = U.followIndexesPath(mp.getHtmlOnGraph(), indexedPath);
       this.updateClickedGUIHighlight();
       // obj.input.innerText = inputHtml.outerHTML;
       // DANGER: se lo fai con l'evento onchange() ti sposta il cursore all'inizio e finisci per scrivere rawtext prima dell'html invalidandolo.
       // tenendolo dovresti scrivere i caratteri uno alla volta riposizionando il cursore nel punto giusto ogni volta.
       // console.log('POST: ', inputHtml, 'outer:', inputHtml.outerHTML, 'innertext:', obj.input.innerText);
-      updatePreview();
+      // updatePreview();
     };
     $(obj.input).off('paste.set').on('paste.set', (e: any/*ClipboardEvent*/) => { /*this.onPaste(e);*/ onStyleChange(); })
       .off('change.set').on('change.set', onStyleChange)
@@ -412,6 +411,22 @@ export class StyleEditor {
       obj.input.innerText = style.htmlstr;
       $(obj.input).trigger('input');
     });*/
+
+    // setup measurable options.
+
+    const ownhtmlinput: HTMLDivElement | HTMLTextAreaElement = $styleown.find('.html[contenteditable="true"]')[0] as HTMLDivElement | HTMLTextAreaElement;
+    const measurableSelect: HTMLSelectElement = $styleown.find('select.attributetypeadd')[0] as HTMLSelectElement;
+    $styleown.find('button.addmeasurable').on('click', () => {
+      this.addmeasurableAttributeButton(measurableSelect, $styleown, mp, style, templateLevel as HTMLElement | SVGElement, ownhtmlinput, indexedPath);
+    });
+    for (i = 0; i < templateLevel.attributes.length; i++) {
+      const a: Attr = templateLevel.attributes[i];
+      if (a.name[0] === '_' || a.name.indexOf('r_') == 0 || a.name.indexOf('r_') == 0) {
+        const val: Attr = this.clickedLevel.attributes.getNamedItem(a.name.substr(1));
+        const style = null;
+        this.addmeasurableAttributeButton(measurableSelect, $styleown, mp, style, templateLevel as HTMLElement | SVGElement, ownhtmlinput, indexedPath, a, val)
+      }
+    }
     return indexedPath; }
 
   showMP(m: ModelPiece, clickedLevel: Element = null, asMeasurable: boolean = false, asEdge: boolean = false) {
@@ -420,17 +435,19 @@ export class StyleEditor {
     this.clickedLevel = clickedLevel = clickedLevel || this.clickedLevel;
     // set htmls
     const style: StyleComplexEntry = m.getStyle();
-    const stylei: StyleComplexEntry = m.getInstancesInheritedStyle();
+    console.log(m);
+    const styleinheritable: StyleComplexEntry = m.getInheritableStyle();
+    const styleinherited: StyleComplexEntry = m.getInheritedStyle();
     const clickedRoot: Element = ModelPiece.getLogicalRootOfHtml(clickedLevel);
     const templateRoot: Element = style.html;// m.styleobj.html;// m.getStyle();
     // let templateLevel: HTMLElement | SVGElement = templateRoot;
     let indexedPath: number[] = U.getIndexesPath(clickedLevel, 'parentNode', 'childNodes', clickedRoot);
-    console.log('clickedRoot', clickedRoot, 'clickedLevel', clickedLevel, 'path:', indexedPath);
+    // console.log('clickedRoot', clickedRoot, 'clickedLevel', clickedLevel, 'path:', indexedPath);
     U.pe(U.followIndexesPath(clickedRoot, indexedPath, 'childNodes') !== clickedLevel, 'mismatch.');
     const realindexfollowed: {indexFollowed: string[] | number[], debugArr: {index: string | number, elem: any}[]} = {indexFollowed: [], debugArr:[]};
-    console.clear();
     let templateLevel: Element = U.followIndexesPath(templateRoot, indexedPath, 'childNodes', realindexfollowed);
-    console.log('clickedRoot:',clickedRoot, 'clikedLevel:', clickedLevel, 'indexedPath:', indexedPath, 'followed:', realindexfollowed, 'templateRoot:', templateRoot, 'templateLevel:', templateLevel);
+    // console.log('clickedRoot:',clickedRoot, 'clikedLevel:', clickedLevel, 'indexedPath:', indexedPath, 'followed:', realindexfollowed,
+    // 'templateRoot:', templateRoot, 'templateLevel:', templateLevel);
     if (realindexfollowed.indexFollowed.length !== indexedPath.length) {
       indexedPath = realindexfollowed.indexFollowed as number[];
       this.clickedLevel = clickedLevel = U.followIndexesPath(clickedRoot, indexedPath);}
@@ -438,20 +455,33 @@ export class StyleEditor {
     // html set END.
     const model: IModel = m.getModelRoot();
     if (asEdge && (m instanceof IClass || m instanceof IReference) && m.shouldBeDisplayedAsEdge()) { return this.showE(m); }
-    const html: HTMLElement = this.getCopyOfTemplate(m, '.Template.modelpiece');
+    const html: HTMLElement = this.getCopyOfTemplate(m, '.modelpiece', this.display, true);
     const $html = $(html);
     const showAsEdge: HTMLInputElement = $html.find('.showAsEdge')[0] as HTMLInputElement;
     const showAsEdgeText: HTMLElement = $html.find('.showAsEdgeText')[0] as HTMLElement;
     const $styleown = $html.find('.style.own');
-    const $stylei = $html.find('.style.instances');
+    const $styleInherited = $html.find('.style.inherited');
+    const $styleInheritable = $html.find('.style.inheritable');
     //const ownhtml = m.getStyle();
     const htmlPath: number[] = this.setStyleEditor($styleown, model, m, style, templateLevel, indexedPath);
     // U.pe(!style.html, $styleown, m, clickedLevel, model, style, instanceshtml);
-    const clickedonStyle: HTMLElement | SVGElement = U.followIndexesPath(style.html, htmlPath) as HTMLElement | SVGElement;
+    // const clickedonStyle: HTMLElement | SVGElement = U.followIndexesPath(style.html, htmlPath) as HTMLElement | SVGElement;
     $html.find('.tsclass').html('' + m.printableName()); // + (htmlDepth === 0 ? ' (root level)' : ' (level&nbsp;' + htmlDepth + ')') );
+    console.log('setStyleEditor inherited, ', styleinherited);
+    let inheritedTemplateLevel: Element = null;
+    if (styleinherited) {
+      const inheritedTemplateRoot: Element = styleinherited.html;
+      inheritedTemplateLevel = U.followIndexesPath(inheritedTemplateRoot, indexedPath, 'childNodes', realindexfollowed);
+      // se ho cliccato su un non-radice non-ereditato, non posso prendere un frammento dell'ereditato, sarebbe un frammento diverso.
+      if (inheritedTemplateLevel !== templateLevel) { inheritedTemplateLevel = inheritedTemplateRoot; }
 
-    if (!model.isM1()) { this.setStyleEditor($stylei, model, m, stylei, templateLevel); }
-
+    }
+    this.setStyleEditor($styleInherited, model, m, styleinherited, inheritedTemplateLevel);
+    console.log('setStyleEditor inheritable, ', styleinheritable);
+    const styleInheritableRoot: Element = styleinheritable ? styleinheritable.html : null;
+    if (!model.isM1()) { this.setStyleEditor($styleInheritable, model, m, styleinheritable, styleInheritableRoot); }
+    else {$styleInheritable[0].innerHTML = '<h5 class="text-danger">M1 elements cannot give inheritance.</h5>'}
+    U.detailButtonSetup($html);
     // <meta>
     //     <dependency><attributes><type>double</ </ </
     //     <preview><img src=imgurl</img> or html diretto.</
@@ -459,7 +489,12 @@ export class StyleEditor {
 
     // pulsanti per settare preview: "takesnapshotOf / set as example... + select vertex with that style"
 
-    U.pe(!showAsEdge, 'wrong PropertyBar.show() call', m, 'html:', html);
+    const $arrowup: JQuery<HTMLButtonElement> = ($html.find('button.arrow.up') as JQuery<HTMLButtonElement>).on('click', (e: ClickEvent) => {
+      $(clickedLevel.parentNode).trigger('click');
+    });
+    $arrowup[0].disabled = htmlPath.length === 0 && m instanceof IClass;
+    ($html.find('button.arrow.down') as JQuery<HTMLButtonElement>)[0].disabled = true;
+
     showAsEdge.checked = false;
     if (m instanceof IClass) {
       showAsEdge.disabled = m.references.length < 2;
@@ -470,27 +505,6 @@ export class StyleEditor {
       });
     }
 
-    const ownhtmlinput: HTMLDivElement | HTMLTextAreaElement = $styleown.find('.html[contenteditable="true"]')[0] as HTMLDivElement | HTMLTextAreaElement;
-    const measurableSelect: HTMLSelectElement = $html.find('select.attributetypeadd')[0] as HTMLSelectElement;
-    $html.find('button.addmeasurable').on('click', () => {
-      this.addmeasurableAttributeButton(measurableSelect, $html, m, style, clickedonStyle, ownhtmlinput, htmlPath);
-    });
-    for (i = 0; i < clickedonStyle.attributes.length; i++) {
-      const a: Attr = clickedonStyle.attributes[i];
-      if (a.name[0] === '_' || a.name.indexOf('r_') == 0 || a.name.indexOf('r_') == 0) {
-        const val: Attr = clickedLevel.attributes.getNamedItem(a.name.substr(1));
-        const style = null;
-        this.addmeasurableAttributeButton(measurableSelect, $html, m, style, clickedonStyle, ownhtmlinput, htmlPath, a, val)
-      }
-    }
-
-    const $arrowup: JQuery<HTMLButtonElement> = ($html.find('button.arrow.up') as JQuery<HTMLButtonElement>).on('click', (e: ClickEvent) => {
-      $(clickedLevel.parentNode).trigger('click');
-    });
-    $arrowup[0].disabled = htmlPath.length === 0 && m instanceof IClass;
-    ($html.find('button.arrow.down') as JQuery<HTMLButtonElement>)[0].disabled = true;
-    // todo: devi consentire di modificare anche defaultStyle (m3)
-
   }
 
   addmeasurableAttributeButton(measurableSelect: HTMLSelectElement, $styleeditor: JQuery<HTMLElement | SVGElement>, m: ModelPiece,
@@ -500,7 +514,7 @@ export class StyleEditor {
                                htmlPath: number[], attr: Attr = null, valAttr: Attr = null): void {
     let val: string;
     let i: number;
-    const template: HTMLElement = U.cloneHtml($styleeditor.find('.measurable.template._root')[0] as HTMLElement);
+    const template: HTMLElement = this.getCopyOfTemplate(m, '.measurable._root', null, false);
     const $template = $(template);
     const nameinputprefix: HTMLElement = $template.find('.nameprefix')[0] as HTMLElement;
     const nameinput: HTMLInputElement = $template.find('input.name')[0] as HTMLInputElement;
@@ -770,7 +784,7 @@ export class StyleEditor {
   public showE(m: IClass | IReference) {
     console.log('styleShowE(', m, ')');
     const edge: IEdge = m.edges && m.edges.length ? m.edges[0] : null;
-    const html: HTMLElement = this.getCopyOfTemplate(m as any, '.edge');
+    const html: HTMLElement = this.getCopyOfTemplate(m as any, '.edge', this.display, true);
     const $html = $(html);
     const edgeStyle: HTMLSelectElement = $html.find('.edgeStyle')[0] as HTMLSelectElement;
     const eColorCommon: HTMLInputElement = $html.find('.edgeColor.common')[0] as HTMLInputElement;

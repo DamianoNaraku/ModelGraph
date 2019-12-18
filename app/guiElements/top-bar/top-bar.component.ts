@@ -1,9 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import {AttribETypes, IModel, Json,
+import {
+  AttribETypes, IModel, Json,
   MClass, MetaModel, Model, prjson2xml, Status, U, EType, // Options,
-  ShortAttribETypes, InputPopup} from '../../common/Joiner';
+  ShortAttribETypes, InputPopup, myFileReader, prxml2json
+}                            from '../../common/Joiner';
 import ChangeEvent = JQuery.ChangeEvent;
 import ClickEvent = JQuery.ClickEvent;
+import {saveEntries}         from '../../Database/LocalStorage';
 
 // @ts-ignore
 @Component({
@@ -42,18 +45,34 @@ export class TopBar {
     TopBar.load(empty, prefix); }
 
   static load_XMI_File(e: JQuery.ClickEvent, prefix: string) {
-    U.pe(true, 'loadXML todo: use load by JSON/string instead.');
+    // filename:   rootClass.name + '.' + MetaModel.name;   es: path\league.bowling
     // open file dialog
     // read file
     // transform in json
-    const json = 'fileContentTransformed';
-    TopBar.load(json, prefix); }
+    const extension = Status.status.getActiveModel().isM1() ? '.' + Status.status.mm.fullname() : '.ecore';
+    let xmistring = '';
+    U.fileRead((e: ChangeEvent, files: FileList, fileContents: string[]) => {
+      U.pe(!fileContents || !files || fileContents.length !== files.length, 'Failed to get file contents:', files, fileContents);
+      U.pe(fileContents.length > 1, 'should not be possible to input multiple files.');
+      if (fileContents.length == 0) return;
+      xmistring = fileContents[0];
+      console.log('xmistr input: ', xmistring);
+      const xmlDoc = new DOMParser().parseFromString(xmistring,"text/xml");
+      console.log('xml:', xmlDoc);
+      let  jsonstr = prxml2json.xml2json(xmlDoc, '    ');
+      console.log('jsonstr input: ', jsonstr);
+      // U.pe(true, 'xml -> json', prxml2json, 'json -> xml', prjson2xml);
+      TopBar.load(jsonstr, prefix);
+    }, [extension], true);
+
+
+  }
 
   static load(json: string, prefix: string) {
     const m: IModel = prefix === 'm' ? Status.status.m : Status.status.mm;
-    m.save(false);
+    if (m.name) m.save(false);
     window['' + 'discardSave']();
-    localStorage.setItem('LastOpened' + prefix.toUpperCase(), json);
+    localStorage.setItem( m.getPrefixNum() + '_' + saveEntries.lastOpened, json);
     U.refreshPage(); }
 
   static load_JSON_Text(e: JQuery.ClickEvent, prefix: string) {

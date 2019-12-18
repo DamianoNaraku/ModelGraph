@@ -109,6 +109,7 @@ export class ViewHtmlSettings{
     if (!html) { html = U.toHtml(htmlstr); }
     if (!htmlstr) { htmlstr = html ? html.outerHTML : null; }
     U.pe(!html || !htmlstr, this, 'html:', html, 'htmlstr:', htmlstr, 'html?', !html, 'htmlstr?', !htmlstr, 'html && htmlstr?', !html && !htmlstr);
+    U.pe(!!html.parentElement || !!html.parentNode, 'parentElement shuld be null here:', html, this);
     this.html = html;
     const $meta: JQuery<Element> = $(html).find('meta');
     const getValue = (jq: JQuery<Element>): string => { return jq.length === 0 ? '' : jq[0].innerHTML; };

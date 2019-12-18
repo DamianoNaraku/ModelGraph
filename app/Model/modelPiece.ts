@@ -1,7 +1,9 @@
 import {
   Dictionary,
   EdgePointStyle,
-  EdgeStyle, GraphSize, EdgeModes,
+  EdgeStyle,
+  GraphSize,
+  EdgeModes,
   IAttribute,
   M2Class,
   IEdge,
@@ -10,9 +12,24 @@ import {
   IPackage,
   IReference,
   IVertex,
-  Json, Model, Status,
-  U, EType, IClass, MClass, MetaModel, MetaMetaModel, EOperation, EParameter, MAttribute, MReference, ViewHtmlSettings
-}              from '../common/Joiner';
+  Json,
+  Model,
+  Status,
+  U,
+  EType,
+  IClass,
+  MClass,
+  MetaModel,
+  MetaMetaModel,
+  EOperation,
+  EParameter,
+  MAttribute,
+  MReference,
+  ViewHtmlSettings,
+  M3Reference,
+  M2Attribute,
+  M3Attribute, M3Class, M2Reference, M3Package, MPackage, M2Package
+} from '../common/Joiner';
 
 import ClickEvent = JQuery.ClickEvent;
 import MouseMoveEvent = JQuery.MouseMoveEvent;
@@ -89,16 +106,16 @@ export abstract class ModelPiece {
 
     let $html: JQuery<HTMLElement | SVGElement>;
     const $root: JQuery<HTMLElement | SVGElement> = $((checkCustomizedFirst ? '.customized' : '.immutable') + rootSelector);
-    if (tsClass.indexOf('M1') === 0 || tsClass.indexOf('M2') === 0) { tsClass = tsClass.substr(2); }
+    if (tsClass.indexOf('m1') === 0 || tsClass.indexOf('m2') === 0) { tsClass = tsClass.substr(2); }
     switch (tsClass) {
     default: U.pe(true, 'unrecognized TS Class: ' + tsClass); return null;
-    case 'Class': $html = $root.find('.Template.Class'); break;
-    case 'Attribute': $html = $root.find('.Template.Attribute'); break;
-    case 'Reference': $html = $root.find('.Template.Reference'); break;
-    case 'EOperation': $html = $root.find('.Template.Operation'); break;
-    case 'EParameter': $html = $root.find('.Template.Parameter'); break; }
+    case 'Class': $html = $root.find('.template.Class'); break;
+    case 'Attribute': $html = $root.find('.template.Attribute'); break;
+    case 'Reference': $html = $root.find('.template.Reference'); break;
+    case 'EOperation': $html = $root.find('.template.Operation'); break;
+    case 'EParameter': $html = $root.find('.template.Parameter'); break; }
     U.pw(checkCustomizedFirst && $html.length > 1,
-      'found more than one match for custom global style, should there be only 0 or 1.', $html, $root, this);
+      'found more than one match for custom global style, should there be only 0 or 1.', $html, $root, this, tsClass);
     if (checkCustomizedFirst && $html.length === 0) { return ModelPiece.GetStyle(model, tsClass, false); }
     /*console.log('class?' + (this instanceof IClass), $root.find('.Template'), $root.find('.Class'),
       $root.find('.Template.Class'));
@@ -106,7 +123,7 @@ export abstract class ModelPiece {
     U.pe(!checkCustomizedFirst && $html.length !== 1,
       'expected exactly 1 match for the un-customized global style, found instead ' + $html.length + ':', $html, $root, this);
     const ret: HTMLElement | SVGElement = U.cloneHtml($html[0], true);
-    ret.classList.remove('Template');
+    ret.classList.remove('template');
     ret.classList.remove('Customized');
     return ret; }
 
@@ -365,17 +382,18 @@ export abstract class ModelPiece {
       container.appendChild(html); }*/
 
   getGlobalLevelStyle(checkCustomizedFirst: boolean = true): HTMLElement | SVGElement {
-    let tsClass: string;
+    let tsClass: string = this.getClassName();/*
     if (false && false ) {
     } else if (this instanceof IClass) { tsClass = 'Class';
     } else if (this instanceof IAttribute) { tsClass = 'Attribute';
     } else if (this instanceof IReference) { tsClass = 'Reference';
     } else if (this instanceof EOperation) { tsClass = 'EOperation';
     } else if (this instanceof EParameter) { tsClass = 'EParameter';
-    } else { tsClass = 'ERROR: ' + U.getTSClassName(this); }
+    } else { tsClass = 'ERROR: ' + U.getTSClassName(this); }*/
     return ModelPiece.GetStyle(this.getModelRoot(), tsClass, checkCustomizedFirst); }
 
-  getStyleOfInstances(): StyleComplexEntry {
+
+  getInheritableStyle(): StyleComplexEntry {
     let i: number;
     const ret: StyleComplexEntry = {html:null, htmlobj:null, view:null, ownermp:null, isownhtml:null, isinstanceshtml:null, isGlobalhtml:null};
     for (i = this.views.length; --i >= 0;) {
@@ -391,7 +409,7 @@ export abstract class ModelPiece {
       return ret; }
     return null; }
 
-  getInstancesInheritedStyle(): StyleComplexEntry { return this.metaParent ? this.metaParent.getStyleOfInstances() : null; }
+  getInheritedStyle(): StyleComplexEntry { return this.metaParent ? this.metaParent.getInheritableStyle() : null; }
   getStyle(): StyleComplexEntry {
     let j: number;
     let i: number;
@@ -407,7 +425,7 @@ export abstract class ModelPiece {
       ret.isinstanceshtml = false;
       ret.isownhtml = true;
       return ret; }
-    const tmpret = this.getInstancesInheritedStyle();
+    const tmpret = this.getInheritedStyle();
     if (tmpret) return tmpret;
     ret.html = this.getGlobalLevelStyle();
     ret.htmlobj = null;
@@ -474,5 +492,30 @@ export abstract class ModelPiece {
     v.viewpoint.viewsDictionary[this.id] = v;
     U.ArrayAdd(this.views, v); }
   resetViews(): void { this.views = []; }
+
+  getClassName(): string {
+    if(this instanceof M3Class) { return 'm3Class'; }
+    if(this instanceof M2Class) { return 'm2Class'; }
+    if(this instanceof MClass) { return 'm1Class'; }
+    if(this instanceof M3Attribute) { return 'm3Attribute'; }
+    if(this instanceof M2Attribute) { return 'm2Attribute'; }
+    if(this instanceof MAttribute) { return 'm1Attribute'; }
+    if(this instanceof M3Reference) { return 'm3Reference'; }
+    if(this instanceof M2Reference) { return 'm2Reference'; }
+    if(this instanceof MReference) { return 'm1Reference'; }
+    if(this instanceof M3Package) { return 'm3Package'; }
+    if(this instanceof M2Package) { return 'm2Package'; }
+    if(this instanceof MPackage) { return 'm1Package'; }
+    if(this instanceof MetaMetaModel) { return 'm3Model'; }
+    if(this instanceof MetaModel) { return 'm2Model'; }
+    if(this instanceof Model) { return 'm1Model'; }
+    if(this instanceof EOperation) { return 'EOperation'; }
+    if(this instanceof EParameter) { return 'EParameter'; }
+    U.pe(true, 'failed to find class:', this);
+  }
+  getInstanceClassName(): string {
+    let ret = this.getClassName();
+    if (ret.indexOf('m1') !== -1) return null;
+    return ret.replace('m2', 'm1').replace('m3', 'm2'); }
 }
 export abstract class ModelNone extends ModelPiece {}
