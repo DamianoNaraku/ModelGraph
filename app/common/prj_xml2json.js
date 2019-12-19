@@ -5,7 +5,7 @@
 	Author:  Stefan Goessner/2006
 	Web:     http://goessner.net/ 
 */
-export function xml2json(xml, tab/*string, string*/) {
+export function xml2json(xml, tab = '    '/*XML_DOM, string*/) {
    var X = {
       toObj: function(xml) {
          var o = {};
@@ -64,8 +64,7 @@ export function xml2json(xml, tab/*string, string*/) {
          else if (xml.nodeType==9) { // document.node
             o = X.toObj(xml.documentElement);
          }
-         else
-            alert("unhandled node type: " + xml.nodeType);
+         else alert("unhandled node type: " + xml.nodeType);
          return o;
       },
       toJson: function(o, name, ind) {

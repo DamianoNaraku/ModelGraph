@@ -23,7 +23,7 @@ export abstract class IAttribute extends IFeature {
     if ($oldTemplate.length === 0) { $oldTemplate = $(selector); }
     U.pe($oldTemplate.length !== 1, 'template not found? (' + $oldTemplate.length + '); selector: "' + selector + '"');
     const old = $oldTemplate[0];
-    newTemplate.classList.add('Template');
+    newTemplate.classList.add('template');
     newTemplate.classList.add('Customized');
     old.parentNode.appendChild(newTemplate);
     if (old.classList.contains('Customized')) { old.parentNode.removeChild(old); }

@@ -7,10 +7,10 @@
   padding: 17px;
   padding-right: calc(17px - 10px);*/
 }
-.Template{
+.template{
   display: none;
 }
-.StyleEditorDisplay .Template{
+.StyleEditorDisplay .template{
   display: unset;
 }
 .preview{
@@ -69,9 +69,26 @@ button {
   border: 3px solid #0084ff;
   background: #252525;
 }
-button.detail{
-/*  border-bottom: 3px solid #252525;*/
+button.detail {
+  margin: auto;
+  margin-top: 0;
+  margin-bottom: 0;
+  display: flex;
+  height: auto;
+  border-top-left-radius: 17px;
+  border-top-right-radius: 17px;
   z-index: 1;
+ }
+button.detail:first-child:not(:only-child){ /* first visible child not possible ic pure css */
+  flex-flow: column;
+  margin-right: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+button.detail:last-child:not(:only-child){
+  margin-left: -3px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
 }
 button.detail:focus {
   box-shadow: none !important;
@@ -80,8 +97,7 @@ button.detail:focus {
 div.detail{
   padding: 5px;
   margin-top: -3px;
-  margin-left: -15px;
-  width: calc(100% + 15px);
+  width: calc(100%);
 }
 .saveasrow{
   display: flex;
@@ -119,14 +135,14 @@ input.saveas {
   margin-left: 0;
   margin-right: 5px;
 }
-.detail {
-}
 .detail > label {
   display: inline-flex;
   margin: auto;
   flex-wrap: nowrap;
 }
-
+button.detail > .opened, button.detail > .closed{
+  margin: auto;
+}
 table {
   width: 100%;
 }
@@ -296,20 +312,13 @@ select.stylename{
 .opened{
   display: none;
 }
-button.detail.measurable{
-  flex-flow: column;
-}
+
 .helpButton {
   margin-top: auto;
   margin-bottom: auto;
   display: flex;
   background: rgb(0, 62, 127);
   border-color: rgb(0, 62, 127);
-}
-button.detail {
-  margin: auto;
-  display: flex;
-  height: 100%;
 }
 .expressionRoot {
   flex-wrap: nowrap !important;
@@ -370,14 +379,6 @@ select.attributetypeadd{
   height: 23px;
   outline: none;
   border: 2px dashed #666666;
-}
-.Template.edge td {
-  padding-right: 30px;
-  white-space: nowrap;
-}
-
-.Template.edge td + td {
-  width: 100%;
 }
 
 .showAsEdge{

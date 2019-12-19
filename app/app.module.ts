@@ -35,7 +35,19 @@ import {
   IClassChild,
   EOperation,
   MPackage,
-  M2Reference, M2Package, M2Attribute, IPackage, M3Package, M3Attribute, EParameter, IAttribute, MReference, IReference, M3Reference, MAttribute
+  M2Reference,
+  M2Package,
+  M2Attribute,
+  IPackage,
+  M3Package,
+  M3Attribute,
+  EParameter,
+  IAttribute,
+  MReference,
+  IReference,
+  M3Reference,
+  MAttribute,
+  prjson2xml, prxml2json
 } from './common/Joiner';
 import { PropertyBarrComponent }   from './guiElements/property-barr/property-barr.component';
 import { MGraphHtmlComponent }     from './guiElements/m-graph-html/m-graph-html.component';
@@ -377,6 +389,152 @@ function main() {
   if (!m2Viewpoints.length) new ViewPoint(Status.status.mm.fullname(),  Status.status.mm).apply(Status.status.mm);
   if (!m1Viewpoints.length) new ViewPoint(Status.status.m.fullname(),  Status.status.m).apply(Status.status.m);*/
   // U.pe(true,'');
+
+  window['' + 'jsonxml'] = prjson2xml.json2xml;
+  window['' + 'xmljson'] = prxml2json.xml2json;
+  window['' + 'xmlstr'] = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n' +
+    '    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="ermesMM" nsURI="https://ermes-project.org/ermes-core-mm" nsPrefix="ermesCoreMM">\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="NamedElement" abstract="true">\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="nome" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>\n' +
+    '  </eClassifiers>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="EnteFisico" abstract="true" eSuperTypes="#//NamedElement"/>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="EnteLogico" abstract="true" eSuperTypes="#//NamedElement"/>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="Ferro" abstract="true" eSuperTypes="#//EnteFisico">\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="dx" eType="#//Ferro"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="sx" eType="#//Ferro"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="lunghezza" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"/>\n' +
+    '  </eClassifiers>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="Binario" eSuperTypes="#//Ferro"/>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="Deviatoio" abstract="true" eSuperTypes="#//Ferro"/>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="DeviatoioSemplice" eSuperTypes="#//Deviatoio">\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="normalmenteDispostoRamoDeviato"\n' +
+    '        lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"\n' +
+    '        defaultValueLiteral="false"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="elettromagnete" eType="#//Elettromagnete"\n' +
+    '        containment="true"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="tallonabilita" lowerBound="1"\n' +
+    '        eType="#//TallonabilitaDeviatoio" defaultValueLiteral="Tallonabile"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="ramoDeviato" lowerBound="1"\n' +
+    '        eType="#//Binario" containment="true"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="posizioneInizialeRovescia"\n' +
+    '        lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"\n' +
+    '        defaultValueLiteral="false"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="direzionePunta" lowerBound="1"\n' +
+    '        eType="#//Direzione"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="normaleADestra" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"\n' +
+    '        defaultValueLiteral="false"/>\n' +
+    '  </eClassifiers>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="FabbricatoViaggiatori" eSuperTypes="#//EnteFisico"/>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="CircuitoDiBinario" eSuperTypes="#//EnteFisico">\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="ferriCDB" lowerBound="1"\n' +
+    '        upperBound="-1" eType="#//Ferro"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="stazionamento" lowerBound="1"\n' +
+    '        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean" defaultValueLiteral="false"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="diLinea" lowerBound="1"\n' +
+    '        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean" defaultValueLiteral="false"/>\n' +
+    '  </eClassifiers>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="Segnale" abstract="true" eSuperTypes="#//EnteFisico">\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="ferroSegnale" lowerBound="1"\n' +
+    '        eType="#//Ferro"/>\n' +
+    '  </eClassifiers>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="Scudetto" eSuperTypes="#//EnteLogico">\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="direzione" lowerBound="1"\n' +
+    '        eType="#//DirezioneScudetto" defaultValueLiteral="Bidirezionale"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="ferroScudetto" lowerBound="1"\n' +
+    '        eType="#//Ferro"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="inibizioneLiberoTransito"\n' +
+    '        lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"\n' +
+    '        defaultValueLiteral="false"/>\n' +
+    '  </eClassifiers>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="Blocco" eSuperTypes="#//EnteLogico">\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="reversibile" lowerBound="1"\n' +
+    '        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean" defaultValueLiteral="true"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="NormalePercorrenza" lowerBound="1"\n' +
+    '        eType="#//NormalePercorrenzaBlocco" defaultValueLiteral="DX"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="ferroBlocco" lowerBound="1"\n' +
+    '        eType="#//Ferro"/>\n' +
+    '  </eClassifiers>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="SegnaleAlto" eSuperTypes="#//Segnale">\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="segnaleAvvio" eType="#//SegnaleAvvio"\n' +
+    '        containment="true"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="segnaleAvanzamento" eType="#//SegnaleAvanzamento"\n' +
+    '        containment="true"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="indicatoreAltoDiPartenza"\n' +
+    '        eType="#//IndicatoreAltoDiPartenza" containment="true"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="primaLuce" lowerBound="1"\n' +
+    '        eType="#//PrimaLuce" containment="true"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="secondaLuce" eType="#//SecondaLuce"\n' +
+    '        containment="true"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="terzaLuce" eType="#//TerzaLuce"\n' +
+    '        containment="true"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="direzioneSegnale" lowerBound="1"\n' +
+    '        eType="#//Direzione"/>\n' +
+    '  </eClassifiers>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="SegnaleBasso" eSuperTypes="#//Segnale"/>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="SegnaleAvvio" eSuperTypes="#//EnteFisico"/>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="SegnaleAvanzamento" eSuperTypes="#//EnteFisico"/>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="PS" eSuperTypes="#//EnteLogico">\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="fabbricatiViaggiatori"\n' +
+    '        lowerBound="1" upperBound="-1" eType="#//FabbricatoViaggiatori" containment="true"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="ferri" upperBound="-1"\n' +
+    '        eType="#//Ferro" containment="true"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="scudetti" upperBound="-1"\n' +
+    '        eType="#//Scudetto" containment="true"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="segnali" upperBound="-1"\n' +
+    '        eType="#//Segnale" containment="true"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="blocchi" upperBound="-1"\n' +
+    '        eType="#//Blocco" containment="true"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="circuitiDiBinario" upperBound="-1"\n' +
+    '        eType="#//CircuitoDiBinario" containment="true"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="rte" upperBound="-1" eType="#//RTE"\n' +
+    '        containment="true"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="regimiStazione" upperBound="-1"\n' +
+    '        eType="#//RegimeStazione" containment="true"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="soccorsiTxTcl" upperBound="-1"\n' +
+    '        eType="#//SoccorsoTxTcl" containment="true"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="trasmettiChiave" upperBound="-1"\n' +
+    '        eType="#//Trasmettichiave" containment="true"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="tracciatiPermanenti" upperBound="-1"\n' +
+    '        eType="#//TracciatoPermanente" containment="true"/>\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="tracciatiPermanentiManovra"\n' +
+    '        upperBound="-1" eType="#//TracciatoPermanenteManovra" containment="true"/>\n' +
+    '  </eClassifiers>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="Luce" abstract="true" eSuperTypes="#//EnteFisico"/>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="PrimaLuce" eSuperTypes="#//Luce"/>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="SecondaLuce" eSuperTypes="#//Luce"/>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="TerzaLuce" eSuperTypes="#//Luce"/>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="IndicatoreAltoDiPartenza" eSuperTypes="#//EnteFisico"/>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="Elettromagnete" eSuperTypes="#//EnteFisico"/>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="RTE" eSuperTypes="#//EnteFisico">\n' +
+    '    <eStructuralFeatures xsi:type="ecore:EReference" name="deviatoiRTE" upperBound="-1"\n' +
+    '        eType="#//Deviatoio"/>\n' +
+    '  </eClassifiers>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="RegimeStazione" eSuperTypes="#//EnteLogico"/>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="SoccorsoTxTcl" eSuperTypes="#//EnteLogico"/>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="Trasmettichiave" eSuperTypes="#//EnteLogico"/>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="TracciatoPermanente" eSuperTypes="#//EnteLogico"/>\n' +
+    '  <eClassifiers xsi:type="ecore:EClass" name="TracciatoPermanenteManovra" eSuperTypes="#//EnteLogico"/>\n' +
+    '  <eClassifiers xsi:type="ecore:EEnum" name="NormalePercorrenzaBlocco">\n' +
+    '    <eLiterals name="DX"/>\n' +
+    '    <eLiterals name="SX" value="1"/>\n' +
+    '  </eClassifiers>\n' +
+    '  <eClassifiers xsi:type="ecore:EEnum" name="DirezioneScudetto">\n' +
+    '    <eLiterals name="Bidirezionale"/>\n' +
+    '    <eLiterals name="OrientamentoSX" value="1"/>\n' +
+    '    <eLiterals name="OrientamentoDX" value="2"/>\n' +
+    '  </eClassifiers>\n' +
+    '  <eClassifiers xsi:type="ecore:EEnum" name="TallonabilitaDeviatoio">\n' +
+    '    <eLiterals name="Tallonabile"/>\n' +
+    '    <eLiterals name="Intallonabile" value="1"/>\n' +
+    '    <eLiterals name="IntallonabileAComando" value="2"/>\n' +
+    '  </eClassifiers>\n' +
+    '  <eClassifiers xsi:type="ecore:EEnum" name="Direzione">\n' +
+    '    <eLiterals name="Destra"/>\n' +
+    '    <eLiterals name="Sinistra" value="1"/>\n' +
+    '  </eClassifiers>\n' +
+    '</ecore:EPackage>\n'
+  return;
   Status.status.enableAutosave(2 * 60 * 1000);
   //Options.enableAutosave(2 * 60 * 1000);
   // Options.Load(Status.status);

@@ -21,7 +21,55 @@ import ContextMenuEvent = JQuery.ContextMenuEvent;
 export class MeasurableArrays {rules: Attr[]; imports: Attr[]; exports: Attr[]; variables: Attr[];
   constraints: Attr[]; chain: Attr[]; chainFinal: Attr[]; dstyle: Attr[]; html: HTMLElement | SVGElement; e: Event}
 
-
+export class myFileReader {
+  private static input: HTMLInputElement;
+  private static fileTypes: string [];
+  private static onchange: (e: ChangeEvent) => void;
+  // constructor(onchange: (e: ChangeEvent) => void = null, fileTypes: FileReadTypeEnum[] | string[] = null) { myFileReader.setinfos(fileTypes, onchange); }
+  private static setinfos(fileTypes: FileReadTypeEnum[] | string[] = null, onchange: (e: ChangeEvent, files: FileList, contents: string[]) => void, readcontent: boolean) {
+    myFileReader.fileTypes = (fileTypes || myFileReader.fileTypes) as string[];
+    console.log('fileTypes:', myFileReader.fileTypes, fileTypes);
+    myFileReader.input = document.createElement('input');
+    const input: HTMLInputElement = myFileReader.input;
+    myFileReader.onchange = function (e: ChangeEvent): void {
+      if (!readcontent) { onchange(e, input.files, null); return; }
+      let contentObj = {};
+      let fileLetti: number = 0;
+      for (let i: number = 0; i < input.files.length; i++) {
+        const f: File = input.files[i];
+        console.log('filereadContent['+i+']( file:', f, ')');
+        U.fileReadContent(f, (content: string) => {
+          console.log('file['+i+'] read complete. done: ' + ( 1 + fileLetti) + ' / ' + input.files.length, 'contentObj:', contentObj);
+          contentObj[i] = content; // cannot use array, i'm not sure the callbacks will be called in order. using push is safer but could alter order.
+          // this is last file to read.
+          if (++fileLetti === input.files.length) {
+            const contentArr: string[] = [];
+            for (let j: number = 0; j < input.files.length; j++) { contentArr.push(contentObj[j]); }
+            onchange(e, input.files, contentArr);
+          }
+        });
+      }
+    } || myFileReader.onchange;
+  }
+  private static reset(): void {
+    myFileReader.fileTypes = null;
+    myFileReader.onchange = null;
+    myFileReader.input = null;
+  }
+  public static show(onChange: (e: ChangeEvent, files: FileList, contents: string[]) => void, extensions: string[] | FileReadTypeEnum[] = null, readContent: boolean): void {
+    myFileReader.setinfos(extensions, onChange, readContent);
+    myFileReader.input.setAttribute('type', 'file');
+    if (myFileReader.fileTypes) {
+      let filetypestr: string = '';
+      const sepkey: string = U.getStartSeparatorKey();
+      for (let i = 0; i < myFileReader.fileTypes.length; i++) { filetypestr += U.startSeparator(sepkey, ',') + myFileReader.fileTypes[i]; }
+      myFileReader.input.setAttribute('accept', filetypestr);
+    }
+    console.log('fileTypes:', myFileReader.fileTypes, 'input:', myFileReader.input);
+    $(myFileReader.input).on('change.custom', myFileReader.onchange).trigger('click');
+    myFileReader.reset();
+  }
+}
 export class InputPopup {
   static popupCounter = 0;
   html: HTMLElement;
@@ -136,6 +184,19 @@ export class U {
 
   static varTextToSvg: SVGSVGElement = null;
 
+  static fileReadContent(file: File, callback: (content :string) => void): void {
+    const textType = /text.*/;
+    try { if (!file.type || file.type.match(textType)) {
+      let reader = new FileReader();
+      reader.onload = function(e) { callback( '' + reader.result ); };
+      reader.readAsText(file);
+      return;
+    } } catch(e) { U.pe(true, "Exception while trying to read file as text. Error: |", e, "|", file); }
+    U.pe(true, "Wrong file type found: |", file ? file.type : null, "|", file); }
+
+  static fileRead(onChange: (e: ChangeEvent, files: FileList, contents: string[]) => void, extensions: string[] | FileReadTypeEnum[] = null, readContent: boolean): void {
+    myFileReader.show(onChange, extensions, readContent);
+  }
   public static textToSvg<T extends SVGElement>(str: string): T { return U.textToSvgArr<T>(str)[0]; }
   static textToSvgArr<T extends SVGElement> (str: string): T[] {
     if (!U.varTextToSvg) { U.varTextToSvg = U.newSvg<SVGSVGElement>('svg'); }
@@ -160,13 +221,13 @@ export class U {
     }
   }
 
+  static clearAllTimeouts(): void {
+    const highestTimeoutId: number = setTimeout(() => {}, 1) as any;
+    for (let i = 0 ; i < highestTimeoutId ; i++) { clearTimeout(i); }
+  }
   static pe(b: boolean, s: any, ...restArgs: any[]): string {
-    if (!b) {
-      return null;
-    }
-    if (restArgs === null || restArgs === undefined) {
-      restArgs = [];
-    }
+    if (!b) { return null; }
+    if (restArgs === null || restArgs === undefined) { restArgs = []; }
     let str = 'Error:' + s + '';
     console.log('pe[0/' + (restArgs.length + 1) + ']: ', s);
     for (let i = 0; i < restArgs.length; i++) {
@@ -611,13 +672,12 @@ export class U {
     return U.toHtml<HTMLTableCellElement>(html, U.toHtml('<table><tbody><tr></tr></tbody></table>').firstChild.firstChild as HTMLElement);
   }
 
-  static toHtml<T extends HTMLElement>(html: string, container: HTMLElement = null, containerTag: string = 'div'): T {
-    if (container === null) {
-      container = document.createElement(containerTag);
-    }
+  static toHtml<T extends Element>(html: string, container: HTMLElement | SVGElement = null, containerTag: string = 'div'): T {
+    if (container === null) { container = document.createElement(containerTag); }
     container.innerHTML = html;
-    return container.firstChild as T;
-  }
+    const ret: T = container.firstChild as any;
+    container.removeChild(ret);
+    return ret; }
 
   static toBase64Image(html: Element, container: Element = null, containerTag: string = 'div'): string {
     // https://github.com/tsayen/dom-to-image
@@ -1413,7 +1473,45 @@ export class U {
   static isValidName(name: string): boolean { return /^[a-zA-Z_$][0-9a-zA-Z_$]*$/.test(name); }
 
   static getTSClassName(thing: any): string { return thing.constructor.name + ''; }
-// Prevent the backspace key from navigating back.
+
+  static detailButtonSetup($root = null): void {
+    if (!$root) $root = $(document.body);
+    $root.find('button.detail').off('click.detailbutton').on('click.detailbutton', (e: ClickEvent, forceHide: boolean) => {
+      const btn = e.currentTarget as HTMLButtonElement;
+      const $btn = $(btn);
+      const $detailPanel = $root.find(btn.getAttribute('target'));
+      const otherButtons: HTMLButtonElement[] = $(btn.parentElement).find('button.detail').toArray().filter(x => x != btn) as any;
+      // $styleown.find('div.detail:not(' + btn.getAttribute('target') + ')');
+
+      const b: boolean = btn.dataset.on === '1';
+      if (forceHide || b) {
+        btn.style.width = '';
+        btn.dataset.on = '0';
+        btn.style.borderBottom = '';
+        btn.style.borderBottomLeftRadius = '';
+        btn.style.borderBottomRightRadius = '';
+        $btn.find('.closed').show();
+        $btn.find('.opened').hide();
+        // $detailcontainers.show();
+        $detailPanel.hide();
+      } else {
+        const size: Size = U.sizeof(btn);
+        btn.style.width = size.w + 'px';
+        btn.dataset.on = '1';
+        btn.style.borderBottom = 'none'; // '3px solid #252525';
+        btn.style.borderBottomLeftRadius = '0';
+        btn.style.borderBottomRightRadius = '0';
+        $btn.find('.closed').hide();
+        $btn.find('.opened').show()[0].style.width = (size.w - 15 * 2) + 'px';
+        console.log('others:', otherButtons, 'me:', $btn);
+        $(otherButtons).data('on', '1').trigger('click', true);
+        $detailPanel.show();
+      }
+    });
+    $root.find('div.detail').hide();
+  }
+
+  // Prevent the backspace key from navigating back.
   static preventBackSlashHistoryNavigation(event: KeyDownEvent): boolean {
     if (!event || !event.key || event.key.toLowerCase() !== 'backspace') { return true; }
     const types: string[] = ['text', 'password', 'file', 'search', 'email', 'number', 'date',
@@ -1904,6 +2002,12 @@ export class U {
     return undefined;
   }
 
+  private static startSeparatorKeys = {};
+  public static getStartSeparatorKey(): string { return new Date().getMilliseconds() + ''; }
+  public static startSeparator(key: string, separator: string = ', '): string {
+    if (key in U.startSeparatorKeys) return separator;
+    U.startSeparatorKeys[key] = true;
+    return ''; }
 }
 
 export enum AttribETypes {
@@ -1978,6 +2082,7 @@ import ResizableUIParams = JQueryUI.ResizableUIParams;
 import DraggableEventUIParams = JQueryUI.DraggableEventUIParams;
 import MouseEnterEvent = JQuery.MouseEnterEvent;
 import MouseLeaveEvent = JQuery.MouseLeaveEvent;
+import ChangeEvent = JQuery.ChangeEvent;
 
 export class DetectZoom {
   static device(): number { return detectzoooom.device(); }
@@ -2265,6 +2370,7 @@ export abstract class IPoint {
     const directionVector: IPoint = this.subtract(pt2, true);
     const ret: number = Math.atan2(directionVector.y, directionVector.x);
     return toRadians ? ret : U.RadToDegree(ret); }
+
 }
 export class GraphPoint extends IPoint{
   dontmixwithPoint: any;
@@ -2310,3 +2416,13 @@ export class Point extends IPoint{
   getM(pt2: Point): number { return super.getM(pt2); }
   degreeWith(pt2: Point, toRadians: boolean): number { return super.degreeWith(pt2, toRadians); }
 }
+
+export class FileReadTypeEnum {
+  public static image: FileReadTypeEnum = "image/*" as any;
+  public static audio: FileReadTypeEnum = "audio/*" as any;
+  public static video: FileReadTypeEnum = "video/*" as any;
+  /// a too much huge list https://www.iana.org/assignments/media-types/media-types.xhtml
+  public static AndManyOthersButThereAreTooMuch: string = "And many others... https://www.iana.org/assignments/media-types/media-types.xhtml";
+  public static OrJustPutFileExtension: string = "OrJustPutFileExtension";
+}
+

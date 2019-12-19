@@ -59,10 +59,11 @@
 }
 ::ng-deep .viewpointrow button{ margin: auto; background-color: transparent }
 ::ng-deep .viewpointrow input[readonly]{ background-color: transparent; border: none; }
-::ng-deep .viewpointrow[islastvp='true'] input.name{ opacity: 0.75; }
+::ng-deep .viewpointrow input.name{ opacity: 0.75; }
+::ng-deep .viewpointrow[islastvp='true'] input.name{ opacity: 1; }
 
 /************************************************** statici */
-.Template, .MMDefaultStyles{
+.template, .MMDefaultStyles{
   display: none;
 }
 .tabContent{

@@ -10,7 +10,7 @@ export {LocalStorage} from '../Database/LocalStorage';
 export {ModelPiece, Info, ModelNone, StyleComplexEntry} from '../Model/modelPiece';
 export {ShortAttribETypes, U, Json, AttribETypes,
   InputPopup, DetectZoom, Dictionary, MeasurableArrays,
-  IPoint, Point, GraphPoint, ISize, Size, GraphSize} from './util';
+  IPoint, Point, GraphPoint, ISize, Size, GraphSize, myFileReader} from './util';
 export {Status} from '../app.module';
 export {IGraph, ViewPointShell} from '../guiElements/mGraph/iGraph';
 export {IVertex} from '../guiElements/mGraph/Vertex/iVertex';

@@ -28,7 +28,8 @@ export class M2Attribute extends IAttribute {
   parse(json: Json, destructive: boolean) {
     this.setName(Json.read<string>(json, ECoreAttribute.namee, 'Attribute_1'));
     const eType = Json.read<string>(json, ECoreAttribute.eType, AttribETypes.EString);
-    this.setPrimitiveType(EType.getFromLongString(eType));/*
+    this.setPrimitiveType(EType.getFromLongString(eType));
+    /*
     this.views = [];
     let i: number;
     for(i = 0; i < this.parent.views.length; i++) {
