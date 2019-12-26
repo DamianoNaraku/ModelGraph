@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import {
   AttribETypes, IModel, Json,
-  MClass, MetaModel, Model, prjson2xml, Status, U, EType, // Options,
+  MClass, MetaModel, Model, prjson2xml, Status, U, // Options,
   ShortAttribETypes, InputPopup, myFileReader, prxml2json
 }                            from '../../common/Joiner';
 import ChangeEvent = JQuery.ChangeEvent;
 import ClickEvent = JQuery.ClickEvent;
 import {saveEntries}         from '../../Database/LocalStorage';
+import {EType}               from '../../mClass/classChild/Type';
 
 // @ts-ignore
 @Component({
@@ -70,8 +71,13 @@ export class TopBar {
 
   static load(json: string, prefix: string) {
     const m: IModel = prefix === 'm' ? Status.status.m : Status.status.mm;
-    if (m.name) m.save(false);
     window['' + 'discardSave']();
+    if (m.name) m.save(false);
+    if (m.isM2()
+    ) {
+      Status.status.m.save(false);
+      localStorage.setItem( Status.status.m.getPrefixNum() + '_' + saveEntries.lastOpened, Model.emptyModel);
+    }
     localStorage.setItem( m.getPrefixNum() + '_' + saveEntries.lastOpened, json);
     U.refreshPage(); }
 

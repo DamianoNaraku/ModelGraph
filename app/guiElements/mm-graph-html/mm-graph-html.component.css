@@ -7,9 +7,6 @@
 ::ng-deep foreignObject.Class select{
   cursor: pointer;
 }
-::ng-deep .addFieldButtonContainer{ display: flex; max-height: 20px; min-height: 20px; overflow: hidden;}
-::ng-deep .addFieldButtonContainer{ opacity: 0; padding-top: 20px; }
-::ng-deep foreignObject.Class:hover .addFieldButtonContainer{ opacity: 1; padding-top: 0; }
 
 /* viewpoint */
 ::ng-deep .viewpointShell{

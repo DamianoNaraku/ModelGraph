@@ -25,7 +25,6 @@ import {
   GraphPoint,
   //Options,
   MyConsole,
-  EType,
   MetaMetaModel,
   ShortAttribETypes,
   ECoreRoot,
@@ -47,7 +46,7 @@ import {
   IReference,
   M3Reference,
   MAttribute,
-  prjson2xml, prxml2json
+  prjson2xml, prxml2json, Type
 } from './common/Joiner';
 import { PropertyBarrComponent }   from './guiElements/property-barr/property-barr.component';
 import { MGraphHtmlComponent }     from './guiElements/m-graph-html/m-graph-html.component';
@@ -57,6 +56,7 @@ import { ConsoleComponent }        from './guiElements/console/console.component
 import KeyDownEvent = JQuery.KeyDownEvent;
 import {saveEntries}               from './Database/LocalStorage';
 import {ViewPoint}                 from './GuiStyles/viewpoint';
+import {EType}                     from './mClass/classChild/Type';
 // @ts-ignore
 // @ts-ignore
 // @ts-ignore
@@ -341,21 +341,20 @@ function main() {
   useless = new TopBar();
   Status.status.mm = new MetaModel(JSON.parse(MetaModelinputStr), Status.status.mmm);
   // console.log('m3:', Status.status.mmm, 'm2:', Status.status.mm, 'm1:', Status.status.m); return;
-  Status.status.mm.fixReferences();
+  Type.linkAll();
   Status.status.m = new Model(JSON.parse(ModelInputStr), Status.status.mm);
   console.log('m3:', Status.status.mmm, 'm2:', Status.status.mm, 'm1:', Status.status.m);
   // Status.status.m.LinkToMetaParent(Status.status.mm);
-  Status.status.m.fixReferences();
+  // Status.status.m.fixReferences(); already linked at parse time.
   Status.status.loadedLogic = true;
   useless = new ISidebar(Status.status.mmm, document.getElementById('metamodel_sidebar'));
   useless = new ISidebar(Status.status.mm, document.getElementById('model_sidebar'));
-  useless = new IGraph(Status.status.mm, document.getElementById('metamodel_editor'));
-  useless = new IGraph(Status.status.m, document.getElementById('model_editor'));
+  useless = new IGraph(Status.status.mm, document.getElementById('metamodel_editor') as unknown as SVGElement);
+  useless = new IGraph(Status.status.m, document.getElementById('model_editor') as unknown as SVGElement);
   Status.status.loadedGUI = true;
   Status.status.mm.graph.propertyBar.show(Status.status.mm, null, false);
   Status.status.m.graph.propertyBar.show(Status.status.m, null, false);
-  M2Class.updateAllMMClassSelectors();
-  EType.fixPrimitiveTypeSelectors();
+  Type.updateTypeSelectors(null, true, true, true);
   // M2Class.updateAllMClassSelectors();
   // Imposto un autosave raramente (minuti) giusto nel caso di crash improvvisi o disconnessioni
   // per evitare di perdere oltre X minuti di lavoro.

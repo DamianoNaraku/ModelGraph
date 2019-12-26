@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {
   IAttribute, M2Class, IEdge, IModel, IPackage, IReference, ModelPiece, PropertyBarr, Status, U, IClass,
-  EdgeModes, EOperation, EParameter, Database, Size, AttribETypes, EType, Vieww, ViewHtmlSettings, StyleComplexEntry, ViewPoint
+  EdgeModes, EOperation, EParameter, Database, Size, AttribETypes, Vieww, ViewHtmlSettings, StyleComplexEntry, ViewPoint, Type
 } from '../../common/Joiner';
 import ChangeEvent = JQuery.ChangeEvent;
 import BlurEvent = JQuery.BlurEvent;
@@ -64,6 +64,7 @@ export class StyleEditor {
     this.clickedLevel = clickedLevel;
     console.log('styleShow(', m, ')');
     if (m instanceof IModel) { this.showM(m); return; }
+    if (m instanceof IPackage) { this.showM(m.parent); return; }
     // if (m instanceof IPackage) { this.showP(m); return; }
     this.showMP(m, null, false, false);
     return;/*
@@ -77,6 +78,7 @@ export class StyleEditor {
   updateClickedGUIHighlight() {
     $(this.propertyBar.model.graph.container).find('.styleEditorSelected').removeClass('styleEditorSelected');
     if (this.isVisible() && this.clickedLevel) { this.clickedLevel.classList.add('styleEditorSelected'); } }
+
   private getCopyOfTemplate(m: ModelPiece, s: string, appendTo: HTMLElement, clear: boolean): HTMLElement {
     let $html: JQuery<HTMLElement> = this.$templates.find('.template' + s);
     const html: HTMLElement = U.cloneHtml<HTMLElement>($html[0]);
@@ -122,13 +124,12 @@ export class StyleEditor {
     });
     $(zoomX).off('change.set').on('change.set', (e: ChangeEvent) => {
       const input: HTMLInputElement = e.currentTarget;
-      m.graph.zoom.x = isNaN(+input.value) ? 0 : +input.value;
-      m.graph.setZoom();
+      m.graph.setZoom(+input.value, null);
     });
     $(zoomY).off('change.set').on('change.set', (e: ChangeEvent) => {
       const input: HTMLInputElement = e.currentTarget;
       m.graph.zoom.y = isNaN(+input.value) ? 0 : +input.value;
-      m.graph.setZoom();
+      m.graph.setZoom(null, +input.value);
     });
     $(showGrid).off('change.set').on('change.set', (e: ChangeEvent) => {
       const input: HTMLInputElement = e.currentTarget;
@@ -443,7 +444,7 @@ export class StyleEditor {
     // let templateLevel: HTMLElement | SVGElement = templateRoot;
     let indexedPath: number[] = U.getIndexesPath(clickedLevel, 'parentNode', 'childNodes', clickedRoot);
     // console.log('clickedRoot', clickedRoot, 'clickedLevel', clickedLevel, 'path:', indexedPath);
-    U.pe(U.followIndexesPath(clickedRoot, indexedPath, 'childNodes') !== clickedLevel, 'mismatch.');
+    U.pe(U.followIndexesPath(clickedRoot, indexedPath, 'childNodes') !== clickedLevel, 'mismatch.', indexedPath);
     const realindexfollowed: {indexFollowed: string[] | number[], debugArr: {index: string | number, elem: any}[]} = {indexFollowed: [], debugArr:[]};
     let templateLevel: Element = U.followIndexesPath(templateRoot, indexedPath, 'childNodes', realindexfollowed);
     // console.log('clickedRoot:',clickedRoot, 'clikedLevel:', clickedLevel, 'indexedPath:', indexedPath, 'followed:', realindexfollowed,
@@ -602,8 +603,8 @@ export class StyleEditor {
         let typesArr: string = '';
         for (j = 0; j < replacedArr.length; j++) {
           namesArr += replacedArr[j].token + '.';
-          const typeDetail: EType | M2Class = replacedArr[j].value.typeDetail;
-          typesArr += (replacedArr[j].value.this instanceof IClass ? 'Class' : typeDetail.name) + '.'; }
+          const typeDetail: Type = replacedArr[j].value.typeDetail;
+          typesArr += typeDetail.toEcoreString() + '.'; }
         namesArr = namesArr.substr(0, namesArr.length - 2);
         typesArr = typesArr.substr(0, typesArr.length - 2);
         featuredependency.push({template: template, namesArray: namesArr, typesArray: typesArr});

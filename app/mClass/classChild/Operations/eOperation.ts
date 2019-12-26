@@ -2,7 +2,6 @@ import {
   AttribETypes,
   ECoreOperation,
   EParameter,
-  EType,
   IClass,
   IClassChild,
   Info,
@@ -36,7 +35,7 @@ export class EOperation extends IClassChild {
   static stylesDatalist: HTMLDataListElement;
   // instances: IClassChild[] = undefined;
   // metaParent: IClassChild = undefined;
-  parent: IClass;
+  parent: M2Class | M3Class;
   childrens: EParameter[];
   exceptionsStr: string; // classlist to be latera processed and linked.
   visibility: OperationVisibility = OperationVisibility.private;
@@ -63,7 +62,7 @@ export class EOperation extends IClassChild {
   conformability(metaparent: ModelPiece, outObj?: any, debug?: boolean): number { U.pe(true, 'operation.conformability()'); return 0; }
 
   duplicate(nameAppend: string = '_Copy', newParent: M2Class = null): EOperation {
-    const c: EOperation = new EOperation(null, null);
+    const c: EOperation = new EOperation(this.parent, null);
     c.copy(this); return c; }
 
   copy(c: EOperation, nameAppend: string = '_Copy', newParent: M2Class = null): void {
@@ -87,7 +86,7 @@ export class EOperation extends IClassChild {
 						"_eExceptions": "#//Casa #//League ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt",
 						"eParameters": [ ]*/
     Json.write(json, ECoreOperation.namee, this.name);
-    Json.write(json, ECoreOperation.eType, this.getTypeStr() );
+    Json.write(json, ECoreOperation.eType, this.getType().toEcoreString() );
     Json.write(json, ECoreOperation.lowerBound, '' + this.lowerbound);
     Json.write(json, ECoreOperation.upperBound, '' + this.upperbound);
     Json.write(json, ECoreOperation.eexceptions, this.exceptionsStr);
@@ -106,10 +105,7 @@ export class EOperation extends IClassChild {
 
   parse(json: Json, destructive?: boolean): void {
     this.setName( (this.parent instanceof M3Class) ? 'Operation' : Json.read<string>(json, ECoreOperation.namee, 'Func_1'));
-    const eType = Json.read<string>(json, ECoreOperation.eType, AttribETypes.void); // '#//' + this.parent.name
-    this.parsePrintableTypeName(eType);
-    if (!this.primitiveType && !this.classType) { this.setPrimitiveType(EType.get(ShortAttribETypes.void)); }
-    this.linkClass();
+    this.setType(Json.read<string>(json, ECoreOperation.eType, AttribETypes.void));
     this.setLowerbound(+Json.read<number>(json, ECoreOperation.lowerBound, 'NAN_Trigger'));
     this.setUpperbound(+Json.read<number>(json, ECoreOperation.upperBound, 'NAN_Trigger'));
     this.exceptionsStr = Json.read<string>(json, ECoreOperation.eexceptions, '');
@@ -162,8 +158,18 @@ export class EOperation extends IClassChild {
   }
 
 
-  private getTypeStr(): string { // todo
-    return '#//'; }
+  private getSignature(maxarguments: number = Number.POSITIVE_INFINITY): string {
+    let parameterStr = '';
+    maxarguments = Math.min(maxarguments, this.childrens.length);
+    let i: number;
+    const debug: boolean = true;
+    const separator = ', ';
+    for (i = 0; i < maxarguments; i++) {
+      if (i !== 0) { parameterStr += separator; }
+      U.pif(debug, 'parameter[' + i + '] = ', this.childrens[i]);
+      U.pif(debug, 'parameterStr: |' + parameterStr + '| --> |' + parameterStr + this.childrens[i].getType().toShortString() + '|');
+      parameterStr += this.childrens[i].getType().toShortString(); }
+    return parameterStr; }
 
   setSignatureHtml(html: HTMLElement, separator: string, maxargumentchars: number = null, maxarguments: number = null): void {
     const debug: boolean = false && true;
@@ -174,24 +180,18 @@ export class EOperation extends IClassChild {
       if (s.length > maxargumentchars) { return s.substring(0, maxargumentchars - 1) + '…'; }
       return s; };
     let i: number;
-    let parameterStr = '';
-    maxarguments = Math.min(maxarguments, this.childrens.length);
-    for (i = 0; i < maxarguments; i++) {
-      if (i !== 0) { parameterStr += separator; }
-      U.pif(debug, 'parameter[' + i + '] = ', this.childrens[i]);
-      U.pif(debug, 'parameterStr: |' + parameterStr + '| --> |' + parameterStr + this.childrens[i].getTypeName() + '|');
-      parameterStr += this.childrens[i].getTypeName(); }
+    let parameterStr = this.getSignature(maxarguments);
     U.pif(debug, 'finalSignature: ', this.getVisibilityChar(), fixName(this.name), parameterStr,
-      fixName(EParameter.GetTypeName(this.getReturnType())), EParameter.GetTypeName(this.getReturnType()), this.getReturnType());
+      fixName(this.type.toShortString()), this);
     // todo: innerText is not standard, switch to textContent
     html.innerHTML = '&nbsp'; // == ' '
     html.textContent += this.getVisibilityChar() + '' + fixName(this.name) + '(' + parameterStr + ') → ' // → ⇒
-      + fixName(EParameter.GetTypeName(this.getReturnType()));
+      + this.type.toShortString();
     html.dataset.visibility = this.visibility;
     html.dataset.exceptions = this.exceptionsStr; }
 
-  getReturnType(): EParameter { return this.getFakeReturnTypeParameter(); }
-
+  // getReturnType(): EParameter { return this.getFakeReturnTypeParameter(); }
+/*
   getFakeReturnTypeParameter(): EParameter {
     const fake: EParameter = new EParameter(null, null);
     U.arrayRemoveAll(this.childrens, fake);
@@ -201,10 +201,9 @@ export class EOperation extends IClassChild {
     fake.unique = this.unique;
     fake.setLowerbound(this.getLowerbound());
     fake.setUpperbound(this.getUpperbound());
-    fake.classType = this.classType;
-    fake.primitiveType = this.primitiveType;
+    fake.setType(this.getType().toEcoreString());
     fake.name = '';
-    return fake; }
+    return fake; }*/
 
   addParameter(): EParameter {
     const p: EParameter = new EParameter(this, null);

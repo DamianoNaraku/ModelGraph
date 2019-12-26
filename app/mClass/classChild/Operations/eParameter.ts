@@ -1,6 +1,5 @@
 import {
   AttribETypes,
-  EType,
   IAttribute,
   M2Class,
   IFeature,
@@ -36,16 +35,7 @@ export class EParameter extends IClassChild {
     if (!parent) { return; } // fake constructor will allow to travel fake -> original. can't original -> fake.
     this.parse(json); }
 
-  static GetTypeName(param: EParameter): string {
-    if (!param) { return 'void'; }
-    if (param.primitiveType) { return param.primitiveType.name; }
-    if (param.classType) { return param.classType.name; }
-    return 'void'; }
-
-  getTypeName(): string { return EParameter.GetTypeName(this); }
-
   fullname(): string { return super.fullname() + ':' + this.name; }
-  midname(): string { return super.midname() + ':' + this.name; }
   getField(): IField { return this.parent ? this.parent.getField() : null; }
   getClass(): IClass { return this.parent ? this.parent.parent : null; }
 
@@ -61,9 +51,6 @@ export class EParameter extends IClassChild {
     // let i; for (i = 0; i < this.childrens.length; i++) { U.ArrayAdd(this.parent.arguments, this.childrens[i]); }
     this.refreshGUI(); }
 
-  private getTypeStr(): string { // todo
-    return '#//'; }
-
   getInfo(toLower: boolean = false): any {
     const info: any = super.getInfo(toLower);
     Info.unset(info, 'instances');
@@ -75,7 +62,7 @@ export class EParameter extends IClassChild {
     Json.write(json, ECoreOperation.upperBound, '' + this.upperbound);
     Json.write(json, ECoreOperation.ordered, '' + this.ordered);
     Json.write(json, ECoreOperation.unique, '' + this.unique);
-    Json.write(json, ECoreOperation.eType, '' + this.getTypeStr());
+    Json.write(json, ECoreOperation.eType, '' + this.getType().toEcoreString());
     return json; }
 
   parse(json: Json, destructive?: boolean): void {
@@ -94,10 +81,7 @@ export class EParameter extends IClassChild {
     this.setUpperbound(+Json.read<number>(json, ECoreOperation.upperBound, 'NAN_Trigger'));
     this.ordered = 'true' === '' + Json.read<boolean>(json, ECoreOperation.ordered, 'false');
     this.unique = 'true ' === '' + Json.read<boolean>(json, ECoreOperation.unique, 'false');
-    const eType = Json.read<string>(json, ECoreParameter.eType, AttribETypes.EString);
-    // (this.parent && this.parent.parent ? '#//' + this.parent.parent.name : AttribETypes.EString)
-    this.parsePrintableTypeName(eType);
-    this.linkClass();
+    this.setType(Json.read<string>(json, ECoreParameter.eType, AttribETypes.EString));
     let i: number;/*
     this.views = [];
     for(i = 0; i < this.parent.views.length; i++) {

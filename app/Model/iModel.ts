@@ -12,7 +12,7 @@ import {
   U,
   ModelPiece,
   ISidebar, MetaMetaModel, LocalStorage,
-  IGraph, IReference, MetaModel, MClass, TopBar, ModelNone, IClass, Model, M3Package, M3Class, ViewPoint, //, Options
+  IGraph, IReference, MetaModel, MClass, TopBar, ModelNone, IClass, Model, M3Package, M3Class, ViewPoint, EEnum, //, Options
 } from '../common/Joiner';
 
 export abstract class IModel extends ModelPiece {
@@ -65,12 +65,16 @@ export abstract class IModel extends ModelPiece {
     const arr: IClass[] = [];
     const packages: IPackage[] = this.childrens;
     let i;
-    for (i = 0; i < packages.length; i++) {
-      packages[i].childrens.forEach( (elem: IClass) => {arr.push(elem); } );
-    }
+    for (i = 0; i < packages.length; i++) { packages[i].classes.forEach( (elem: IClass) => {arr.push(elem); } ); }
     return arr; }
 
-  midname(): string { return this.name; }
+  getAllEnums(): EEnum[] {
+    const arr: EEnum[] = [];
+    const packages: IPackage[] = this.childrens;
+    let i;
+    for (i = 0; i < packages.length; i++) { packages[i].enums.forEach( (elem: EEnum) => {arr.push(elem); } ); }
+    return arr; }
+
   fullname(): string { return this.name; }
 
   getVertex(): IVertex { U.pe(true, 'IModel.getVertex();'); return undefined; }
@@ -218,7 +222,19 @@ export class ECoreRoot {
     ECoreClass.eStructuralFeatures = 'eStructuralFeatures';
     ECoreClass.eOperations = 'eOperations';
     ECoreClass.xsitype = Status.status.XMLinlineMarker + 'xsi:type'; // "ecore:EClass"
-    ECoreClass.namee = Status.status.XMLinlineMarker + 'name';
+    ECoreClass.namee = ECorePackage.namee;
+    ECoreClass.eSuperTypes = Status.status.XMLinlineMarker + 'eSuperTypes';
+    ECoreClass.instanceTypeName = Status.status.XMLinlineMarker + 'instanceTypeName';  // raw str
+
+    ECoreEnum.instanceTypeName = ECoreClass.instanceTypeName;
+    ECoreEnum.serializable = 'serializable'; // "false", "true"
+    ECoreEnum.xsitype = ECoreClass.xsitype; // "ecore:EEnum"
+    ECoreEnum.eLiterals = 'eLiterals';
+    ECoreEnum.namee = ECorePackage.namee;
+
+    EcoreLiteral.literal = 'literal';
+    EcoreLiteral.namee = ECorePackage.namee;
+    EcoreLiteral.value = 'value'; // any integer (-inf, +inf), not null. limiti = a type int 32 bit?
 
     ECoreReference.xsitype = Status.status.XMLinlineMarker + 'xsi:type'; // "ecore:EReference"
     ECoreReference.eType = Status.status.XMLinlineMarker + 'eType'; // "#//Player"
@@ -268,7 +284,27 @@ export class ECoreClass {
   static xsitype: string;
   static namee: string;
   static eOperations: string;
+  static instanceTypeName: string;
+  static eSuperTypes: string;
+
+  // static defaultValue = Status.status.XMLinlineMarker + 'defaultValue';  // visualizzato in ecore ma mai salvato dentro il file. inutilizzato
+  // nelle classi, assume il valore di "[name] = [NumericValue]" senza le [] negli enum.
 }
+
+export class ECoreEnum {
+  static xsitype: string;
+  static namee: string;
+  static instanceTypeName: string;
+  static serializable: string;
+  static eLiterals: string;
+}
+
+export class EcoreLiteral {
+  static namee: string;
+  static value: string;
+  static literal: string;
+}
+
 
 export class ECoreReference {
   static xsitype: string;

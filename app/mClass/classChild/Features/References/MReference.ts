@@ -22,14 +22,13 @@ import {
   ECoreAttribute,
   ECoreReference,
   ShortAttribETypes,
-  EType,
   IReference,
   Dictionary,
   MPackage,
   M3Reference,
   M2Reference,
   IClass,
-  Info,
+  Info, Type,
 } from '../../../../common/Joiner';
 
 export class MReference extends IReference {
@@ -61,7 +60,7 @@ export class MReference extends IReference {
     M2Class.updateMMClassSelector($selector[0] as HTMLSelectElement, this.getm2Target());
     return htmlRaw; }*/
 
-  getm2Target(): M2Class { return this.metaParent.classType; }
+  getm2Target(): M2Class { return this.metaParent.type.classType; }
 
   endingName(valueMaxLength: number = 10): string {
     if (this.mtarget.length > 0) {
@@ -70,7 +69,7 @@ export class MReference extends IReference {
         const a: MAttribute = t.attributes[0];
         return a.endingName(valueMaxLength); } }
     return ''; }
-
+/*
   conformability(meta: M2Reference, debug: boolean = true): number {
     let comformability = 0;
     comformability += 0.1 * StringSimilarity.compareTwoStrings(this.getm2Target().name, meta.classType.name);
@@ -78,7 +77,7 @@ export class MReference extends IReference {
     // comformability += 0.2 * StringSimilarity.compareTwoStrings(this.name, meta.name);
     // comformability += 0.2 * (this.metaParent.containment === meta.containment ? 1 : 0);
     U.pif(debug, 'REFERENCE.comform(', this.name, {0: this}, ', ', meta.name, {0: meta}, ') = ', comformability);
-    return comformability; }
+    return comformability; }*/
 
 
 
@@ -115,9 +114,12 @@ export class MReference extends IReference {
     for (i = linkStart; i < linkEnd; i++) { U.arrayRemoveAll(this.mtarget[i].referencesIN, this); }
   }
 
+  getType(): Type { return (this.metaParent ? this.metaParent.getType() : null); }
+
   canBeLinkedTo(hoveringTarget: MClass): boolean {
-    if (!this.metaParent || !hoveringTarget.metaParent) { return null; }
-    return this.metaParent.canBeLinkedTo(hoveringTarget.metaParent); }
+    const c1: M2Class = this.getType().classType;
+    const c2: M2Class = hoveringTarget.metaParent;
+    return c1 === c2 || c1.isExtending(c2); }
 
   // link(targetStr?: string, debug?: boolean): void { throw new Error('mreference.linkByStr() should never be called'); }
 
@@ -149,7 +151,7 @@ export class MReference extends IReference {
     U.pe(!destructive, 'non-destructive parse of MReference to do.');
     if (!json0) { json0 = []; }
     const json: Json[] = Array.isArray(json0) ? json0 : [json0];
-    const targetMM: M2Class = this.metaParent.classType;
+    const targetMM: M2Class = this.getm2Target();
     let i: number;
     if (!this.mtarget) { this.mtarget = []; }
     if (destructive) {
@@ -163,8 +165,7 @@ export class MReference extends IReference {
       // console.log('mref.parse: ', json0, json, 'i:', json[i]);
       if ($.isEmptyObject(json[i])) { continue; }
       const t: MClass = new MClass(pkg, json[i], targetMM);
-      U.ArrayAdd(pkg.childrens, t);
-      if (destructive) { U.ArrayAdd(this.mtarget, t); /* this.edges.push(null); */ }
+      U.ArrayAdd(this.mtarget, t);
     }/*
     this.views = [];
     for(i = 0; i < this.parent.views.length; i++) {
@@ -210,8 +211,7 @@ export class MReference extends IReference {
       // edge.setTarget(this.classType.vertex);
       edge.refreshGui(); }
 
-    U.pif(debug, 'ref target changed; targetFullName:' + this.classType.fullname() + '; this.targetStr:' + this.typeClassFullnameStr +
-      '; target:', this.classType, 'inside:', this);
+    U.pif(debug, 'ref target changed; target:', classe, '; inside:', this);
     if (refreshGUI) { this.refreshGUI(debug); }
   }
 

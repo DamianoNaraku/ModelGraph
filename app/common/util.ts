@@ -184,6 +184,10 @@ export class U {
 
   static varTextToSvg: SVGSVGElement = null;
 
+  static firstToUpper(s: string): string {
+    if (!s || s === '') return s;
+    return s.charAt(0).toUpperCase() + s.slice(1); }
+
   static fileReadContent(file: File, callback: (content :string) => void): void {
     const textType = /text.*/;
     try { if (!file.type || file.type.match(textType)) {
@@ -705,16 +709,16 @@ export class U {
     size = size.clone();
     const defaults: GraphSize = new GraphSize(0, 0, 200, 101);
     if (isNaN(+size.x)) {
-      U.pw(true, 'Svg x attribute is NaN: ' + style.getAttribute('x') + ' will be set to default: ' + defaults.x);
+      U.pw(true, 'VertexSize Svg x attribute is NaN: ' + style.getAttribute('x') + ' will be set to default: ' + defaults.x);
       size.x = defaults.x; }
     if (isNaN(+size.y)) {
-      U.pw(true, 'Svg y attribute is NaN: ' + style.getAttribute('y') + ' will be set to default: ' + defaults.y);
+      U.pw(true, 'VertexSize Svg y attribute is NaN: ' + style.getAttribute('y') + ' will be set to default: ' + defaults.y);
       size.y = defaults.y; }
     if (isNaN(+size.w)) {
-      U.pw(true, 'Svg w attribute is NaN: ' + style.getAttribute('width') + ' will be set to default: ' + defaults.w);
+      U.pw(true, 'VertexSize Svg w attribute is NaN: ' + style.getAttribute('width') + ' will be set to default: ' + defaults.w);
       size.w = defaults.w; }
     if (isNaN(+size.h)) {
-      U.pw(true, 'Svg h attribute is NaN: ' + style.getAttribute('height') + ' will be set to default: ' + defaults.h);
+      U.pw(true, 'VertexSize Svg h attribute is NaN: ' + style.getAttribute('height') + ' will be set to default: ' + defaults.h);
       size.h = defaults.h; }
     // U.pe(true, '100!, ', size, style);
     style.setAttributeNS(null, 'x', '' + size.x);
@@ -1539,6 +1543,15 @@ export class U {
     }
     return ret; }
 
+  static ArrayMerge(arr1: any[], arr2: any[]): void {
+    if (!arr1 || !arr2) return;
+    Array.prototype.push.apply(arr1, arr2); }
+
+  static ArrayMergeUnique(arr1: any[], arr2: any[]): void {
+    if (!arr1 || !arr2) return;
+    let i: number;
+    for( i = 0; i < arr2.length; i++) { U.ArrayAdd(arr1, arr2[i]); } }
+
   static ArrayAdd<T>(arr: Array<T>, elem: T, unique: boolean = true, throwIfContained: boolean = false): boolean {
     U.pe(!arr || !Array.isArray(arr), 'arr null or not array:', arr);
     if (!unique) { arr.push(elem); return true; }
@@ -1665,7 +1678,7 @@ export class U {
     return {destination: leftSide, operator, value}; }
 
 
-  static processMeasuring(logic: IClass, m: MeasurableArrays, ui: ResizableUIParams | DraggableEventUIParams): void {
+  static processMeasuring(logic: IClassifier, m: MeasurableArrays, ui: ResizableUIParams | DraggableEventUIParams): void {
     const size: Size = U.sizeof(m.html);
     let relativeRoot: HTMLElement | SVGElement = m.html;
     while (!relativeRoot.classList.contains('vertexShell')) { relativeRoot = relativeRoot.parentElement; }
@@ -2002,12 +2015,20 @@ export class U {
     return undefined;
   }
 
+  static makeSet(notice_willStripSpaces: any): DOMTokenList {
+    const useless = document.createElement('');
+    // NB: classList behave like a set but will strip spaces
+    return useless.classList; }
+
   private static startSeparatorKeys = {};
-  public static getStartSeparatorKey(): string { return new Date().getMilliseconds() + ''; }
+  private static startSeparatorKeyMax = -1;
+  public static getStartSeparatorKey(): string { return ++U.startSeparatorKeyMax + ''; }
   public static startSeparator(key: string, separator: string = ', '): string {
     if (key in U.startSeparatorKeys) return separator;
     U.startSeparatorKeys[key] = true;
     return ''; }
+
+  static arrayContains(arr: any[], searchElem: any): boolean { return arr && arr.indexOf(searchElem) === -1; }
 }
 
 export enum AttribETypes {
@@ -2051,8 +2072,9 @@ export class Json {
     const pkg = thiss[ECorePackage.eClassifiers];
     const cla = thiss[functions ? ECoreClass.eOperations : ECoreClass.eStructuralFeatures];
     const fun = thiss[ECoreOperation.eParameters];
+    const lit = thiss[ECoreEnum.eLiterals];
 
-    const ret: any = mod || pkg || cla || fun;
+    const ret: any = mod || pkg || cla || fun || lit;
     /*if ( ret === undefined || ret === null ) {
       if (thiss['@name'] !== undefined) { ret = thiss; } // if it's the root with only 1 child arrayless
     }*/
@@ -2083,6 +2105,8 @@ import DraggableEventUIParams = JQueryUI.DraggableEventUIParams;
 import MouseEnterEvent = JQuery.MouseEnterEvent;
 import MouseLeaveEvent = JQuery.MouseLeaveEvent;
 import ChangeEvent = JQuery.ChangeEvent;
+import {IClassifier}     from '../mClass/IClassifier';
+import {ECoreEnum}       from '../Model/iModel';
 
 export class DetectZoom {
   static device(): number { return detectzoooom.device(); }
@@ -2425,4 +2449,3 @@ export class FileReadTypeEnum {
   public static AndManyOthersButThereAreTooMuch: string = "And many others... https://www.iana.org/assignments/media-types/media-types.xhtml";
   public static OrJustPutFileExtension: string = "OrJustPutFileExtension";
 }
-

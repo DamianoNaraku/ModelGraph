@@ -139,3 +139,22 @@ li.dropdownContent:hover {
 .dropdownContainer:hover>.dropdownTitle {
   background-color: var(--secondaryBorderColor);
 }
+
+.buttonGridContainer {
+  display: flex;
+  flex-wrap: wrap;
+  /* width: calc(40px * 5 - 1);*/
+  width: min(25vw, calc(40px * 5 + 10px * 5 - 1px)); /* button size + buttonshell margin, 4 per riga con massimo spazio avanzato prima del 5°*/
+}
+
+.buttonGridMinMargin {
+  display: flex;
+  flex-grow: 0;
+  flex-shrink: 0;
+  margin: auto;
+  padding: 5px; }
+
+.buttonGrid {
+  width: 45px;
+  height: 45px;
+}

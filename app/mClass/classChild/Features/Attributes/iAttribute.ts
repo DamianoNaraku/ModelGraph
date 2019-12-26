@@ -1,11 +1,10 @@
 import {
-  EType,
   IClass,
   IFeature,
   Json,
   M2Attribute, M3Class, M3Feature, M3Reference, PropertyBarr,
   ShortAttribETypes,
-  Status,
+  Status, Type,
   U
 } from '../../../../common/Joiner';
 
@@ -66,7 +65,7 @@ export class M3Attribute extends IAttribute {
     U.pe(true, 'm3Attr.generateModel()');
     return {}; }
 
-  getType(): EType { U.pe(true, 'm3Attr.getType()'); return EType.get(ShortAttribETypes.EString); }
+  // getType(): Type { U.pe(true, 'm3Attr.getType()'); return null; }
 
   parse(json: Json, destructive: boolean = true): void {
     this.name = 'Attribute'; }

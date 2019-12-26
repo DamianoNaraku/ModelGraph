@@ -12,7 +12,7 @@ import {
   MPackage,
   IClass,
   M3Class,
-  M3Package, IGraph
+  M3Package, IGraph, IClassifier, EEnum
 } from '../../common/Joiner';
 import ClickEvent = JQuery.ClickEvent;
 
@@ -55,13 +55,14 @@ export class ISidebar {
     console['' + 'trace']('refresh left iSidebar');
     // bug: todo: not refreshing quando cambio il nome di un m2class. però i classSelector si aggiornano.
     this.clear();
-    let arr: IClass[];
+    let arr: IClassifier[];
     let i;
     this.htmls = {};
     /*if (false && false) {
       arr = this.model.childrens;
       for (i = 0; i < arr.length; i++) { this.htmls[arr[i].fullname()] = IPackage.defaultSidebarHtml(); } } */
     arr = this.model.getAllClasses();
+    Array.prototype.push.apply(arr, this.model.getAllEnums());
     for (i = 0; i < arr.length; i++) { this.htmls[arr[i].fullname()] = arr[i].getSidebarHtml();  }
     this.updateAll();
     return this.htmls; }
@@ -73,12 +74,8 @@ export class ISidebar {
 
   updateAll() {
     let i;
-    let arr: ModelPiece[] = null;
-    if (false && this.model !== Status.status.mmm) {// package is not shown for mmm (in the mm sidebar), per ora tolgo proprio i packages
-      U.clear(this.packageContainer);
-      for (i = 0; i < arr.length; i++) { this.updateNode( arr[i], this.packageContainer); }
-    }
-    arr = this.model.getAllClasses();
+    const arr: IClassifier[] = this.model.getAllClasses();
+    Array.prototype.push.apply(arr, this.model.getAllEnums());
     for (i = 0; i < arr.length; i++) { this.updateNode( arr[i], this.classContainer); }
   }
 
@@ -96,19 +93,16 @@ export class ISidebar {
     console.log('sidebarNodeClick()');
     let html: HTMLElement | SVGElement = e.currentTarget;
     while (!html.dataset.modelPieceID) { html = html.parentNode as HTMLElement | SVGElement; }
-    const modelPiece = ModelPiece.getLogic(html);
-    U.pe( !modelPiece , 'the id does not match any class or package', e);
-    const modelOfSidebar: IModel /*m3*/ = modelPiece.getModelRoot();
+    const metaParent = ModelPiece.getLogic(html);
+    U.pe( !metaParent , 'the id does not match any class or package', e);
+    const modelOfSidebar: IModel /*m3*/ = metaParent.getModelRoot();
     const modelOfGraph: IModel /*m2*/ = Status.status.getActiveModel();
     const graph: IGraph = modelOfGraph.graph; /*m2*/
     U.pe(!graph, 'invalid graph of model:', modelOfGraph);
     console.log('pre Add empty class');
-    U.pe(!modelPiece.instances, modelPiece);
-    if ( modelPiece instanceof IClass /*m3*/) { modelOfGraph.getDefaultPackage().addEmptyClass(modelPiece);
-    // } else {
-    //  if ( modelPiece instanceof M3Package /*m3*/) { modelOfGraph.addEmptyP(); }
-    } else {
-      U.pe(true, 'unxpected class type of modelpiece:', modelPiece); }
+    if ( metaParent instanceof IClass /*m3*/) { modelOfGraph.getDefaultPackage().addEmptyClass(metaParent); }
+    if ( metaParent instanceof EEnum /*m3*/) { modelOfGraph.getDefaultPackage().addEmptyEnum(); }
+    else { U.pe(true, 'unxpected class type of metaparent:', metaParent); }
     console.log('addSidebarNodeClick done'); }
 
   updateNode(piece: ModelPiece, containerr: HTMLElement) {

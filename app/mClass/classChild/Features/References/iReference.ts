@@ -47,6 +47,7 @@ export abstract class IReference extends IFeature {
     for (i = linkStart; i < linkEnd; i++) { edges[i].remove(); }
   }
 
+  // abstract linkClass(classe?: IClass): void;
   getEdges(): IEdge[] { return this.edges; }
 
   refreshGUI_Alone(debug: boolean = true): void {
@@ -62,13 +63,13 @@ export abstract class IReference extends IFeature {
     this.edgeStyleCommon = r.edgeStyleCommon.clone();
     this.edgeStyleHighlight = r.edgeStyleHighlight.clone();
     this.edgeStyleSelected = r.edgeStyleSelected.clone();
-    this.typeClassFullnameStr = r.typeClassFullnameStr;
+    // this.typeClassFullnameStr = r.typeClassFullnameStr;
     if (newParent) { U.ArrayAdd(newParent.references, this); }
     this.refreshGUI();
     return this; }
 
   // abstract link(targetStr?: string, debug?: boolean): void;
-  abstract conformability(meta: IReference, debug?: boolean): number;
+  // abstract conformability(meta: IReference, debug?: boolean): number;
   abstract canBeLinkedTo(hoveringTarget: IClass): boolean;
 
 
@@ -129,10 +130,10 @@ export abstract class IReference extends IFeature {
     if (this instanceof M2Reference) { return this.containment; }
     if (this instanceof MReference) { return this.metaParent.containment; }
     U.pe(true, 'unrecognized class.'); }
-  getM2Target(): M2Class {
+  /*getM2Target(): M2Class {
     if (this instanceof M2Reference) { return this.classType; }
     if (this instanceof MReference) { return this.metaParent.classType; }
-    U.pe(true, 'unrecognized class.'); }
+    U.pe(true, 'unrecognized class.'); }*/
   getUpperbound(): number {
     if (this instanceof M2Reference) { return this.upperbound; }
     if (this instanceof MReference) { return this.metaParent.upperbound; }
@@ -156,7 +157,7 @@ export class M3Reference extends IReference {
 
   canBeLinkedTo(hoveringTarget: M3Class): boolean { U.pe(true, 'Invalid operation: m3Reference.canBeLinkedTo()'); return true; }
 
-  conformability(meta: IReference, debug?: boolean): number { U.pe(true, 'Invalid operation: m3Reference.comformability()'); return 0; }
+  //conformability(meta: IReference, debug?: boolean): number { U.pe(true, 'Invalid operation: m3Reference.comformability()'); return 0; }
 
   duplicate(nameAppend?: string, newParent?: IClass): M3Reference {  U.pe(true, 'Invalid operation: m3Reference.duplicate()'); return this; }
 
@@ -166,6 +167,7 @@ export class M3Reference extends IReference {
 
   parse(json: Json, destructive?: boolean): void { this.name = 'Reference'; }
 
+  linkClass(classe: IClass = null): void { U.pe(true, 'Invalid operation: M3Reference.linkClass();'); }
   // metaParent: M3Reference;
   // instances: M3Reference[] | M2Reference[];
 }

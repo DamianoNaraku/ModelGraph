@@ -1,4 +1,3 @@
-import {Component, OnInit} from '@angular/core';
 import {
   IAttribute,
   M2Class,
@@ -17,7 +16,6 @@ import {
   Database,
   Size,
   AttribETypes,
-  EType,
   Dictionary,
   // Options,
   Point,

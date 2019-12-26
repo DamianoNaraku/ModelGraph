@@ -25,28 +25,27 @@ import {
   M3Package,
   M3Reference,
   M3Class,
-  ViewPoint
+  ViewPoint, EEnum, Type
 } from '../../common/Joiner';
 
 export class M2Package extends IPackage {
   metaParent: M3Package;
   instances: MPackage[];
   parent: MetaModel;
-  childrens: M2Class[];
+  childrens: (M2Class | EEnum)[];
 
   constructor(mm: MetaModel, json: Json) {
     super(mm, json, Status.status.mmm.getPackage());
     this.parse(json, true); }
 
-  getClass(name: string, caseSensitive: boolean = false, throwErr: boolean = true, debug: boolean = true): M3Class {
-    return super.getClass(name, caseSensitive, throwErr, debug) as M3Class; }
+  getClass(name: string, caseSensitive: boolean = false, throwErr: boolean = true, debug: boolean = true): M2Class {
+    return super.getClass(name, caseSensitive, throwErr, debug) as M2Class; }
 
   addEmptyClass(): M2Class {
     const c = new M2Class(this, null);
     console.log('addEmptyClass(); package:', this, '; classe:', c);
-    U.ArrayAdd(this.childrens, c);
     if (Status.status.loadedLogic) { c.generateVertex(); }
-    M2Class.updateAllMMClassSelectors();
+    Type.updateAllMMClassSelectors();
     return c; }
 
   parse(json: Json, destructive: boolean = true): void {
@@ -59,7 +58,8 @@ export class M2Package extends IPackage {
     json[ECorePackage.name];
     json[ECorePackage.eClassifiers]; */
     /// own attributes.
-    this.setName(Json.read<string>(json, ECorePackage.namee));
+    const name: string = Json.read<string>(json, ECorePackage.namee, 'defaultPackage');
+    if (name) this.setName(name);
     const uri: string = json[ECorePackage.nsURI];
     const nsPrefix: string = json[ECorePackage.nsPrefix];
     this.parent.uri(uri);
@@ -70,18 +70,14 @@ export class M2Package extends IPackage {
     let i: number;
     for (i = 0; i < childs.length; i++) {
       const child = childs[i];
+      if (!child) { U.pw(true, 'invalid m2Package in ecore input. found a null classifier, it will be ignored.'); continue; }
       // metaParent = U.findMetaParentC(this, child);
-      if (destructive) { U.ArrayAdd(this.childrens, new M2Class(this, child)); continue; }
-      U.pe(true, 'Non-destructive pkg parse: to do');
-    }/*
-    this.views = [];
-    for(i = 0; i < this.parent.viewpoints.length; i++) {
-      const vp: ViewPoint = this.parent.viewpoints[i];
-      const v = new PackageView(vp.modelView);
-      this.views.push(v);
-      vp.modelView.packageViews.push(v); }*/
-
-    M2Class.updateAllMMClassSelectors();
+      switch (child[ECoreClass.xsitype]) {
+        default: U.pe(true, 'unexpected xsitype:', child[ECoreClass.xsitype], ' found in jsonfragment:', child, ', in json:', json, ' package:', this); break;
+        case 'ecore:EClass': new M2Class(this, child); break;
+        case 'ecore:EEnum': new EEnum(this, child); break;
+      }
+    }
   }
 
   /*parse(deep) {
@@ -130,11 +126,11 @@ export class M2Package extends IPackage {
 
   generateModel(): Json {
     const classarr = [];
-    let i;
-    for (i = 0; i < this.childrens.length; i++) {
-      const classe = this.childrens[i];
-      classarr.push(classe.generateModel());
-    }
+    const enumarr = [];
+    let i: number;
+    for (i = 0; i < this.classes.length; i++) { classarr.push(this.classes[i].generateModel()); }
+    for (i = 0; i < this.enums.length; i++) { enumarr.push(this.enums[i].generateModel()); }
+    const classifiers: Json[] = Array.prototype.concat.call(classarr, enumarr);
     const model = new Json(null);
     model[ECorePackage.xmiversion] = '2.0';
     model[ECorePackage.xmlnsxmi] = 'http://www.omg.org/XMI';
@@ -143,7 +139,7 @@ export class M2Package extends IPackage {
     model[ECorePackage.namee] = this.name;
     model[ECorePackage.nsURI] = this.parent.uri();
     model[ECorePackage.nsPrefix] = this.getModelRoot().namespace();
-    model[ECorePackage.eClassifiers] = classarr;
+    model[ECorePackage.eClassifiers] = classifiers;
     /*
    "_xmi:version": "2.0",
    "_xmlns:xmi": "http://www.omg.org/XMI",
@@ -153,7 +149,6 @@ export class M2Package extends IPackage {
    "_nsURI": "http://org/eclipse/example/bowling",
    "_nsPrefix": "org.eclipse.example.bowling"*/
     return model; }
-
 
 }
 

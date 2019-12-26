@@ -17,7 +17,8 @@ import {
 
 
 export class MetaModel extends IModel {
-  static emptyModel: string =
+  static emptyModel: string = '{}';
+  static emptyModelOld: string =
   '{ "ecore:EPackage": {\n' +
   '    "@xmlns:xmi": "http://www.omg.org/XMI",\n' +
   '    "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",\n' +
@@ -54,14 +55,14 @@ export class MetaModel extends IModel {
       if (mmclassNS === fullnamespace) { return mmclass; } }
     U.pe(!justNameMatchFallback, 'class |' + fullnamespace + '| not found. classArr:', classes);
     return justNameMatchFallback; }
-
+/*
   fixReferences(): void {
     const arr: M2Reference[] = this.getAllReferences();
     let i = -1;
     while (++i < arr.length) {
       arr[i].linkClass();
       U.pe(!arr[i].classType, arr[i], Status.status.loadedLogic);
-    } }
+    } }*/
 
 
   parse(json: Json, destructive: boolean = true): void {

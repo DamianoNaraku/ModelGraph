@@ -20,14 +20,13 @@ import {
   ECoreAttribute,
   ECoreReference,
   ShortAttribETypes,
-  EType,
   MClass,
   MReference,
   IReference,
   M3Reference,
   EdgeStyle,
   EdgeModes,
-  EdgePointStyle, MetaModel, Info, IClass,
+  EdgePointStyle, MetaModel, Info, IClass, Type,
 } from '../../../../common/Joiner';
 
 export class M2Reference extends IReference {
@@ -60,10 +59,11 @@ export class M2Reference extends IReference {
   parse(json: Json, destructive: boolean): void {
     /// own attributes.
     this.setName(Json.read<string>(json, ECoreReference.namee, 'Ref_1'));
-    const eType = Json.read<string>(json, ECoreReference.eType, '#//' + this.parent.name );
+    this.type.changeType(Json.read<string>(json, ECoreReference.eType, this.parent.getEcoreTypeName() ));
+    //const eType = Json.read<string>(json, ECoreReference.eType, '#//' + this.parent.name );
     // this.type = AttribETypes.reference;
-    this.parsePrintableTypeName(eType);
-    this.linkClass();
+    // this.parsePrintableTypeName(eType);
+    // this.linkClass();
     this.containment = Json.read<boolean>(json, ECoreReference.containment, false);
     this.setLowerbound(Json.read<number>(json, ECoreReference.lowerbound, 0));
     this.setUpperbound(Json.read<number>(json, ECoreReference.upperbound, 1));
@@ -79,7 +79,7 @@ export class M2Reference extends IReference {
   generateModel(): Json {
     const model = new Json(null);
     model[ECoreReference.xsitype] = 'ecore:EReference';
-    model[ECoreReference.eType] = '#//' + this.classType.name;
+    model[ECoreReference.eType] = this.type.toEcoreString();
     model[ECoreReference.namee] = this.name;
     if (this.lowerbound != null && !isNaN(+this.lowerbound)) { model[ECoreReference.lowerbound] = +this.lowerbound; }
     if (this.upperbound != null && !isNaN(+this.lowerbound)) { model[ECoreReference.upperbound] = +this.upperbound; }
@@ -87,11 +87,11 @@ export class M2Reference extends IReference {
     return model; }
 
   generateEdge(): IEdge[] {
-    const e: IEdge = new IEdge(this, this.parent.getVertex(), this.classType.getVertex());
+    const e: IEdge = new IEdge(this, this.parent.getVertex(), this.type.classType.getVertex());
     return [e]; }
 
   useless(): void {}
-
+/*
   fieldChanged(e: JQuery.ChangeEvent) {
     const html: HTMLElement = e.currentTarget;
     switch (html.tagName.toLowerCase()) {
@@ -103,7 +103,7 @@ export class M2Reference extends IReference {
         const m: M2Class = ModelPiece.getByID(+select.value) as any;
         this.linkClass(m); break;
     }
-  }
+  }*/
 
   setContainment(b: boolean): void { this.containment = b; }
 
@@ -118,7 +118,7 @@ export class M2Reference extends IReference {
     super.delete(linkStart, linkEnd);
     // total deletion
     if (linkStart === null && linkEnd === null) {
-      U.arrayRemoveAll(this.classType.referencesIN, this);
+      if (this.type.classType) U.arrayRemoveAll(this.type.classType.referencesIN, this);
       return; } }
 /*
   getStyle(debug: boolean = true): HTMLElement | SVGElement {
@@ -137,22 +137,14 @@ export class M2Reference extends IReference {
     this.lowerbound = r.lowerbound;
     this.upperbound = r.upperbound;
     this.containment = r.containment;
-    if (r.classType) { this.typeClassFullnameStr = r.classType.fullname(); }
-    this.linkClass();
+    this.type.changeType(r.type.toEcoreString());
     this.refreshGUI();
     return this; }
 
 
-  linkClass(classe: M2Class = null, id: number = null, refreshGUI: boolean = true, debug: boolean = false): void {
-    super.linkClass(classe, id, debug);
-    if (!Status.status.mm) { return; }
-    this.classType.referencesIN.push(this);
-    if (this.edges && this.edges[0]) { this.edges[0].setTarget(this.classType.vertex); this.edges[0].refreshGui(); }
-    U.pif(debug, 'ref target changed; targetFullName:' + this.classType.fullname() + '; this.targetStr:' + this.typeClassFullnameStr +
-      '; target:', this.classType, 'inside:', this);
-    if (refreshGUI) { this.refreshGUI(debug); } }
+  // linkClass(classe: M2Class = null): void { return this.type.changeType(null, null, classe); }
 
-  conformability(meta: M3Reference, debug: boolean = true): number { U.pw(true, 'it\'s ok but should not be called'); return 1; }
+  // conformability(meta: M3Reference, debug: boolean = true): number { U.pw(true, 'it\'s ok but should not be called'); return 1; }
 
   getInfo(toLower: boolean = true): any {
     const info: any = super.getInfo();
@@ -161,20 +153,12 @@ export class M2Reference extends IReference {
     Info.rename(info, 'type', 'target');
     Info.rename(info, 'typeDetail', 'targetDetail');
     Info.set(info, 'containment', this.containment);
-    const targetinfo: Info = this.classType ? this.classType.getInfo(toLower) : {};
+    const targetinfo: Info = this.type.classType ? this.type.classType.getInfo(toLower) : {};
     Info.set(info, 'target', targetinfo);
     Info.merge(info, targetinfo);
     return info; }
 
 
-  canBeLinkedTo(hoveringTarget: M2Class): boolean {
-    if (this.classType === hoveringTarget) { return true; }
-    const extendedTargetClasses: M2Class[] = this.classType.getExtendedClassArray();
-    let i: number;
-    for (i = 0; i < extendedTargetClasses.length; i++) {
-      if (this.classType === extendedTargetClasses[i]) { return true; }
-    }
-    return false;
-  }
+   canBeLinkedTo(hoveringTarget: M2Class): boolean { return this.type.classType === hoveringTarget || this.type.classType.isExtending(hoveringTarget); }
 
 }

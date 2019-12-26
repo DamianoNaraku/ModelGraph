@@ -14,7 +14,7 @@ import {
   Status,
   Size,
   IReference, GraphPoint, GraphSize,
-  PropertyBarr, Dictionary, IClass, ViewPoint, EOperation, EParameter, Point
+  PropertyBarr, Dictionary, IClass, ViewPoint, EOperation, EParameter, Point, EEnum
 } from '../../common/Joiner';
 import MouseDownEvent = JQuery.MouseDownEvent;
 import MouseUpEvent = JQuery.MouseUpEvent;
@@ -54,7 +54,7 @@ export class ViewPointShell {
     $defaultCheckbox.on('click', (e: ClickEvent) => { this.undoAll(true); });
     $checkboxlidefault.find('button.duplicate').on('click', (e: ClickEvent) => this.duplicateEvent(e, null, this.defaultCheckbox) );
   }
-  undoAllOld(model :IModel): void {
+  /*undoAllOld(model :IModel): void {
     let i1: number;
     let i2: number;
     let i3: number;
@@ -88,7 +88,7 @@ export class ViewPointShell {
       }
     }
     model.refreshGUI_Alone();
-  }
+  }*/
   undoAll(changingGuiChecked: boolean): void {
     let i: number;
     // de-apply all
@@ -216,7 +216,7 @@ export class ViewPointShell {
     return null;
   }
 }
-
+enum CursorAction { drag, select, multiselect }
 export class IGraph {
 // todo: this.vertex non è mai aggiornato reealmente.
   static all: Dictionary<number, IGraph> = {};
@@ -226,7 +226,7 @@ export class IGraph {
   static defaultGrid: GraphPoint = new GraphPoint(20, 20);
   static defaultZoom: Point = new Point(1, 1);
   id: number = null;
-  container: HTMLElement = null;
+  container: SVGElement = null;
   model: IModel = null;
   vertex: IVertex[] = null;
   edges: IEdge[] = null;
@@ -242,8 +242,11 @@ export class IGraph {
   private allMarkgp: SVGCircleElement[] = [];
   private markp: HTMLElement;
   private markgp: SVGCircleElement;
-  private svg: SVGElement;
+  // private svg: SVGElement;
   public viewPointShell: ViewPointShell;
+  private size: Size;
+  private cursorAction: CursorAction;
+  private isMoving: GraphPoint;
 
   static getByID(id: string): IGraph { return IGraph.all[id]; }
   static getByHtml(html: HTMLElement | SVGElement): IGraph {
@@ -254,7 +257,8 @@ export class IGraph {
     }
     U.pe(true, 'failed to find parent graph of:', html);
     return null; }
-  constructor(model: IModel, container: HTMLElement) {
+
+  constructor(model: IModel, container: SVGElement) {
     U.pe(!container, 'graph container is null. model:', model);
     this.id = IGraph.ID++;
     IGraph.all[this.id + ''] = this;
@@ -268,7 +272,9 @@ export class IGraph {
     this.vertexContainer.classList.add('allVertexContainer');
     this.container.appendChild(this.edgeContainer);
     this.container.appendChild(this.vertexContainer);
-    this.svg = $(this.container).find('svg.graph')[0] as unknown as any;
+    this.isMoving = null;
+    this.cursorAction = CursorAction.select;
+    // this.svg = $(this.container).find('svg.graph')[0] as unknown as SVGElement;
     this.vertex = [];
     this.edges = [];
     this.zoom = new Point(1, 1);
@@ -276,6 +282,10 @@ export class IGraph {
     this.grid = new GraphPoint(20, 20);
     this.gridDisplay = true;
     let i;
+    const earr: EEnum[] = this.model.getAllEnums();
+    for (i = 0; i < earr.length; i++) {
+      this.vertex.push(earr[i].generateVertex());
+    }
     const arr: IClass[] = this.model.getAllClasses();
     const classEdges: IClass[] = [];
     for (i = 0; i < arr.length; i++) {
@@ -288,7 +298,6 @@ export class IGraph {
     const arrReferences: IReference[] = this.model.getAllReferences();
     for (i = 0; i < arrReferences.length; i++) { this.edges.concat(arrReferences[i].generateEdge()); }
     this.propertyBar = new PropertyBarr(this.model);
-
     this.viewPointShell = new ViewPointShell(this);
     this.addGraphEventListeners();
     this.ShowGrid(); }
@@ -300,28 +309,6 @@ export class IGraph {
     if (fitVertical && !isNaN(this.grid.y) && this.grid.y > 0) { pt.y = U.trunc(pt.y / this.grid.y) * this.grid.y; }
     U.pif(debug, 'fitToGrid(', pt0, '); this.grid:', this.grid, ' = ', pt);
     return pt; }
-  /*
-    addv(v: IVertex, position: GraphPoint = null) {
-      // if (!position ) { position = new Point(0, 0); }
-      U.pe(!v, 'vertex is null;');
-      this.vertex.push(v);
-      const html: HTMLElement = v.createGUI();
-      this.shell.append(html);
-      if (position) {
-        html.setAttribute('x', '' + position.x);
-        html.setAttribute('y', '' + position.y); }
-      IVertex.addEventListeners(html); }
-    adde(e: IEdge, position: GraphPoint = null) {
-      this.edges.push(e);
-      const html: HTMLElement = e.createGUI();
-      e.refreshGui();
-      this.shell.append(html);
-      if (position) {
-        html.setAttribute('x', '' + position.x);
-        html.setAttribute('y', '' + position.y); }
-      IEdge.addEventListeners(html);
-    }
-  */
 
   addGraphEventListeners() {
     const $graph = $(this.container);
@@ -332,7 +319,44 @@ export class IGraph {
     $graph.off('mousemove.graph').on('mousemove.graph', (evt: MouseMoveEvent) => { thiss.onMouseMove(evt); });
     // $graph.off('keydown.graph').on('keydown.graph', (evt: KeyDownEvent) => { thiss.onKeyDown(evt); }); non triggerabile, non ha focus.
     // $graph.off('click.mark').on('click.mark', (e: ClickEvent) => { thiss.markClick(e, true); } );
-    $graph.off('click.propbar').on('click.propbar', (e: ClickEvent) => { IVertex.ChangePropertyBarContentClick(e); } );
+    $graph.off('mousedown.move').on('mousedown.move', (e: ClickEvent) => {
+      switch (this.cursorAction) {
+      default: U.pe(true, 'unexpected cursorAction:', this.cursorAction);
+      case CursorAction.drag:
+      case CursorAction.select:
+        const mp: ModelPiece = IVertex.ChangePropertyBarContentClick(e);
+        if (mp instanceof IModel) { this.isMoving = this.toGraphCoord(Point.fromEvent(e)); }
+        break;
+      case CursorAction.multiselect: break;
+      }
+    } );
+    $graph.off('mouseup.move').on('mouseup.move', (e: ClickEvent) => {
+      if (this.isMoving) this.isMoving = null; });
+    // @ts-ignore
+    if (!!ResizeObserver) { // not supported by edge, android firefox.
+      if (!window['' + 'resizeobservers']) window['' + 'resizeobservers'] = [];
+      // @ts-ignore
+      const tmp = new ResizeObserver( (entryes: ResizeObserverEntry[], observer: ResizeObserverr) => { this.onResize(); });
+      window['' + 'resizeobservers'] = tmp;
+      tmp.observe(this.container);
+    }
+    // @ts-ignore
+    if (!ResizeObserver){
+      let oldSize: Size = null;
+      setInterval(() => {
+        console.log('setinterval graphsize checker');
+        const size: Size = this.getSize();
+        if (!size.equals(oldSize)) this.onResize(size);
+      }, 100);
+    }
+    // altre opzioni:
+    // 1) MutationObserver (detect dom changes (attributes like "style" too)),
+    // 2) http://marcj.github.io/css-element-queries/ : sembra simile a mutationObserver, no timers, funziona su flexbox che non cambiano
+    // direttamente valori. non ho capito perchè parsa tutti i file css.
+    // 3) "Use a combination of mousedown, mousemove and/or mouseup to tell whether the div is being / has been resized.
+    // If you want really fine-grained control you can check in every mousemove event how much / if the div has been resized. If you don't need that,
+    // you can simply not use mousemove at all and just measure the div in mousedown and mouseup and figure out if it was resized in the latter."
+    // PROBLEMA: potrebbe avvenire un resize dovuto a serverEvents, keyboardEvents, timers.
   }
 
   onMouseDown(evt: MouseDownEvent): void { }
@@ -354,6 +378,15 @@ export class IGraph {
     currentGraphCoord = currentGraphCoord.subtract(IVertex.selectedStartPt, false);
     v.moveTo(currentGraphCoord); }
 
+  onMouseMoveDrag(e: MouseMoveEvent): void {
+    if (!this.isMoving) return;
+    const offset: GraphPoint = this.toGraphCoord(Point.fromEvent(e));
+    offset.x -= this.isMoving.x;
+    offset.y -= this.isMoving.y;
+    this.scroll.x += offset.x;
+    this.scroll.y += offset.y;
+    this.updateViewbox(); }
+
   edgeChangingAbort(e: KeyDownEvent | MouseDownEvent): void {
     const edge: IEdge = IEdge.edgeChanging;
     if (!edge) { return; }
@@ -373,8 +406,10 @@ export class IGraph {
     edge.refreshGui(); }
 
   onMouseMove(evt: MouseMoveEvent): void {
-    this.onMouseMoveSetReference(evt, IEdge.edgeChanging);
-    this.onMouseMoveVertexMove(evt, IVertex.selected); }
+    if (IEdge.edgeChanging) return this.onMouseMoveSetReference(evt, IEdge.edgeChanging);
+    if (IVertex.selected) return this.onMouseMoveVertexMove(evt, IVertex.selected);
+    if (this.isMoving) return this.onMouseMoveDrag(evt);
+  }
 
   toGraphCoordS(s: Size): GraphSize {
     const tl = this.toGraphCoord(new Point(s.x, s.y));
@@ -382,8 +417,13 @@ export class IGraph {
     const ret = new GraphSize(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
     return ret; }
 
+  computeSize(): void { this.size =  U.sizeof(this.container); }
+  getSize(): Size {
+    if (!this.size ) this.computeSize();
+    return this.size; }
+
   toGraphCoord(p: Point): GraphPoint {
-    const graphSize: Size = U.sizeof(this.container);
+    const graphSize: Size = this.getSize();
     const ret: GraphPoint = new GraphPoint(p.x, p.y);
     const debug = true;
     ret.x -= graphSize.x;
@@ -404,7 +444,7 @@ export class IGraph {
     const br = this.toHtmlCoord(new GraphPoint(s.x + s.w, s.y + s.h));
     return new Size(tl.x, tl.y, br.x - tl.x, br.y - tl.y); }
   toHtmlCoord(p: GraphPoint): Point {
-    const graphSize: Size = U.sizeof(this.container);
+    const graphSize: Size = this.getSize();
     const ret: Point = new Point(p.x, p.y);
     // console.log('toHtml()', ' * zoom', this.zoom, ' - scroll: ', this.scroll, ' + graphSize:', graphSize);
     ret.x *= this.zoom.x;
@@ -467,11 +507,29 @@ export class IGraph {
     this.container.appendChild(this.markgp);
   }
 
-  setZoom(zoom: Point = null): void {
-    if (zoom) { this.zoom = zoom; }
-    const size: Size = U.getViewBox(this.svg);
-    U.pw(true, 'Graph.setZoom: todo.');
-    U.setViewBox(this.svg, size); }
+  onScroll(x: number, y: number): void {
+    this.scroll.x = isNaN(+x) ? this.scroll.x : +x;
+    this.scroll.y = isNaN(+y) ? this.scroll.y : +y;
+    this.updateViewbox(); }
+
+  setZoom(x: number, y: number): void {
+    this.zoom.x = isNaN(+x) ? this.zoom.x : +x;
+    this.zoom.y = isNaN(+y) ? this.zoom.y : +y;
+    this.updateViewbox(); }
+
+  onResize(currSize: Size = null): void {
+    if (currSize) this.size = currSize;
+    else this.computeSize();
+    this.updateViewbox(); }
+
+  updateViewbox(): void {
+    const vbox: Size = U.getViewBox(this.container);
+    vbox.w = this.size.w / this.zoom.x;
+    vbox.h = this.size.h / this.zoom.y;
+    vbox.x = this.scroll.x;
+    vbox.y = this.scroll.y;
+    U.setViewBox(this.container, vbox);
+  }
 
   ShowGrid(checked: boolean = null) {
     const graph = (this.model === Status.status.mm ? Status.status.mm.graph : Status.status.m.graph);
@@ -490,8 +548,8 @@ export class IGraph {
       '        <path d="M ' + (x * 10) + ' 0 L 0 0 0 ' + (y * 10) + '" fill="none" stroke="gray" stroke-width="1"/>\n' +
       '      </pattern>\n' +
       '    </defs>\n' +
-      '    <rect class="grid" width="100%" height="100%" fill="url(#grid_' + this.id + ')" />';
-    $grid[0].setAttributeNS(null, 'justForRefreshingIt', 'true');
+      '    <rect class="grid" width="900%" height="900%" x="-400%" y="-400%" fill="url(#grid_' + this.id + ')" />';
+    // $grid[0].setAttributeNS(null, 'justForRefreshingIt', 'true');
     // $grid.x
     if (checked) { $grid.show(); } else { $grid.hide(); }
 

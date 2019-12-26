@@ -1,6 +1,5 @@
 import {
   AttribETypes,
-  EType,
   IAttribute,
   M2Class,
   IFeature,
@@ -9,9 +8,11 @@ import {
   MClass,
   ModelPiece,
   ShortAttribETypes, M2Attribute,
-  U, StringSimilarity, M3Attribute, IVertex, IField, MetaModel, Model, Status, Info,
+  U, StringSimilarity, M3Attribute, IVertex, IField, MetaModel, Model, Status, Info, Type, EEnum, ELiteral,
 } from '../../../../common/Joiner';
-import {del} from 'selenium-webdriver/http';
+import {del}   from 'selenium-webdriver/http';
+import {EType} from '../../Type';
+import ChangeEvent = JQuery.ChangeEvent;
 
 
 export class MAttribute extends IAttribute {
@@ -84,20 +85,20 @@ export class MAttribute extends IAttribute {
     if (this.values && this.values.length > 0) { return (this.values[0] + '').substr(0, valueMaxLength); }
     return ''; }
 
-  getType(): EType { return (this.metaParent ? this.metaParent.primitiveType : null); }
+  getType(): Type { return (this.metaParent ? this.metaParent.getType() : null); }
 
   getInfo(toLower: boolean = false): any {
     const info: any = super.getInfo();
     Info.set(info, 'values', this.values);
     return info; }
-
+/*
   conformability(meta: IAttribute, debug: boolean = true): number {
     let conformability = 0;
     // todo: questo check è totalmente sbagliato, this.getType non può riuscire senza un metaParent assegnato
-    conformability += 0.5 * StringSimilarity.compareTwoStrings(this.getType().short, meta.getType().short);
+    conformability += 0.5 * StringSimilarity.compareTwoStrings(this.getType().short, meta.getType().primitiveType.short);
     conformability += 0.5 * StringSimilarity.compareTwoStrings(this.name, meta.name);
     U.pif(debug, 'ATTRIBUTE.comform(', this.name, {0: this}, ', ', meta.name, {0: meta}, ') = ', conformability);
-    return conformability; }
+    return conformability; }*/
 
   duplicate(nameAppend: string = null, newParent: MClass = null): MAttribute {
     const ret: MAttribute = new MAttribute(newParent, null, this.metaParent);
@@ -110,12 +111,28 @@ export class MAttribute extends IAttribute {
 
   generateModel(): Json {
     if (this.values.length === 0) { return null; }
-    if (this.values.length === 1) { return this.values[0]; }
-    return this.values; }
+    let values: Json[] = this.values;
+    if (this.values[0] instanceof ELiteral) {
+      values = [];
+      let i: number;
+      for (i = 0; i < this.values.length; i++) {
+        const v = this.values[i];
+        if (v instanceof ELiteral) { values.push(v.generateModelM1()); }
+      }
+    }
+    if (values.length === 1) { return values[0]; }
+    return values; }
 
   validate(): boolean {
     let i: number;
-    switch (this.getType().long) {
+    const primitive: EType = this.getType().primitiveType;
+    const enumtype: EEnum = this.getType().enumType;
+    if (enumtype) {
+      const admittedValues: string[] = enumtype.getAllowedValuesStr();
+      for (i = 0; i < this.values.length; i++) { if (!U.arrayContains(admittedValues, this.values[i])) return false; }
+      return true; }
+    U.pe(!primitive, 'found type in Mattribute that is neither primitive nor enumerative', this);
+    switch (primitive.long) {
       default: U.pe(true, 'unexpected mattrib type:', this.getType()); return false;
       case AttribETypes.EDate: U.pe(true, 'eDAte: todo'); break;
       case AttribETypes.EBoolean: return true;
@@ -124,17 +141,17 @@ export class MAttribute extends IAttribute {
       case AttribETypes.EFloat:
       case AttribETypes.EDouble:
         for (i = 0; i < this.values.length; i++) { this.values[i] = +this.values[i]; }
-        return U.isNumberArray(this.values, this.getType().minValue, this.getType().maxValue);
+        return U.isNumberArray(this.values, primitive.minValue, primitive.maxValue);
       case AttribETypes.EByte:
       case AttribETypes.EShort:
       case AttribETypes.EInt:
       case AttribETypes.ELong:
         for (i = 0; i < this.values.length; i++) { this.values[i] = +this.values[i]; }
-        return U.isIntegerArray(this.values, this.getType().minValue, this.getType().maxValue);
+        return U.isIntegerArray(this.values, primitive.minValue, primitive.maxValue);
     }
   }
 
-  fieldChanged(e: JQuery.ChangeEvent) {
+  fieldChanged(e: ChangeEvent) {
     const html: HTMLElement = e.currentTarget;
     switch (html.tagName.toLowerCase()) {
       default: U.pe(true, 'unexpected tag:', html.tagName, ' of:', html, 'in event:', e); break;
@@ -142,7 +159,7 @@ export class MAttribute extends IAttribute {
       case 'input': this.setValueStr((html as HTMLInputElement).value); break;
       case 'select': U.pe(true, 'Unexpected non-disabled select field in a Vertex.MAttribute.'); break;
     }
-    try { this.parent.refreshGUI(); } catch (e) {} finally {}
+    super.fieldChanged(e, true);
   }
 
   setValueStr(valStr: string) {
@@ -156,14 +173,12 @@ export class MAttribute extends IAttribute {
   }
   setValue(values: any[] = null, refreshGUI: boolean = true, debug: boolean = false) {
     const values0 = values;
-    const type: EType = this.getType();
-    const defaultv: any = type.defaultValue;
     if (U.isEmptyObject(values, true, true) || values === [{}]) {
-      values = defaultv; }
+      values = this.getType().defaultValue(); }
     if (!Array.isArray(values)) { values = [values]; }
-    U.pif(debug, this.metaParent.fullname() +  '.setvalue: |', values0, '| --> ', values, 'defaultv:', defaultv, 'type:', type);
+    U.pif(debug, this.metaParent.fullname() +  '.setvalue: |', values0, '| --> ', values, 'defaultv:', this.getType().defaultValue(), 'type:', this.getType());
     this.values = values;
-    U.pe('' + values === '' + undefined, 'undef:', values, this);
+    U.pe('' + values === '' + undefined, 'undef:', values, this); 
     // this.replaceVarsSetup();
     if (refreshGUI) { this.refreshGUI(); } else { this.graph().propertyBar.refreshGUI(); } }
 

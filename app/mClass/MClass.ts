@@ -114,6 +114,8 @@ export class MClass extends IClass {
       for (i = 0; i < arr[outi].length; i++) {
         const child = arr[outi][i];
         const value: Json | string = (child).generateModel();
+        U.pe(value instanceof ModelPiece, 'value returned is modelpiece.', child);
+        // some error here, il value = ELIteral viene assegnato alla key .nome
         if (value === '' || value === null || value === undefined || U.isEmptyObject(value)) { continue; }
         const key: string = (U.isPrimitive(value) ? inlineMarker : '') + child.metaParent.name;
         json[key] = value; }

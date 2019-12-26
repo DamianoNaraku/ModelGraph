@@ -22,18 +22,7 @@
       </li>
     </ul>
     <svg class="graph" id='metamodel_editor'>
-      <g class="gridContainer">
-        <defs>
-          <pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
-            <path d="M 10 0 L 0 0 0 10" fill="none" stroke="gray" stroke-width="0.5"></path>
-          </pattern>
-          <pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse">
-            <rect width="100" height="100" fill="url(#smallGrid)"></rect>
-            <path d="M 100 0 L 0 0 0 100" fill="none" stroke="gray" stroke-width="1"></path>
-          </pattern>
-        </defs>
-        <rect class="grid" width="100%" height="100%" fill="url(#grid)"></rect>
-      </g>
+      <g class="gridContainer"></g>
     </svg>
     <div id='metamodel_navigatorOutlineContainer'></div>
   </div>
@@ -67,25 +56,70 @@
         <div class="specialjs AttributeContainer" style="display: flex; flex-direction: column;"></div>
         <div class="specialjs ReferenceContainer" style="display: flex; flex-direction: column;"></div>
         <div class="specialjs OperationContainer" style="display: flex; flex-direction: column;"></div>
-        <div class="specialjs addFieldButtonContainer" style="width: 100%; text-align: center;">
+        <div class="addFieldButtonContainer" style="width: 100%; text-align: center;">
+          <style id="addfieldcss_class">
+            .addFieldButtonContainer{ display: flex; max-height: 20px; min-height: 20px; overflow: hidden;}
+            .addFieldButtonContainer{ opacity: 0; padding-top: 20px; }
+            .Vertex:hover .addFieldButtonContainer{ opacity: 1; padding-top: 0; }
+          </style>
+          <select class="AddFieldSelect" style="display:flex; margin:auto;">
+            <optgroup label="FeatureType">
+              <option value="Attribute" selected="">Attribute</option>
+              <option value="Reference">Reference</option>
+              <option value="Operation">Operation</option>
+            </optgroup>
+          </select>
+          <span style="display:flex; margin:auto;">&nbsp;field</span>
+          <button class="addFieldButton">Go</button>
         </div>
       </div>
     </foreignobject>
+
+    <foreignobject class="template EEnum">
+      <div class="Class Vertex vertexShell EEnum" style="background:white; height:auto; width:100%; overflow: auto;" data-autosize="1">
+        <div class="VertexHeader" style="height:20px; width:100%; text-align:center; display:flex;">
+          <input value="$##name$" placeholder="Object name" pattern="[A-Za-z0-9_$]+" style="border:none; text-align:right; order:1; flex-grow:1; flex-shrink:1; flex-basis:10px; min-width:10px; color:black; border:none; padding-right:4px;">
+          <div style="text-align:left; order:2; flex-grow:1; flex-shrink:1; flex-basis:10px; color:red; margin:auto; padding-left:4px;">(Enum)</div>
+        </div>
+        <div class="specialjs LiteralContainer" style="display: flex; flex-direction: column;"></div>
+        <div class="addFieldButtonContainer" style="width: 100%; text-align: center;">
+          <style id="addfieldcss_enum">
+            .addFieldButtonContainer{ display: flex; max-height: 20px; min-height: 20px; overflow: hidden;}
+            .addFieldButtonContainer{ opacity: 0; padding-top: 20px; }
+            .Vertex:hover .addFieldButtonContainer{ opacity: 1; padding-top: 0; }
+          </style>
+          <select class="AddFieldSelect" disabled style="display:flex; margin:auto;">
+            <optgroup label="FeatureType">
+              <option value="Literal" selected="">Literal</option>
+            </optgroup>
+          </select>
+          <span style="display:flex; margin:auto;">&nbsp;field</span>
+          <button class="addFieldButton">Go</button>
+        </div>
+      </div>
+    </foreignobject>
+
     <div class="template Reference" style="height: 22px; width: 100%; display:flex; box-sizing:content-box;">
-      <select class="specialjs ClassSelector" style="border:none; display:flex; order:3; flex-grow:0; flex-shrink:1;"></select>
+      <select data-class="true" style="border:none; display:flex; order:3; flex-grow:1; flex-basis:0; min-width:0;"></select>
       <input type="text" placeholder="Reference Name" pattern="[A-Za-z0-9_$]+" value="$##name$" style="border:none; order: 1; flex-basis:10px; flex-grow:2; flex-shrink:2; min-width:3px;">
     </div>
 
     <div class="template Attribute EString EInteger" style="height:22px; width:100%; display:flex; box-sizing:content-box;">
-      <select class="specialjs TypeSelector" style="border:none; display:flex; order:2; flex-grow:2; flex-shrink:2; flex-basis:3px; min-width:3px; text-align: right;"></select>
+      <select data-primitive="true" data-enum="true" style="border:none; display:flex; order:2; flex-grow:2; flex-shrink:2; flex-basis:3px; min-width:3px; text-align: right;"></select>
       <input type="text" placeholder="Attribute Name" pattern="[A-Za-z0-9_$]+" value="$##name$" style="border:none; display: flex; order: 1; flex-basis:10px; flex-grow:3; flex-shrink:3; min-width:3px;">
+    </div>
+
+    <div class="template ELiteral" style="height:22px; width:100%; display:flex; box-sizing:content-box;">
+      <input class="value" type="number" placeholder="auto" value="$##value$" style="border:none; display: flex; width: 30px;">
+      <input class="name" type="text" placeholder="name" value="$##name$" pattern="[A-Za-z0-9_$]+" style="border:none; display:flex; flex-grow:1; flex-shrink:1; flex-basis:3px; min-width:3px;">
+      <input class="literal" type="text" placeholder="literal" value="$$#literal$" style="border:none; display:flex; flex-grow:1; text-align: right; flex-basis:3px; min-width:3px;">
     </div>
 
     <div class="template Operation" style="width:100%; display:flex; box-sizing:content-box; flex-flow:column;">
       <div class="specialjs signature" data-maxargumentchars="10" data-maxarguments="2" style="height:21px; min-width:100%"></div>
       <div class="specialjs operationDetail" style="margin:2px; padding:2px; order:2; border: 3px solid green; border-top-color:transparent; margin-top:0;">
         <div class="row" style="display: flex; width: 100%;">
-          <select class="specialjs returnType" style="border:none; display:flex; order:2; flex-grow:2; flex-shrink:2; flex-basis:3px; min-width:3px; text-align: right;"></select>
+          <select data-primitive="true" data-enum="true" data-class="true" data-void="true" style="border:none; display:flex; order:2; flex-grow:2; flex-shrink:2; flex-basis:3px; min-width:3px; text-align: right;"></select>
           <input disabled type="text" placeholder="Return Type" pattern="[A-Za-z0-9_$]+" value="Return type" style="border:none; display: flex; order: 1; flex-basis:10px; flex-grow:3; flex-shrink:3; min-width:3px;">
         </div>
         <div class="row parameterList" style="display: flex; width: 100%; flex-flow:column;">
@@ -95,7 +129,7 @@
     </div>
 
     <div class="template Parameter" style="height: 22px; width: 100%; border-bottom: 1px solid lightgray; display:flex; box-sizing:content-box;">
-       <select class="specialjs fullType" style="display:flex; order:2; flex-grow:1; flex-shrink:1; flex-basis:3px; min-width:3px; text-align: right;"></select>
+       <select data-primitive="true" data-enum="true" data-class="true" style="display:flex; order:2; flex-grow:1; flex-shrink:1; flex-basis:3px; min-width:3px; text-align: right;"></select>
        <input type="text" placeholder="Parameter Name" pattern="[A-Za-z0-9_$]*" value="$##name$" style="display: flex; order: 1; flex-basis:10px; flex-grow:1; flex-shrink:1; min-width:3px;">
        <button style="order: 3; padding:0 5px;">X</button>
     </div>

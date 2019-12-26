@@ -23,13 +23,12 @@ import {
   Dictionary,
   DetectZoom,
   PropertyBarr,
-  EType,
   MClass,
   MReference,
   M2Reference,
   EOperation,
   EParameter,
-  MAttribute, MeasurableArrays, IPoint, GraphSize, GraphPoint, StyleComplexEntry
+  MAttribute, MeasurableArrays, IPoint, GraphSize, GraphPoint, StyleComplexEntry, Type, EEnum, ELiteral
 } from '../../../common/Joiner';
 import MouseMoveEvent = JQuery.MouseMoveEvent;
 import MouseDownEvent = JQuery.MouseDownEvent;
@@ -46,6 +45,7 @@ import ResizableOptions = JQueryUI.ResizableOptions;
 import DraggableOptions = JQueryUI.DraggableOptions;
 import ResizableUIParams = JQueryUI.ResizableUIParams;
 import DraggableEventUIParams = JQueryUI.DraggableEventUIParams;
+import {IClassifier} from '../../../mClass/IClassifier';
 
 export class IVertex {
   static all: Dictionary = {};
@@ -54,7 +54,7 @@ export class IVertex {
   static selectedStartPt: GraphPoint = null;
   private static oldEdgeLinkHoveringVertex: IVertex = null;
   private static minSize: GraphSize = new GraphSize(null, null, 200, 30);
-  classe: IClass;
+  classe: IClassifier;
   // package: IPackage;
   owner: IGraph;
   fields: IField[] = [];
@@ -109,13 +109,14 @@ export class IVertex {
     const m: IModel = Status.status.m;
     setTimeout( () => { mm.refreshGUI(); m.refreshGUI(); }, 1); }
 
-  static ChangePropertyBarContentClick(e: ClickEvent, isEdge: boolean = false) {
+  static ChangePropertyBarContentClick(e: ClickEvent, isEdge: boolean = false): ModelPiece {
     const html: HTMLElement | SVGElement = e.target; // todo: approfondisci i vari tipi di classType (current, orginal...)
     const modelPiece: ModelPiece = ModelPiece.getLogic(html);
     const model: IModel = modelPiece.getModelRoot();
     U.pe(!modelPiece, 'failed to get modelPiece from html:', html);
     const pbar: PropertyBarr = model.graph.propertyBar;
-    pbar.show(modelPiece, html, isEdge, false); }
+    pbar.show(modelPiece, html, isEdge, false);
+    return modelPiece; }
 
   static GetMarkedWith(markKey: string, colorFilter: string = null): IVertex[] {
     const ret: IVertex[] = [];
@@ -125,31 +126,21 @@ export class IVertex {
       if (vertex.isMarkedWith('refhover', colorFilter)) { ret.push(vertex); } }
     return ret; }
 
-  constructor(classe: IClass) {
+  constructor(logical: IClassifier, size: GraphSize = null) {
     this.id = IVertex.ID++;
     IVertex.all[this.id] = this;
-    const graph: IGraph = classe.getModelRoot().graph;
-    this.logic(classe);
+    const graph: IGraph = logical.getModelRoot().graph;
+    this.logic(logical);
     if (graph) { graph.addVertex(this); }
     this.contains = [];
     this.fields = [];
     this.edgesStart = [];
-    this.edgesEnd = []; }
-
-  constructorClass(logical: IClass): void {
+    this.edgesEnd = [];
     this.classe = logical;
     this.setGraph(logical.getModelRoot().graph);
-    let i: number;
-    const fields: IField[] = [];
-    return;
-    if (!this.classe || !this.classe.attributes) { return; }
-    U.pe(!this.classe, 'undefined class while creating a vertex from class:', this.classe);
-    U.pe(!this.classe.attributes, 'undefined class attributes while creating a vertex from class:', this.classe.attributes, this.classe);
-    for (i = 0; i < this.classe.attributes.length; i++) {
-      fields.push(new IField(this.classe.attributes[i]));
-    }
-    this.setFields(fields); }
-
+    if (size) this.setSize(size);
+    this.refreshGUI();
+  }
 
   mark(markb: boolean, key: string, color: string = 'red', radiusX: number = 10, radiusY: number = 10,
        width: number = 5, backColor: string = 'none', extraOffset: GraphSize = null): void {
@@ -224,9 +215,8 @@ export class IVertex {
     U.pe(!U.isOnEdge(pt, vertexGSize), 'not on Vertex edge.');
     return pt; }
 
-  setSize(size: GraphSize, refreshVertex: boolean = true, refreshEdge: boolean = true) {
-    U.pe(!size, 'setPosition: null');
-    const oldSize: GraphSize = this.size.clone();
+  setSize(size: GraphSize, refreshVertex: boolean = true, refreshEdge: boolean = true): void {
+    if (!size) return;
     this.size = size;
     const htmlForeign: SVGForeignObjectElement = this.getHtmlRawForeign();
     U.setSvgSize(htmlForeign, this.size);
@@ -241,15 +231,21 @@ export class IVertex {
     for (i = 0; i < refEnd.length; i++) { if (refEnd[i]) { refEnd[i].refreshGui(); } }
     for (i = 0; i < refStart.length; i++) { if (refStart[i]) { refStart[i].refreshGui(); } } }
 
-  draw(): void {
+  private draw(): void {
     /*const htmlRaw: SVGForeignObjectElement = U.newSvg('foreignObject');
     htmlRaw.appendChild(this.classe.getStyleObj().html);*/
     const style: StyleComplexEntry = this.classe.getStyle();
     const htmlRaw: SVGForeignObjectElement = style.html as SVGForeignObjectElement;
-    this.drawC(this.classe, htmlRaw);
+
+    U.pe(!this.classe, 'class null?', this, htmlRaw);
+    this.setHtmls(this.classe, htmlRaw);
+    if (this.classe instanceof IClass) this.drawC(this.classe, htmlRaw);
+    if (this.classe instanceof EEnum) this.drawE(this.classe, htmlRaw);
     this.addEventListeners();
     U.fixHtmlSelected($(htmlRaw));
-    this.autosize(false, false); }
+    this.autosize(false, false);
+    Type.updateTypeSelectors($(this.getHtml()));
+  }
 
   private autosize(refreshVertex: boolean = true, refreshEdge: boolean = true, debug: boolean = false): IVertex {
     const html: HTMLElement = this.getHtml();
@@ -269,34 +265,21 @@ export class IVertex {
     this.setSize(new GraphSize(this.size.x, this.size.y, actualSize.w, actualSize.h), refreshVertex, refreshEdge);
     return this; }
 
+  private drawE_production(data: EEnum, htmlRaw: SVGForeignObjectElement): void { try{ return this.drawE0(data, htmlRaw); } catch(e) {} }
+  private drawC_production(data: IClass, htmlRaw: SVGForeignObjectElement): void { try{ return this.drawC0(data, htmlRaw); } catch(e) {} }
+  private drawE(data: EEnum, htmlRaw: SVGForeignObjectElement): void { return this.drawE0(data, htmlRaw); }
   private drawC(data: IClass, htmlRaw: SVGForeignObjectElement): void { return this.drawC0(data, htmlRaw); }
-  // todo: attiva questo in produzione
-  /*
-  private drawC_NonDebug(data: IClass, htmlRaw: SVGForeignObjectElement): void {
-    try {
-      this.drawC0(data, htmlRaw);
-    } catch (e) {
-      let level: number;
-      if (this.classe.customStyleToErase) { level = 1;
-      } else {
-        if (this.classe.metaParent.styleOfInstances) { level = 2;
-        } else { level = 3; } }
-      U.pw(true,
-        'Invalid user defined template:' + e.toString() + ', at style level ' + level +
-        '. The Higher level template will be loaded instead.', ' HtmlCustomStyle:', htmlRaw);
-
-      switch (level) {
-        case 1: data.setStyle_SelfLevel_1(null); break;
-        case 2: data.metaParent.setStyle_InstancesLevel_2(null); break;
-        case 3: data.setStyle_GlobalLevel_3(null); break;
-        default: U.pe(true, 'unexpected level.', this, data, htmlRaw); break; }
-      this.draw();
-    } finally {}
-  }*/
+  private drawE0(logic: EEnum, htmlRaw: SVGForeignObjectElement): void {
+    const html: SVGForeignObjectElement = this.htmlForeign;
+    /// append childrens:
+    const $eContainer = $(html).find('.LiteralContainer');
+    let i: number;
+    for (i = 0; i < logic.childrens.length; i++) {
+      const field = this.drawEChild(logic.childrens[i]);
+      $eContainer.append(field); }
+  }
   private drawC0(data: IClass, htmlRaw: SVGForeignObjectElement): void {
     // console.log('drawC()');
-    U.pe(!this.classe, 'class null?', data, htmlRaw);
-    this.setHtmls(data, htmlRaw);
     const html: SVGForeignObjectElement = this.htmlForeign;
     /// append childrens:
     const $attContainer = $(html).find('.AttributeContainer');
@@ -309,6 +292,7 @@ export class IVertex {
     // const attContainer = $attContainer[0];
     // const refContainer = $refContainer[0];
     // const opContainer = $opContainer[0];
+
     let i: number;
 
     for (i = 0; i < data.attributes.length; i++) {
@@ -335,7 +319,7 @@ export class IVertex {
     if ($start.length > 0) { return $start[0]; }
     return (html.tagName.toLowerCase() === 'foreignobject') ? html.firstChild as HTMLElement | SVGElement : html; }
 
-  private setHtmls(data: IClass, htmlRaw: SVGForeignObjectElement): SVGForeignObjectElement {
+  private setHtmls(data: IClassifier, htmlRaw: SVGForeignObjectElement): SVGForeignObjectElement {
     // console.log('drawCV()');
     const graphHtml: HTMLElement | SVGElement = this.owner.vertexContainer;
     const $graphHtml: JQuery<HTMLElement | SVGElement> = $(graphHtml);
@@ -394,8 +378,6 @@ export class IVertex {
     });
     data.detailIsOpened ? $detailHtml.show() : $detailHtml.hide();
 
-    const $typeHtml: JQuery<HTMLSelectElement> = $detailHtml.find('select.returnType') as JQuery<HTMLSelectElement>;
-    for (i = 0; i < $typeHtml.length; i++) { PropertyBarr.makeFullTypeSelector($typeHtml[0], data.primitiveType, data.classType, true); }
     $html.find('input.name').val(data.name);
     const $parameterList = $detailHtml.find('.parameterList');
     let j: number;
@@ -418,12 +400,12 @@ export class IVertex {
     let i: number;
     const html: Element = this.drawTerminal(data);
     const $html = $(html);
-    const $typeHtml: JQuery<HTMLSelectElement> = $html.find('select.fullType') as JQuery<HTMLSelectElement>;
-    for (i = 0; i < $typeHtml.length; i++) { PropertyBarr.makeFullTypeSelector($typeHtml[0], data.primitiveType, data.classType); }
+    // const $typeHtml: JQuery<HTMLSelectElement> = $html.find('select.fullType') as JQuery<HTMLSelectElement>;
     const $nameHtml: JQuery<HTMLInputElement> = $html.find('input.name') as JQuery<HTMLInputElement>;
     $nameHtml.val(data.name);
     return html; }
 
+  drawEChild(data: ELiteral): Element { return this.drawTerminal(data); }
   drawA(data: IAttribute): Element { return this.drawTerminal(data); }
   drawR(data: IReference): Element { return this.drawTerminal(data); }
 
@@ -442,8 +424,7 @@ export class IVertex {
     U.pe(true, 'vertexToEdge() todo.');
     return null; }
 
-  addEventListeners(): void {
-    this.owner.addGraphEventListeners(); // todo: spostalo per efficienza.
+  private addEventListeners(): void {
     // todo: viene chiamato 1 volta per ogni elementNode con modelID, ma io eseguo tutto dalla radice.
     // quindi viene eseguito N +1 volte per ogni vertice dove N sono i suoi (attributes + references)
     // console.log(html.tagName, html.dataset.modelPieceID);
@@ -458,15 +439,12 @@ export class IVertex {
     $html.off('mouseenter.vertex').on('mouseenter.vertex', (e: MouseEnterEvent) => { thiss.onMouseEnter(e); });
     $html.off('mouseleave.vertex').on('mouseleave.vertex', (e: MouseLeaveEvent) => { thiss.onMouseLeave(e); });
     $html.off('click').on('click', (e: ClickEvent) => { thiss.onClick(e); });
-    const $addFieldButtonContainer: JQuery<HTMLElement> = $html.find('.addFieldButtonContainer') as any as JQuery<HTMLElement>;
-    this.setAddButtonContainer($addFieldButtonContainer[0]);
-    $addFieldButtonContainer.find('button').off('click.addField').on('click.addField',
-      (e: ClickEvent) => {thiss.addFieldClick(e); });
-    $addFieldButtonContainer.find('select').off('change.addField').on('change.addField',
-      (e: ClickEvent) => {thiss.addFieldClick(e); });
-    $html.find('input, select').off('change.fieldchange').on('change.fieldchange', (e: ChangeEvent) => IVertex.FieldNameChanged(e));
+    // const $addFieldButtonContainer: JQuery<HTMLElement> = $html.find('.addFieldButtonContainer') as any as JQuery<HTMLElement>;
+    // this.setAddButtonContainer($addFieldButtonContainer[0]);
+    $html.find('.addFieldButton').off('click.addField').on('click.addField', (e: ClickEvent) => {thiss.addFieldClick(e); });
+    $html.find('.AddFieldSelect').off('change.addField').on('change.addField',  (e: ChangeEvent) => {thiss.addFieldClick(e as any); });
+    $html.find('input, select, textarea').off('change.fieldchange').on('change.fieldchange', (e: ChangeEvent) => IVertex.FieldNameChanged(e));
     // NB: deve essere solo un off, oppure metti selettore .NOT(class) nel selettore dei 'select' di sopra
-    $html.find('.AddFieldSelect').off('change.fieldchange');
     // if (!IVertex.contextMenu) { IVertex.contextMenu = new MyContextMenuClass(new ContextMenuService()); }
     $html.off('contextmenu').on('contextmenu', (e: ContextMenuEvent) => { thiss.vertexContextMenu(e); });
     $html.find('.Attribute, .Reference').off('contextmenu').on('contextmenu', (e: ContextMenuEvent) => { thiss.featureContextMenu(e); });
@@ -489,8 +467,8 @@ export class IVertex {
     console.log('measuringInit:', ui, e, m);
     let i: number;
     const size: Size = U.sizeof(m.html);
-    const absTargetSize: Size = U.sizeof(this.owner.container);
-    const logic: IClass = this.logic();
+    const absTargetSize: Size = this.owner.getSize();
+    const logic: IClassifier = this.logic();
     for (i = 0; i < m.variables.length; i++) { U.processMeasurableVariable(m.variables[i], logic, m.html, size, absTargetSize); }
     for (i = 0; i < m.dstyle.length; i++) { U.processMeasurableDstyle(m.dstyle[i], logic, m.html, null, absTargetSize); }
     for (i = 0; i < m.imports.length; i++) { U.processMeasurableImport(m.imports[i], logic, m.html, null, absTargetSize); }
@@ -521,11 +499,13 @@ export class IVertex {
     const edge: IEdge = IEdge.edgeChanging;
     if (!edge) { return; }
     U.pif(debug, 'setreferenceClick success!');
-    const vertexLogic: IClass = this.logic();
+    const vertexLogic: IClassifier = this.logic();
+    if (!(vertexLogic instanceof IClass)) return;
     if (!edge.logic.canBeLinkedTo(vertexLogic)) {
       U.pif(debug, 'edge ', edge.logic, 'cannot be linked to ', vertexLogic, 'hoveringvertex:', this);
       return; }
-    (edge.logic as IReference).linkClass(vertexLogic);
+    if (edge.logic instanceof MReference) edge.logic.linkClass(vertexLogic as MClass);
+    if (edge.logic instanceof M2Reference) edge.logic.setType((vertexLogic as M2Class).getEcoreTypeName());
     this.mark(false, 'refhover');
     // altrimenti parte l'onClick su AddFieldButton quando fissi la reference.
     // setTimeout( () => { IEdge.edgeChanging = null; }, 1);
@@ -615,21 +595,25 @@ export class IVertex {
   addFieldClick(e: ClickEvent): void {
     // impedisco che un click mentre fisso un edge triggeri altre cose, 100ms di "cooldown"
     if (IEdge.edgeChanging || Date.now() - IEdge.edgeChangingStopTime < 100) { return; }
-    U.pe(!(this.classe instanceof M2Class), 'AddFieldClick should only be allowed on M2Classes.');
-    const modelPiece: M2Class = this.classe as M2Class;
+    const modelPiece: IClassifier = this.classe;
+    const classe: M2Class = modelPiece instanceof M2Class ? modelPiece : null;
+    const enumm: EEnum = modelPiece instanceof EEnum ? modelPiece : null;
+    U.pe(!enumm && !classe, 'AddFieldClick should only be allowed on M2-Classes or enumerations.');
+
     U.pe(!this.classe, 'called addFieldClick on a package');
     Status.status.debug = true;
     const html = this.getHtml();
     let select: HTMLSelectElement;
     // const debugOldJson = U.cloneObj(modelPiece.generateModel());
-    select = $(html).find('.addFieldButtonContainer').find('select')[0] as unknown as HTMLSelectElement;
-    switch (select.value) {
-      default: U.pe(true, 'unexpected select value for addField:' + select.value); break;
-      case 'Reference': modelPiece.addReference(); break;
-      case 'Attribute': modelPiece.addAttribute(); break;
-      case 'Operation': modelPiece.addOperation(); break; }
-    EType.fixPrimitiveTypeSelectors(); }
-
+    select = $(html).find('.AddFieldSelect')[0] as unknown as HTMLSelectElement;
+    switch (select.value.toLowerCase()) {
+      default: U.pe(true, 'unexpected select value for addField:' + select.value + ' allowed values are: ["Reference", "Attribute", "Operation", "Literal"]'); break;
+      case 'reference': U.pe(!classe, '"Reference" as .AddFieldSelect value is only allowed on M2-classes'); classe.addReference(); break;
+      case 'attribute': U.pe(!classe, '"Attribute" as .AddFieldSelect value is only allowed on M2-classes'); classe.addAttribute(); break;
+      case 'operation': U.pe(!classe, '"Operation" as .AddFieldSelect value is only allowed on M2-classes'); classe.addOperation(); break;
+      case 'literal': U.pe(!enumm, '"Literal" as .AddFieldSelect value is only allowed on Enumerations'); enumm.addLiteral(); break; }
+  }
+/*
   setAddButtonContainer(container: HTMLElement): void {
     U.toHtml('<span style="display:flex; margin:auto;">Add&nbsp;</span>' +
       '<select class="AddFieldSelect" style="display:flex; margin:auto;"><optgroup label="FeatureType">' +
@@ -639,12 +623,14 @@ export class IVertex {
       '</optgroup></select>' +
       '<span style="display:flex; margin:auto;">&nbsp;field</span>\n' +
       '<button>Go</button>', container); }
-
+*/
   setFields(f: IField[]) {
     this.fields = f;
   }
 
-  setGraph(graph: IGraph) { this.owner = graph; }
+  setGraph(graph: IGraph) {
+    U.pe(!graph, 'Vertex should only be created after Graph initialization.');
+    this.owner = graph; }
 
   refreshGUI(): void { this.draw(); }
 
@@ -654,7 +640,7 @@ export class IVertex {
     if (!gridIgnore) { graphPoint = this.owner.fitToGrid(graphPoint); }
     this.setSize(new GraphSize(graphPoint.x, graphPoint.y, oldsize.w, oldsize.h), false, true); }
 
-  logic(set: IClass = null): IClass {
+  logic(set: IClassifier = null): IClassifier {
     if (set) { return this.classe = set; }
     return this.classe; }
     // todo: elimina differenze html e htmlforeign o almeno controlla e riorganizza

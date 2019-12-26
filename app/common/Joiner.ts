@@ -5,7 +5,9 @@
 // /*new*/export {Styles, ModelPieceStyleEntry, SortType, StyleVisibility} from '../GuiStyles/styles';
 // /*new*/export {ViewHtmlSettings, ViewPoint, Vieww, ModelView, PackageView, ClassView, AttributeView, EdgeView, ReferenceView, OperationView,
 // ParameterView} from '../GuiStyles/viewpoint';
-/*new*/export {ViewHtmlSettings, ViewPoint, Vieww, EdgeView} from '../GuiStyles/viewpoint';
+/*new*/import {ECoreEnum, EcoreLiteral} from '../Model/iModel';
+
+export {ViewHtmlSettings, ViewPoint, Vieww, EdgeView} from '../GuiStyles/viewpoint';
 export {LocalStorage} from '../Database/LocalStorage';
 export {ModelPiece, Info, ModelNone, StyleComplexEntry} from '../Model/modelPiece';
 export {ShortAttribETypes, U, Json, AttribETypes,
@@ -25,18 +27,21 @@ export {StyleEditor} from '../guiElements/style-editor/style-editor.component';
 // export {Options} from '../Save/Save';
 export {MyConsole} from '../guiElements/console/console.component';
 export {IModel, ECoreRoot, ECorePackage, ECoreClass, ECoreReference,
-  ECoreAttribute, ECoreParameter, ECoreOperation, XMIModel } from '../Model/iModel';
+  ECoreAttribute, ECoreParameter, ECoreOperation, XMIModel, EcoreLiteral, ECoreEnum } from '../Model/iModel';
 export {MetaMetaModel} from '../Model/MetaMetaModel';
 export {MetaModel} from '../Model/MetaModel';
 export {Model} from '../Model/Model';
 export {IPackage, M3Package} from '../Model/mPackage/iPackage';
 export {M2Package} from '../Model/mPackage/MMPackage';
 export {MPackage} from '../Model/mPackage/MPackage.component';
+export {IClassifier} from '../mClass/IClassifier';
 export {IClass, M3Class} from '../mClass/iClass';
 export {M2Class} from '../mClass/m2Class';
 export {MClass} from '../mClass/MClass';
-export {EType} from '../Model/MetaMetaModel';
+export {EEnum} from '../mClass/EEnum';
+export {Type, EType} from '../mClass/classChild/Type';
 export {IClassChild} from '../mClass/classChild/IClassChild';
+export {ELiteral} from '../mClass/classChild/ELiteral';
 export {IFeature, M3Feature, M2Feature, MFeature} from '../mClass/classChild/Features/iFeature';
 export {IReference, M3Reference} from '../mClass/classChild/Features/References/iReference';
 export {M2Reference} from '../mClass/classChild/Features/References/M2Reference';
@@ -55,14 +60,39 @@ export const ansiUp = new AnsiUp(); // https://github.com/drudru/ansi_up // ansi
 
 import * as stringsimilarity from '../../app/common/StringSimilarity.js';
 export let StringSimilarity = stringsimilarity;
-import * as $$ from 'jquery';
+import * as $$               from 'jquery';
 export const $ = $$;
-import * as JQueryUII from '../../node_modules/jquery-ui';
+import * as JQueryUII        from '../../node_modules/jquery-ui';
 export const JQueryUI = JQueryUII;
-import * as _pr_json2xml from '../common/prj_json2xml.js';
-import * as _pr_xml2json from '../common/prj_xml2json.js';
+import * as _pr_json2xml     from '../common/prj_json2xml.js';
+import * as _pr_xml2json     from '../common/prj_xml2json.js';
+import {IClassifier}         from '../mClass/IClassifier';
 export const prjson2xml = _pr_json2xml;
 export const prxml2json = _pr_xml2json;
 export const $$$: JQueryStatic = require('jquery-ui');
 export const $ui: JQueryStatic = $$$;
 
+
+
+// NB: se li esporti e usi come identificatori/costruttori nel codice, typescript li collega da una fantomatica user-class con nome __CambiatoTipoCosì
+// e pur esistendo la classe A, lui cerca __A e dice che non esiste.
+// soluzione: attiva quando scrivi codice per abilitare il type check, disabilita in produzione.
+/*
+type ResizeObserverSize = unknown;
+declare type ResizeObserverEntry = {
+  readonly target: Element;
+  readonly contentRect: DOMRectReadOnly;
+  readonly borderBoxSize: ResizeObserverSize[]; // type was "readonly attribute sequence<ResizeObserverSize>"
+  readonly contentBoxSize: ResizeObserverSize[];
+  devicePixelContentBoxSize: ResizeObserverSize[];
+}
+declare type ResizeObserverCallback = (entries: ResizeObserverEntry[], observer: ResizeObserverr) => unknown;
+declare type ResizeObserverOptions = {box: 'content-box' | 'border-box'}
+declare type ResizeObserverr = {
+  constructor(callback: ResizeObserverCallback);
+  observe(target: Element, options?: ResizeObserverOptions): void;
+  unobserve(target: Element): void;
+  disconnect(): void;
+}
+export let ResizeObserver: ResizeObserverr = window['' + 'ResizeObserver'];
+*/

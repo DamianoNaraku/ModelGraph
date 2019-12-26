@@ -13,37 +13,58 @@ import {
   ISidebar,
   IGraph,
   IModel, MetaMetaModel,
-  Status, IReference, StringSimilarity, IClass, ModelNone, M3Class, M2Package
+  Status, IReference, StringSimilarity, IClass, ModelNone, M3Class, M2Package, EEnum, Type
 } from '../../common/Joiner';
+import {IClassifier} from '../../mClass/IClassifier';
 
 export abstract class IPackage extends ModelPiece {
   metaParent: IPackage;
   instances: IPackage[];
   parent: IModel;
-  childrens: IClass[];
+  childrens: IClassifier[];
+  classes: IClass[];
+  enums: EEnum[];
 
   constructor(mm: IModel, json: Json, metaParent: IPackage) {
-    super(mm, metaParent); }
+    super(mm, metaParent);
+    this.classes = [];
+    this.enums = [];
+  }
 
-  abstract generateModel(): Json;
   abstract parse(json: Json, destructive?: boolean): void;
   abstract addEmptyClass(metaVersion: IClass): IClass;
 
-  conformability(metaparent: IPackage, outObj?: any, debug?: boolean): number { return 1; }
-  midname(): string { return this.name; }
+  addEmptyEnum(): EEnum {
+    const c = new EEnum(this, null);
+    if (this instanceof M3Package || !Status.status.loadedLogic) return;
+    c.generateVertex();
+    Type.updateTypeSelectors(null, false, true, false);
+    return c; }
+
+  // conformability(metaparent: IPackage, outObj?: any, debug?: boolean): number { return 1; }
   fullname(): string { return this.name; }
   getVertex(): IVertex { return undefined; }
+
+
+  getEnum(name: string, caseSensitive: boolean = false, throwErr: boolean = true, debug: boolean = true): EEnum {
+    let i: number;
+    if (!caseSensitive) { name = name.toLowerCase(); }
+    for (i = 0; i < this.enums.length; i++) {
+      let classname: string = this.enums[i].name;
+      if (!caseSensitive) { classname = classname.toLowerCase(); }
+      if (name === classname) { return this.enums[i]; }
+    }
+    return null; }
 
   getClass(name: string, caseSensitive: boolean = false, throwErr: boolean = true, debug: boolean = true): IClass {
     let i: number;
     if (!caseSensitive) { name = name.toLowerCase(); }
-    for (i = 0; i < this.childrens.length; i++) {
-      let classname: string = this.childrens[i].name;
+    for (i = 0; i < this.classes.length; i++) {
+      let classname: string = this.classes[i].name;
       if (!caseSensitive) { classname = classname.toLowerCase(); }
-      if (name === classname) { return this.childrens[i]; }
+      if (name === classname) { return this.classes[i]; }
     }
     return null; }
-
 
   duplicate(nameAppend: string = '_Copy', newParent: ModelPiece = null): ModelPiece {
     U.pe(true, 'Package duplicate to do.');
@@ -69,8 +90,8 @@ export abstract class IPackage extends ModelPiece {
     console.log(outObj);
     while (++i < classPermutation.length) {
       this.childrens[i].linkToMetaParent(meta.childrens[classPermutation[i]]); }
-  }*/
-  comformability(meta: IPackage, outObj: any = null/*.classPermutation*/): number {
+  }* /
+  comformability(meta: IPackage, outObj: any = null/*.classPermutation* /): number {
     // return 1;
     // todo: sbloccalo facendo Mpackage.name conforme a MMPackage.name e abilitando package multipli
     if (this.childrens > meta.childrens) { return 0; }
@@ -112,7 +133,7 @@ export abstract class IPackage extends ModelPiece {
     nameComformability = 1 / total;
     const ret = nameComformability + bestClassPermutationValue;
     console.log('PKG.comform(', this.name, {0: this}, ', ', meta.name, {0: meta}, ') = ', ret);
-    return ret; }
+    return ret; }*/
 }
 
 export class M3Package extends IPackage {
@@ -120,6 +141,7 @@ export class M3Package extends IPackage {
   instances: M2Package[];
   parent: MetaMetaModel;
   childrens: M3Class[];
+  classes: M3Class[];
 
   constructor(model: MetaMetaModel, json: Json) { super(model, json, null); this.parse(json, true); }
 
@@ -128,9 +150,6 @@ export class M3Package extends IPackage {
 
   addEmptyClass(metaVersion?: M3Class): M3Class {
     const c = new M3Class(this, null);
-    U.ArrayAdd(this.childrens, c);
-    // c.generateVertex(null).draw();
-    // M2Class.updateAllMMClassSelectors();
     return c; }
 
   generateModel(): Json {
@@ -140,7 +159,10 @@ export class M3Package extends IPackage {
 
   parse(json: Json, destructive: boolean = true): void {
     this.name = 'Package';
-    this.addEmptyClass(null); }
+    this.addEmptyClass(null);
+    this.addEmptyEnum();
+    this.enums[0].setName('Enumeration');
+  }
 
   refreshGUI_Alone(debug: boolean = true): void { }
 

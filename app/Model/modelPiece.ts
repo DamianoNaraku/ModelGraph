@@ -16,7 +16,6 @@ import {
   Model,
   Status,
   U,
-  EType,
   IClass,
   MClass,
   MetaModel,
@@ -28,7 +27,7 @@ import {
   ViewHtmlSettings,
   M3Reference,
   M2Attribute,
-  M3Attribute, M3Class, M2Reference, M3Package, MPackage, M2Package
+  M3Attribute, M3Class, M2Reference, M3Package, MPackage, M2Package, Type, ELiteral, EEnum
 } from '../common/Joiner';
 
 import ClickEvent = JQuery.ClickEvent;
@@ -109,6 +108,8 @@ export abstract class ModelPiece {
     if (tsClass.indexOf('m1') === 0 || tsClass.indexOf('m2') === 0) { tsClass = tsClass.substr(2); }
     switch (tsClass) {
     default: U.pe(true, 'unrecognized TS Class: ' + tsClass); return null;
+    case 'EEnum': $html = $root.find('.template.EEnum'); break;
+    case 'ELiteral': $html = $root.find('.template.ELiteral'); break;
     case 'Class': $html = $root.find('.template.Class'); break;
     case 'Attribute': $html = $root.find('.template.Attribute'); break;
     case 'Reference': $html = $root.find('.template.Reference'); break;
@@ -199,13 +200,17 @@ export abstract class ModelPiece {
     if (set !== null) {
       U.pe( !(this instanceof IClass), 'shouldBeDisplayedAsEdge(' + set + ') should only be set on M2Class instances');
       (this as any as IClass).shouldBeDisplayedAsEdgeVar = set;
-      M2Class.updateAllMMClassSelectors(null, false);
+      Type.updateTypeSelectors(null, false, false, true);
       return set; }
     if (this instanceof IModel) { return false; }
     if (this instanceof IPackage) { return false; }
+    if (this instanceof EEnum) { return false; }
     if (this instanceof IClass) { return (this as IClass).shouldBeDisplayedAsEdgeVar; }
     if (this instanceof IAttribute) { return false; }
     if (this instanceof IReference) { return true; }
+    if (this instanceof EOperation) { return false; }
+    if (this instanceof EParameter) { return false; }
+    if (this instanceof ELiteral) { return false; }
     U.pe(true, 'unrecognized class:', this);
   }
 
@@ -259,7 +264,11 @@ export abstract class ModelPiece {
     let i: number;
     for (i = 0; edges && i < edges.length; i++) { edges[i].mark(markb, key, color); }
   }
-  generateModelString(): string { return JSON.stringify(this.generateModel(), null, 4); }
+  generateModelString(): string {
+    const json: Json = this.generateModel();
+    console.log('genmodelstring:', json, 'this:',  this);
+    return JSON.stringify(json, null, 4);
+  }
 
   abstract refreshGUI_Alone(debug?: boolean): void;
   abstract fullname(): string;
@@ -270,14 +279,50 @@ export abstract class ModelPiece {
     const ending: String = this.endingName(valueMaxLength);
     return this.metaParent.fullname() + ':' + this.id + (ending && ending !== '' ? ':' + ending : ''); }
 
-  abstract midname(): string;
   abstract parse(json: Json, destructive?: boolean): void;
   abstract getVertex(): IVertex;
   abstract generateModel(): Json;
   abstract duplicate(nameAppend?: string, newParent?: ModelPiece): ModelPiece;
-  abstract conformability(metaparent: ModelPiece, outObj?: any/*.refPermutation, .attrPermutation*/, debug?: boolean): number;
+  // abstract conformability(metaparent: ModelPiece, outObj?: any/*.refPermutation, .attrPermutation*/, debug?: boolean): number;
+  setName0(value: string, refreshGUI: boolean = false, warnDuplicateFix: boolean = true, key: string, allowEmpty: boolean): string {
+    const valueOld: string = this['' + key];
+    const valueInputError = value;
+    value = value !== null && value !== undefined ? '' + value.trim() : null;
+    if (!allowEmpty && (!value || value === '')) { U.pw(true, key + ' cannot be empty.'); return valueOld; }
+    if (value === valueOld) { return valueOld; }
+    const regexp: RegExp = new RegExp((allowEmpty ? '^$|' : '') + '^[a-zA-Z_$][a-zA-Z_$0-9]*$');
+    console.log('set' + key + '.valid ? ' + regexp.test(value) + ' |' + value + '|');
+    if (!regexp.test(value)) {
+      value = value.replace(/([^a-zA-Z_$0-9])/g, '');
+      let i: number = 0;
+      while (value[i] && value[i] >= '0' && value[i] <= '9') i++;
+      value = value.substr(i);
+      let remainder: string = value;
+      let firstChar: string = '' || '';
+      while (remainder.length > 0 && firstChar === '') {
+        firstChar = remainder[0].replace('[^a-zA-Z_$]', '');
+        remainder = remainder.substring(1); }
+      value = firstChar + remainder;
+      U.pw(true, 'a valid ' + key + ' must be match this regular expression: ' + regexp.compile().toString()
+        + '; trying autofix: |' + valueInputError + '| --> + |' + value + '|');
+      return this['set' + U.firstToUpper(key)](value, true || refreshGUI); }
 
-  setName(value: string, refreshGUI: boolean = false, warnDuplicateFix: boolean = true): string {
+
+    if (value !== '') {
+      let nameFixed: boolean = false;
+      while (this.parent && this.parent['isChild' +  U.firstToUpper(key) + 'Taken'](value)) {
+        nameFixed = true;
+        value = U.increaseEndingNumber(value, false, false); }
+      U.pe(nameFixed && (valueInputError === value), 'increaseEningNumber failed:', value, this, this.parent ? this.parent.childrens : null);
+      U.pw(nameFixed && warnDuplicateFix, 'that ' + key + ' is already used in this context, trying autofix: |'
+        + valueInputError + '| --> + |' + value + '|'); }
+
+    this['' + key] = value;
+    if (refreshGUI) { this.refreshGUI(); }
+    return this['' + key]; }
+
+  setName(value: string, refreshGUI: boolean = false, warnDuplicateFix: boolean = true): string { return this.setName0(value, refreshGUI, warnDuplicateFix, 'name', false); }
+  setNameOld(value: string, refreshGUI: boolean = false, warnDuplicateFix: boolean = true): string {
     const valueOld: string = this.name;
     const valueInputError = value;
     value = value ? '' + value.trim() : null;
@@ -312,6 +357,7 @@ export abstract class ModelPiece {
     let i: number;
     for (i = 0; model && i < model.instances.length; i++) { model.instances[i].sidebar.fullnameChanged(valueOld, this.name); }
     if (refreshGUI) { this.refreshGUI(); }
+    Type.updateTypeSelectors(null, false, false, true);
     return this.name; }
 
   fieldChanged(e: JQuery.ChangeEvent): void { U.pe(true, U.getTSClassName(this) + '.fieldChanged() should never be called.'); }
@@ -470,14 +516,16 @@ export abstract class ModelPiece {
     } else { Info.set(info, 'metaParent', this.metaParent); }
     for (i = 0; this.childrens && i < this.childrens.length; i++) {
       const child = this.childrens[i];
-      const name = model.isM1() && child.metaParent ? child.metaParent.name : child.name;
-      U.pe(!name, 'error: probably some metparent is null.', this, child);
+      let name = model.isM1() && child.metaParent ? child.metaParent.name : child.name;
+      U.pw(!name, 'getInfo() getName error: probably some metaparent is null.', this, child);
+      if (!name) name = '';
       Info.setc(info, name.toLowerCase(), child);
       Info.setraw(childrenInfo, name.toLowerCase(), child); }
     for (i = 0; this.instances && i < this.instances.length; i++) { Info.seti(instancesInfo,  '' + i, this.instances[i]); }
     return info; }
 
   getHtmlOnGraph(): HTMLElement | SVGElement {
+    if (this instanceof IPackage) return null;
     let html: HTMLElement | SVGElement = this.getVertex().getHtml();
     if (this instanceof IClass) return html;
     html = $(html).find('*[data-modelPieceID="' + this.id + '"]')[0];
@@ -497,6 +545,7 @@ export abstract class ModelPiece {
     if(this instanceof M3Class) { return 'm3Class'; }
     if(this instanceof M2Class) { return 'm2Class'; }
     if(this instanceof MClass) { return 'm1Class'; }
+    if(this instanceof EEnum) { return 'EEnum'; }
     if(this instanceof M3Attribute) { return 'm3Attribute'; }
     if(this instanceof M2Attribute) { return 'm2Attribute'; }
     if(this instanceof MAttribute) { return 'm1Attribute'; }
@@ -511,6 +560,7 @@ export abstract class ModelPiece {
     if(this instanceof Model) { return 'm1Model'; }
     if(this instanceof EOperation) { return 'EOperation'; }
     if(this instanceof EParameter) { return 'EParameter'; }
+    if(this instanceof ELiteral) { return 'ELiteral'; }
     U.pe(true, 'failed to find class:', this);
   }
   getInstanceClassName(): string {

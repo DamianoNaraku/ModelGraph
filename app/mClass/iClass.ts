@@ -25,7 +25,6 @@ import {
   IModel,
   Size,
   StringSimilarity,
-  EType,
   MAttribute,
   MReference,
   MClass,
@@ -38,33 +37,26 @@ import {
   M3Attribute,
   M3Feature,
   EdgeModes,
-  EdgePointStyle, EOperation, EParameter, IClassChild,
-} from '../common/Joiner';
-import {first} from 'rxjs/operators';
+  EdgePointStyle, EOperation, EParameter, IClassChild, Type,
+}                    from '../common/Joiner';
+import {IClassifier} from './IClassifier';
 
-export abstract class IClass extends ModelPiece {
-  parent: IPackage;
-  childrens: IClassChild[];
+export abstract class IClass extends IClassifier {
   attributes: IAttribute[];
   references: IReference[];
   metaParent: IClass;
   instances: IClass[];
   referencesIN: IReference[] = []; // external pointers to this class.
   shouldBeDisplayedAsEdgeVar: boolean = false && false;
-  vertex: IVertex = null;
 
   edges: IEdge[] = [];
   edgeStyleCommon: EdgeStyle;
   edgeStyleHighlight: EdgeStyle;
   edgeStyleSelected: EdgeStyle;
-  private sidebarHtml: HTMLElement;
 
-
-  static defaultSidebarHtml(): HTMLElement {
-    return U.toHtml<HTMLElement>('<div class="sidebarNode class"><p class="sidebarNodeName">$##name$</p></div>'); }
-
-  constructor(parent: IPackage, meta: IClass) {
+  protected constructor(parent: IPackage, meta: IClass) {
     super(parent, meta);
+    if (this.parent) { U.ArrayAdd(this.parent.classes, this); }
     this.edgeStyleCommon = new EdgeStyle(EdgeModes.straight, 2, '#ffffff',
       new EdgePointStyle(5, 2, '#ffffff', '#000000'));
     this.edgeStyleHighlight = new EdgeStyle(EdgeModes.straight, 4, '#ffffff',
@@ -73,12 +65,7 @@ export abstract class IClass extends ModelPiece {
       new EdgePointStyle(5, 2, '#ffffff', '#ff0000'));
   }
 
-  getSidebarHtml(): HTMLElement {
-    if (this.sidebarHtml) { return this.sidebarHtml; }
-    return IClass.defaultSidebarHtml(); }
-
   fullname(): string { return this.parent.name + '.' + this.name; }
-  midname(): string { return this.fullname(); }
 
   generateEdge(): IEdge[] { U.pe(true, 'IClass.generateEdge() todo.'); return null; }
 
@@ -97,7 +84,7 @@ export abstract class IClass extends ModelPiece {
       const edges: IEdge[] = U.ArrayCopy(this.getEdges(), false);
       for (i = 0; i < edges.length; i++) { edges[i].remove(); }
     } else { this.getVertex().remove(); }
-    M2Class.updateAllMMClassSelectors(); }
+    Type.updateTypeSelectors(null, false, false, true); }
 
   refreshGUI_Alone(debug?: boolean): void {
     if (!Status.status.loadedLogic) { return; }
@@ -107,13 +94,10 @@ export abstract class IClass extends ModelPiece {
       let i: number;
       for (i = 0; i < edges.length; i++) { edges[i].refreshGui(debug); }
       return; }
-    this.getVertex().refreshGUI();
-    EType.fixPrimitiveTypeSelectors(this.vertex.getHtml());
-    M2Class.updateAllMMClassSelectors(this.vertex.getHtml(), false, false); // update self selectors
-  }
+    this.getVertex().refreshGUI(); }
 
   getReferencePointingHere(): IReference[] { return this.referencesIN; }
-  getStyle_oldhtml(): SVGForeignObjectElement {
+  /*getStyle_oldhtml(): SVGForeignObjectElement {
     const html: Element = super.getStyle().html; // U.removeemptynodes(super.getStyle(), true);
     const container: SVGForeignObjectElement = html as SVGForeignObjectElement; //U.newSvg<SVGForeignObjectElement>('foreignObject');
     const size: Size = new Size(0, 0, 0, 0);
@@ -138,9 +122,9 @@ export abstract class IClass extends ModelPiece {
     container.setAttributeNS(null, 'y', isNaN(size.y) ? '0' : '' + size.y);
     container.setAttributeNS(null, 'width', isNaN(size.w) ? '200' : '' + size.w);
     container.setAttributeNS(null, 'height', isNaN(size.h) ? '100' : '' + size.h);
-    container.appendChild(html);*/
+    container.appendChild(html);* /
     return container; }
-
+*/
   getAttribute(name: string, caseSensitive: boolean = false): IAttribute {
     let i: number;
     if (!caseSensitive) { name = name.toLowerCase(); }
@@ -157,19 +141,6 @@ export abstract class IClass extends ModelPiece {
       console.log('find IReference[' + s1 + '] =?= ' + name + ' ? ' + (caseSensitive ? s1 : s1.toLowerCase()) === name);
       if ((caseSensitive ? s1 : s1.toLowerCase()) === name) { return this.references[i]; } }
     return null; }
-
-  generateVertex(position: GraphPoint = null): IVertex {
-    if (!position) { position = new GraphPoint(0, 0); }
-    const v: IVertex = this.vertex = new IVertex(this);
-    v.constructorClass(this);
-    v.draw();
-    v.moveTo(position);
-    return v; }
-
-  setName(value: string, refreshGUI: boolean = false): string {
-    super.setName(value, refreshGUI);
-    M2Class.updateAllMMClassSelectors(null, false);
-    return this.name; }
 
   /*generateEdge(): IEdge[] {
     const e: IEdge = null;
@@ -195,11 +166,6 @@ export abstract class IClass extends ModelPiece {
     }
   }
 
-  getVertex(): IVertex {
-    const displayAsEdge: boolean = this.shouldBeDisplayedAsEdge();
-    // U.pw(displayAsEdge, 'getvertex called on a class that should not have a vertex.', this);
-    if (!displayAsEdge && this.vertex === null && Status.status.loadedLogic) { this.generateVertex(); }
-    return this.vertex; }
   /*getEdge(): IEdge[] {
     U.pe(!this.shouldBeDisplayedAsEdge(), 'err');
     if (!this.edges) { this.generateEdge(); }
@@ -222,7 +188,7 @@ export abstract class IClass extends ModelPiece {
     while (++i < refPermutation.length) { this.references[i].linkToMetaParent(meta.references[refPermutation[i]]); }
   }*/
 
-  conformability(meta: IClass, outObj: any = null/*.refPermutation, .attrPermutation*/, debug: boolean = true): number {
+  /*conformability(meta: IClass, outObj: any = null/*.refPermutation, .attrPermutation* /, debug: boolean = true): number {
     if (this.attributes > meta.attributes) { return 0; }
     if (this.references > meta.references) { return 0; }
     const refLenArray: number[] = [];
@@ -296,7 +262,7 @@ export abstract class IClass extends ModelPiece {
     const ret = nameComformability + bestAttPermutationValue + bestRefPermutationValue;
     U.pif(debug, 'M2CLASS.comform(', this.name, {0: this}, ', ', meta.name, {0: meta}, ') = ', ret,
       ' = ', nameComformability + ' + ' + bestAttPermutationValue + ' + ', bestRefPermutationValue);
-    return ret; }
+    return ret; }*/
 
   getOperations(): EOperation[] {
     if (this instanceof M3Class) {
@@ -333,6 +299,7 @@ export class M3Class extends IClass {
     const r: M3Reference = new M3Reference(this, null);
     const o: EOperation = new EOperation(this, null);
     const p: EParameter = new EParameter(o, null);
+    o.childrens = [p];
     this.childrens = [a, r, o];
     this.attributes = [a];
     this.references = [r];
