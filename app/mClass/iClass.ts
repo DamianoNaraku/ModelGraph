@@ -15,353 +15,168 @@ import {
   Status,
   DetectZoom,
   Model,
-  eCoreAttribute,
-  eCoreClass,
-  eCorePackage,
-  eCoreReference,
-  eCoreRoot,
+  ECoreAttribute,
+  ECoreClass,
+  ECorePackage,
+  ECoreReference,
+  ECoreRoot,
   Point,
   GraphPoint,
   IModel,
   Size,
   StringSimilarity,
-  EType,
   MAttribute,
-  MReference, MClass
-} from '../common/Joiner';
+  MReference,
+  MClass,
+  M2Class,
+  EdgeStyle,
+  M2Reference,
+  M2Attribute,
+  M3Package,
+  M3Reference,
+  M3Attribute,
+  M3Feature,
+  EdgeModes,
+  EdgePointStyle, EOperation, EParameter, Typedd, Type,
+}                    from '../common/Joiner';
+import {IClassifier} from './IClassifier';
 
-export class IClass extends ModelPiece {
-  // static all: any[] = [];
-  referencesIN: IReference[] = null; // external pointers to this class.
-  references: IReference[] = null;
-  attributes: IAttribute[] = null;
+export abstract class IClass extends IClassifier {
+  attributes: IAttribute[];
+  references: IReference[];
+  metaParent: IClass;
+  instances: IClass[];
+  referencesIN: IReference[] = []; // external pointers to this class.
+  shouldBeDisplayedAsEdgeVar: boolean = false && false;
 
-  constructor(pkg: IPackage, json: Json, metaVersion: IClass) {
-    super(pkg, metaVersion);
-    if (!pkg && !json && !metaVersion) { return; } // empty constructor for .duplicate();
-    this.modify(json, true);
-  }
-  static defaultSidebarHtml(): HTMLElement {
-    const div = document.createElement('div');
-    const p = document.createElement('p');
-    div.appendChild(p);
-    p.innerHTML = '$##name$';
-    p.classList.add('sidebarNodeName');
-    div.classList.add('sidebarNode');
-    div.classList.add('class');
-    return div; }
+  edges: IEdge[] = [];
+  edgeStyleCommon: EdgeStyle;
+  edgeStyleHighlight: EdgeStyle;
+  edgeStyleSelected: EdgeStyle;
 
-  static GetDefaultStyle(modelRoot: IModel): HTMLElement | SVGElement {
-    const selector = '.' + (modelRoot.isMM() ? 'MM' : 'M') + 'DefaultStyles>.Class.Template';
-    let $template: JQuery<HTMLElement | SVGElement> = $(selector + '.Customized');
-    if ($template.length === 0) { $template = $(selector); }
-    U.pe($template.length !== 1, 'template not found? (' + $template.length + '); selector: "' + selector + '"');
-    const ret: HTMLElement | SVGElement = U.cloneHtml($template[0]);
-    ret.classList.remove('Template');
-    ret.classList.remove('Customized');
-    return ret; }
-
-  private static generateEmptyeCore(): Json {
-    const str =
-      '{' +
-      '"@xsi:type":"ecore:EClass",' +
-      '"@name":"NewClass",' +
-      '"eStructuralFeatures":[' +
-      //  '{"@xsi:type":"ecore:EAttribute",' +
-      //   '"@name":"name",' +
-      //   '"@eType":"ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"},' +
-      //  '{"@xsi:type":"ecore:EReference",' +
-      //   '"@name":"players",' +
-      //   '"@upperBound":"@1",' +
-      //   '"@eType":"#//Player",' +
-      //   '"@containment":"true"}' +
-      ']' +
-      '}';
-    return JSON.parse(str); }
-
-  static updateAllMClassSelectors(): void {}
-  static updateAllMMClassSelectors(root0: Element = null, updateModel: boolean = true): void {
-    let root: Element = root0;
-    if (!Status.status.loadedGUI) { return; }
-    if (!root) { root = Status.status.mm.graph.container; }
-    console.log('updateAllMMClassSelectors()');
-    const $selectors = $(root).find('select.ClassSelector');
-    // console.clear();
-    console.log('selects:', $selectors, root);
-    // U.pe(!root0, 'here1');
-    let i = 0;
-    while (i < $selectors.length) {
-      IClass.updateMMClassSelector($selectors[i++] as HTMLSelectElement);
-    }
-
-    if (!updateModel) { return; }
-    // if (Status.status.mm && Status.status.mm.sidebar) { Status.status.mm.sidebar.updateAll(); }
-    if (Status.status.m && Status.status.m.sidebar) { Status.status.m.sidebar.loadDefaultHtmls(); }
-    if (Status.status.m) { Status.status.m.refreshGUI(); }
+  protected constructor(parent: IPackage, meta: IClass) {
+    super(parent, meta);
+    if (this.parent) { U.ArrayAdd(this.parent.classes, this); }
+    this.edgeStyleCommon = new EdgeStyle(EdgeModes.straight, 2, '#ffffff',
+      new EdgePointStyle(5, 2, '#ffffff', '#000000'));
+    this.edgeStyleHighlight = new EdgeStyle(EdgeModes.straight, 4, '#ffffff',
+      new EdgePointStyle(5, 2, '#ffffff', '#0077ff'));
+    this.edgeStyleSelected = new EdgeStyle(EdgeModes.straight, 4, '#ffbb22',
+      new EdgePointStyle(5, 2, '#ffffff', '#ff0000'));
   }
 
-  static updateMMClassSelector(htmlSelect: HTMLSelectElement, selected: IClass = null, debug = false): HTMLSelectElement {
-    if (!htmlSelect || !Status.status.loadedGUI) { return; }
-    const optGrp: HTMLOptGroupElement = document.createElement('optgroup');
-    let toSelect: string;
-    if (debug) { console.clear(); }
-    if (!selected) {
-      const mp: ModelPiece = ModelPiece.getLogic(htmlSelect);
-      U.pif(debug, 'mp:', mp, 'select:', htmlSelect);
-      // if (mp instanceof IAttribute || mp instanceof MAttribute) { selected = mp.parent as IClass; }
-      if (mp instanceof IReference) { selected = (mp as IReference).target; }
-      U.pw(!selected, 'ClassSelectors must be held inside a m2-reference:', htmlSelect, 'mp:', mp) ;
-      if (!selected) { return; }
-      // if (mp instanceof IClass || mp instanceof MClass) { selected = mp.parent as IClass; }
-    }
-    toSelect = '' + selected.id;
-    U.pif(debug, 'selected:', selected);
-    U.clear(htmlSelect);
-    htmlSelect.appendChild(optGrp);
-    optGrp.setAttribute('label', 'Class list');
-    const mmClasses: IClass[] = Status.status.mm.getAllClasses();
-    let i: number;
-    let found: boolean = false;
-    for (i = 0; i < mmClasses.length; i++) {
-      const classe: IClass = mmClasses[i];
-      const opt: HTMLOptionElement = document.createElement('option');
-      opt.value = '' + classe.id;
-      if (toSelect && opt.value === toSelect) { opt.selected = found = true; }
-      opt.innerHTML = classe.name;
-      optGrp.appendChild(opt); }
-    U.pw(debug && !found, 'class not found.', mmClasses);
-    return htmlSelect; }
+  fullname(): string { return this.parent.name + '.' + this.name; }
 
-  isRoot(): boolean { U.pe(true, 'm2 class cannot be roots.'); return false; }
-  setRoot(value: boolean): void { U.pe(true, 'only usable in model version'); }
-  getStyle(): HTMLElement | SVGElement {
-    // prima precedenza: stile personale.
-    // seconda precedenza: stile del meta-parent.
-    let htmlRaw: HTMLElement | SVGElement = super.getStyle();
-    if (htmlRaw) { return this.processTemplate(htmlRaw); }
-    // terza precedenza: stile della sua classe.
-    htmlRaw = IClass.GetDefaultStyle(this.getModelRoot());
-    U.pe(!htmlRaw, 'default style of vertex not found.');
-    return this.processTemplate(htmlRaw);
-  }
-  incapsula(html: HTMLElement | SVGElement): HTMLElement | SVGElement {
-    const container: SVGForeignObjectElement = U.newSvg<SVGForeignObjectElement>('foreignObject');
+  generateEdge(): IEdge[] { U.pe(true, 'IClass.generateEdge() todo.'); return null; }
+
+  canBeLinkedTo(target: IClass): boolean {
+    if (!this.shouldBeDisplayedAsEdge()) { return false; }
+    return false; }
+
+  getEdges(): IEdge[] { return this.edges; }
+
+  delete(): void {
+    // todo: che fare con le reference a quella classe? per ora cancello i campi.
+    const pointers: IReference[] = this.getReferencePointingHere();
+    let i;
+    for (i = 0; i < pointers.length; i++) { pointers[i].delete(); }
+    if (this.shouldBeDisplayedAsEdge()) {
+      const edges: IEdge[] = U.ArrayCopy(this.getEdges(), false);
+      for (i = 0; i < edges.length; i++) { edges[i].remove(); }
+    } else { this.getVertex().remove(); }
+    Type.updateTypeSelectors(null, false, false, true); }
+
+  refreshGUI_Alone(debug?: boolean): void {
+    if (!Status.status.loadedLogic) { return; }
+    if (this.shouldBeDisplayedAsEdge()) {
+      if (this.vertex) { this.vertex.remove(); this.vertex = null; }
+      const edges: IEdge[] = this.getEdges();
+      let i: number;
+      for (i = 0; i < edges.length; i++) { edges[i].refreshGui(debug); }
+      return; }
+    this.getVertex().refreshGUI(); }
+
+  getReferencePointingHere(): IReference[] { return this.referencesIN; }
+  /*getStyle_oldhtml(): SVGForeignObjectElement {
+    const html: Element = super.getStyle().html; // U.removeemptynodes(super.getStyle(), true);
+    const container: SVGForeignObjectElement = html as SVGForeignObjectElement; //U.newSvg<SVGForeignObjectElement>('foreignObject');
     const size: Size = new Size(0, 0, 0, 0);
+    // todo: devi specificarlo che x, y, width, height sono attributi speciali assegnabili agli HTMLElement non-svg e vengono trasmessi.
+    // todo: pondera l'uso di U.cloneAllAttributes(html, container); per trasferire gli attributi dell' userStyle-root nell'SvgForeignElem.
+
+    const firstChild: HTMLElement = container.firstChild as HTMLElement;
+    if (!firstChild.style.height || firstChild.style.height === '') { firstChild.style.height = 'auto'; }
+    if (firstChild.style.height === 'auto') { container.dataset.autosize = 'true'; }
+    else if (container.dataset.autosize === 'true') { firstChild.style.height = 'auto'; }
+    // (html.firstChild as HTMLElement).style.height = 'auto'; // allows autosize.
+
+
+    container.classList.add('Class');
+    container.setAttributeNS(null, 'dinamico', 'true');
+    /*
     size.x = +html.getAttribute('x');
     size.y = +html.getAttribute('y');
     size.w = +html.getAttribute('width');
     size.h = +html.getAttribute('height');
-    container.classList.add('Class');
-    // todo: ??? a che serviva? U.cloneAllAttributes(html, container);
-    container.appendChild(html);
-    container.setAttributeNS(null, 'dinamico', 'true');
     container.setAttributeNS(null, 'x', isNaN(size.x) ? '0' : '' + size.x);
     container.setAttributeNS(null, 'y', isNaN(size.y) ? '0' : '' + size.y);
     container.setAttributeNS(null, 'width', isNaN(size.w) ? '200' : '' + size.w);
     container.setAttributeNS(null, 'height', isNaN(size.h) ? '100' : '' + size.h);
+    container.appendChild(html);* /
     return container; }
-
-  processTemplate(htmlRaw: HTMLElement | SVGElement): HTMLElement | SVGElement {
-    htmlRaw = this.incapsula(htmlRaw);
-    htmlRaw = U.removeemptynodes(htmlRaw, true);
-    return htmlRaw; }
-
-  modify(json: Json, destructive: boolean) {
-    if (!json) {json = IClass.generateEmptyeCore(); }
-    this.setJson(json);
-    console.log('IClass.modify(); json:', json, '; metaVersion: ', this.metaParent, 'this:', this);
-    /// own attributes.
-    this.setName(Json.read<string>(this.json, eCoreClass.name), false);
-    /*this.name = Json.read<string>(this.json, eCoreClass.name);
-    this.fullname = this.midname = this.parent.fullname + '.' + this.name;*/
-    if (!this.referencesIN) { this.referencesIN = []; }
-    /// childrens
-    const childs: Json[] = Json.getChildrens(json);
+*/
+  getAttribute(name: string, caseSensitive: boolean = false): IAttribute {
     let i: number;
-    let newFeature: IFeature;
-    const oldChildrens: ModelPiece[] = this.childrens;
-    let metaParent: IFeature;
-    if (destructive) { this.childrens = []; this.attributes = []; this.references = []; }
-    for (i = 0; i < childs.length; i++) {
-      // console.log('reading class children[' + i + '/' + childs.length + '] of: ', childs, 'of', json);
-      const child: Json = childs[i];
-      const xsiType = Json.read<string>(child, eCoreAttribute.xsitype);
-      if (destructive) {
-        switch (xsiType) {
-          default: U.pe(true, 'unexpected xsi:type: ', xsiType, ' in feature:', child); break;
-          case 'ecore:EAttribute':
-            metaParent = null;
-            // metaParent = oldChildrens[i] && oldChildrens[i].metaParent ? oldChildrens[i].metaParent : U.findMetaParentA(this, child);
-            newFeature = new IAttribute(this, child, metaParent as unknown as IAttribute);
-            this.attributes.push(newFeature as IAttribute); break;
-          case 'ecore:EReference':
-            metaParent = null;
-            // metaParent = oldChildrens[i] && oldChildrens[i].metaParent ? oldChildrens[i].metaParent : U.findMetaParentA(this, child);
-            newFeature = new IReference(this, child, metaParent as unknown as IReference);
-            this.references.push(newFeature as IReference); break;
-        }
-        this.childrens.push(newFeature);
-        continue; }
-      U.pe(true, 'Non-destructive class modify: to do');
-    }
-  }
-  remove(): IClass {
-    // controllo se il parent è il package contenente eClassifiers o se è direttamente l'array come dovrebbe.
-    // U.pe(!Array.isArray(this.parent.json['@eClassifiers']), 'tried to read array in wrong position in model:', this.parent.json);
-    super.remove();
-    // this.styleEditor.remove(); // rimuove dalla toolbar
-    return this; }
+    if (!caseSensitive) { name = name.toLowerCase(); }
+    for (i = 0; i < this.attributes.length; i++) {
+      const s: string = this.attributes[i].name;
+      if ((caseSensitive ? s : s.toLowerCase()) === name) { return this.attributes[i]; } }
+    return null; }
 
+  getReference(name: string, caseSensitive: boolean = false): IReference {
+    let i: number;
+    if (!caseSensitive) { name = name.toLowerCase(); }
+    for (i = 0; i < this.references.length; i++) {
+      const s1: string = this.references[i].name;
+      console.log('find IReference[' + s1 + '] =?= ' + name + ' ? ' + (caseSensitive ? s1 : s1.toLowerCase()) === name);
+      if ((caseSensitive ? s1 : s1.toLowerCase()) === name) { return this.references[i]; } }
+    return null; }
 
-generateModel() {
-  const featurearr = [];
-  const model = new Json(null);
-  model[eCoreClass.xsitype] = 'ecore:EClass';
-  model[eCoreClass.name] = this.name;
-  model[eCoreClass.eStructuralFeatures] = featurearr;
-  let i;
-  for (i = 0; i < this.childrens.length; i++) {
-    const feature = this.childrens[i];
-    featurearr.push(feature.generateModel());
-  }
-  return model; }
-
-
-  generateVertex(position: GraphPoint): IVertex {
-    if (!position) { position = new GraphPoint(0, 0); }
-    const v: IVertex = this.vertex = new IVertex();
-    v.constructorClass(this);
-    v.draw();
-    v.moveTo(position);
-    return v; }
-
-  generateEdge(): IEdge[] {
+  /*generateEdge(): IEdge[] {
     const e: IEdge = null;
     U.pw(true, 'Class.generateEdge(): todo');
     // todo check questa funzione e pure il shouldbedisplayedasedge
     this.edges = [e];
-    return this.edges; }
+    return this.edges; }*/
 
-  getVertex(): IVertex {
-    U.pe(this.shouldBeDisplayedAsEdge(), 'err');
-    if (this.vertex == null) { this.generateVertex(null); }
-    return this.vertex; }
-  getEdge(): IEdge[] {
+  copy(other: IClass, nameAppend: string = '_Copy', newParent: IClass = null): void {
+    super.copy(other, nameAppend, newParent);
+    this.attributes = [];
+    this.references = [];
+    this.edges = [];
+    this.edgeStyleCommon = other.edgeStyleCommon.clone();
+    this.edgeStyleHighlight = other.edgeStyleHighlight.clone();
+    this.edgeStyleSelected = other.edgeStyleSelected.clone();
+    let i: number;
+    for ( i = 0; i < this.childrens.length; i++) {
+      const child: Typedd = this.childrens[i];
+      if (child instanceof IReference) { this.references.push(child); continue; }
+      if (child instanceof IAttribute) { this.attributes.push(child); continue; }
+      U.pe(true, 'found class.children not reference neither attribute: ', child);
+    }
+  }
+
+  /*getEdge(): IEdge[] {
     U.pe(!this.shouldBeDisplayedAsEdge(), 'err');
     if (!this.edges) { this.generateEdge(); }
-    return this.edges; }
+    return this.edges; }*/
 
-  refreshGUI(): void {
-    if (!Status.status.loadedLogic) { return; }
-    // console.log('Class.refreshGUI(), shouldBeEdge?', this.shouldBeDisplayedAsEdge(),
-    // '!this.vertex && !this.edge === ', !this.vertex && !this.edge);
-    if (!this.vertex && (!this.edges || this.edges.length === 0)) {
-      if (this.shouldBeDisplayedAsEdge()) { this.generateEdge(); } else {  this.generateVertex(null); }}
-    if (this.vertex) { this.vertex.refreshGUI(); }
-    let i = -1;
-    // while (++i < this.references.length) {} i = -1;
-    while (++i < this.edges.length) { if (this.edges) { this.edges[i].refreshGui(); } }
-    if (this.vertex && this.vertex.html()) {
-      EType.fixPrimitiveTypeSelectors(this.vertex.html());
-      IClass.updateAllMMClassSelectors(this.vertex.html(), false);
-    }
-  }
-
-  addReference() {
-    const ref: IReference = new IReference(this, null, null);
-    this.references.push(ref);
-    this.childrens.push(ref);
-    this.json = this.generateModel();
-    ref.target = this;
-    ref.edges = ref.generateEdge();
-    this.refreshGUI();
-    IClass.updateAllMMClassSelectors();
-  }
-
-  addAttribute() {
-    const attr: IAttribute = new IAttribute(this, null, null);
-    this.attributes.push(attr);
-    this.childrens.push(attr);
-    this.json = this.generateModel();
-    this.refreshGUI(); }
-
-  fieldChanged(e: JQuery.ChangeEvent): void {
-    const html: HTMLElement = e.currentTarget;
-    switch (html.tagName.toLowerCase()) {
-      case 'select':
-      default: U.pe(true, 'unexpected tag:', html.tagName, ' of:', html, 'in event:', e); break;
-      case 'textarea':
-      case 'input': this.setName((html as HTMLInputElement).value); break;
-    }
-  }
-
-
-  setName(name: string, refreshGUI: boolean = true) {
-    super.setName(name, refreshGUI);
-    this.midname = this.parent.name + '.' + this.name;
-    this.fullname = this.midname;
-    let i;
-    for (i = 0; i < this.childrens.length; i++) {
-      this.childrens[i].setName(this.childrens[i].name, refreshGUI); // per aggiornare il fullname.
-    }
-    if (refreshGUI) { this.refreshGUI(); IClass.updateAllMMClassSelectors(); }
-  }
-
-  delete(): void {
-    U.arrayRemoveAll(this.metaParent.instances, this);
-    U.arrayRemoveAll(this.parent.childrens, this);
-    // todo: che fare con le reference a quella classe? per ora cancello i campi.
-    const pointers: IReference[] = this.getReferencePointingHere();
-    let i;
-    for (i = 0; i < pointers.length; i++) { pointers[i].remove(); }
-    if (this.shouldBeDisplayedAsEdge()) {
-      const edges: IEdge[] = this.getEdge();
-      while (this.edges.length > 0) { edges[0].remove(); } } else { this.getVertex().remove(); }
-    IClass.updateAllMMClassSelectors();
-  }
-
-  duplicate(nameAppend: string = '_Copy', newParent: IPackage = null): IClass {
-    const c: IClass = new IClass(null, null, null);
-    c.setName(this.name + nameAppend);
-    if (newParent) {
-      c.parent = newParent;
-      c.midname = c.parent.name + '.' + c.name;
-      c.fullname = c.parent.fullname + '.' + c.name;
-      newParent.childrens.push(c); }
-    c.metaParent = this.metaParent;
-    if (c.metaParent) { c.metaParent.instances.push(c); c.metaParent.refreshGUI(); this.metaParent.refreshInstancesGUI(); }
-    c.childrens = [];
-    c.references = [];
-    c.attributes = [];
-    c.referencesIN = [];
-    c.styleOfInstances = this.styleOfInstances;
-    c.customStyle = this.customStyle;
-    c.html = null;
-    c.json = {} as Json;
-    //// set childrens
-    let i;
-    for (i = 0; i < this.childrens.length; i++) {
-      // console.log('duplicating children[' + (i + 1) + '/' + this.childrens.length + ']');
-      this.childrens[i].duplicate('', c);
-    }
-    IClass.updateAllMMClassSelectors();
-    c.refreshGUI();
-    return c; }
-  getReferencePointingHere(): IReference[] {
-    // U.pe(true, 'todo'); // todo:
-    return this.referencesIN;
-  }
-
-  setDefaultStyle(value: string): void {
-    U.pw(true, 'class.setdefaultStyle: todo.');
-  }
-
-
-  linkToMetaParent(meta: IClass) {
+  /*linkToMetaParent(meta: IClass): void {
+    U.pe(true, 'linkToMetaParent: todo.');
     const outObj: any = {};
-    const comformability: number = this.comformability(meta, outObj);
+    const comformability: number = this.conformability(meta, outObj);
     if (comformability !== 1) {
-      U.pw(true, 'iClass: ' + this.name + ' not fully conform to ' + meta.name + '. Compatibility = ' + comformability * 100 + '%' );
+      U.pw(true, 'm2Class: ' + this.name + ' not fully conform to ' + meta.name + '. Conformability: = ' + comformability * 100 + '%' );
       return; }
     this.metaParent = meta;
     let i: number;
@@ -371,14 +186,15 @@ generateModel() {
     while (++i < attrPermutation.length) { this.attributes[i].linkToMetaParent(meta.attributes[attrPermutation[i]]); }
     i = -1;
     while (++i < refPermutation.length) { this.references[i].linkToMetaParent(meta.references[refPermutation[i]]); }
-  }
-  comformability(meta: IClass, outObj: any = null/*.refPermutation, .attrPermutation*/): number {
+  }*/
+
+  /*conformability(meta: IClass, outObj: any = null/*.refPermutation, .attrPermutation* /, debug: boolean = true): number {
     if (this.attributes > meta.attributes) { return 0; }
     if (this.references > meta.references) { return 0; }
     const refLenArray: number[] = [];
     let i;
     let j;
-    // find best references permutation compability
+    // find best references permutation compabilityF
     i = -1;
     while (++i < meta.references.length) { refLenArray.push(i); }
     const refPermut: number[][] = U.permute(refLenArray);
@@ -394,7 +210,7 @@ generateModel() {
       while (++j < permutation.length) {
         const Mref: IReference = this.references[j];
         const MMref: IReference = meta.references[permutation[j]];
-        const refComf = !Mref ? 0 : Mref.comformability(MMref);
+        const refComf = !Mref ? 0 : Mref.conformability(MMref, debug);
         console.log('ref: permutationComformability:', permutationComformability, ' + ' + refComf + ' / ' + permutation.length,
           '-->', permutationComformability + refComf / permutation.length);
         permutationComformability += refComf / permutation.length; }
@@ -410,7 +226,7 @@ generateModel() {
     const attLenArray: number[] = [];
     i = -1;
     while (++i < meta.attributes.length) { attLenArray.push(i); }
-    const attPermut: number[][] = U.permute(attLenArray);
+    const attPermut: number[][] = U.permute(attLenArray, debug);
     // console.log('possible class.attributes permutations[' + meta.attributes.length + '!]:', attLenArray, ' => ', attPermut);
     const allAttPermutationConformability: number[] = [];
     i = -1;
@@ -421,9 +237,9 @@ generateModel() {
       const permutation = attPermut[i];
       let permutationComformability = 0;
       while (++j < permutation.length) {
-        const Matt: IAttribute = this.attributes[j];
-        const MMatt: IAttribute = meta.attributes[permutation[j]];
-        const attComf = !Matt ? 0 : Matt.comformability(MMatt);
+        const M2att: IAttribute = this.attributes[j];
+        const M3att: IAttribute = meta.attributes[permutation[j]];
+        const attComf = !M2att ? 0 : M2att.conformability(M3att, debug);
         console.log('attr: permutationComformability:', permutationComformability, ' + ' + attComf + ' / ' + permutation.length,
           '-->', permutationComformability + attComf / permutation.length);
         permutationComformability += attComf / permutation.length; }
@@ -444,39 +260,50 @@ generateModel() {
       outObj.attrPermutation = bestAttPermutation; }
 
     const ret = nameComformability + bestAttPermutationValue + bestRefPermutationValue;
-    console.log('CLASS.comform(', this.name, {0: this}, ', ', meta.name, {0: meta}, ') = ', ret,
+    U.pif(debug, 'M2CLASS.comform(', this.name, {0: this}, ', ', meta.name, {0: meta}, ') = ', ret,
       ' = ', nameComformability + ' + ' + bestAttPermutationValue + ' + ', bestRefPermutationValue);
-    return ret; }
+    return ret; }*/
 
-  getInfo(toLower: boolean = true): any {
-    const info: any = super.getInfo();
-    info['' + 'tsClass'] = (this.getModelRoot().isMM() ? 'm' : '') + 'mClass';
-    return info;
+  getOperations(): EOperation[] {
+    if (this instanceof M3Class) {
+      let i: number;
+      for (i = 0; i < this.childrens.length; i++) {
+        const c: Typedd = this.childrens[i];
+        if (c instanceof EOperation) { return [c]; } }
+      U.pe(true, 'failed to find m3Operation'); }
+    if (this instanceof M2Class) { return this.operations; }
+    if (this instanceof MClass) { return this.metaParent.operations; }
+    U.pe(true, 'unexpected class:' + U.getTSClassName(this) + ': ', this);
+  }
+}
+export class M3Class extends IClass {
+  parent: M3Package;
+  // childrens: M3Feature[];
+  attributes: M3Attribute[];
+  references: M3Reference[];
+  referencesIN: M3Reference[]; // external pointers to this class.
+  metaParent: M3Class;
+  instances: M2Class[]; //  | M3Class[] = null;
+
+  constructor(parent: M3Package, json: Json = null) {
+    super(parent, null);
+    this.parse(json, true); }
+
+  duplicate(nameAppend?: string, newParent?: ModelPiece): ModelPiece { U.pe(true, 'Invalid operation: m3Class.duplicate()'); return this; }
+
+  generateModel(): Json { U.pe(true, 'Invalid operation: m3Class.generateModel()'); return this; }
+
+  parse(json: Json, destructive?: boolean): void {
+    this.name = 'Class';
+    const a: M3Attribute = new M3Attribute(this, null);
+    const r: M3Reference = new M3Reference(this, null);
+    const o: EOperation = new EOperation(this, null);
+    const p: EParameter = new EParameter(o, null);
+    o.childrens = [p];
+    this.childrens = [a, r, o];
+    this.attributes = [a];
+    this.references = [r];
   }
 
-  getAttribute(name: string, caseSensitive: boolean = false): IAttribute {
-    let i: number;
-    if (!caseSensitive) { name = name.toLowerCase(); }
-    for (i = 0; i < this.attributes.length; i++) {
-      const s1: string = this.attributes[i].name;
-      if ((caseSensitive ? s1 : s1.toLowerCase()) === name) { return this.attributes[i]; }
-    }
-    return null;
-  }
-
-  getReference(name: string, caseSensitive: boolean = false): IReference {
-    let i: number;
-    if (!caseSensitive) { name = name.toLowerCase(); }
-    for (i = 0; i < this.references.length; i++) {
-      const s1: string = this.references[i].name;
-      console.log('find IReference[' + s1 + '] =?= ' + name + ' ? ' + (caseSensitive ? s1 : s1.toLowerCase()) === name);
-      if ((caseSensitive ? s1 : s1.toLowerCase()) === name) { return this.references[i]; }
-    }
-    return null;
-  }
-
-
-  getChildrenIndex_ByMetaParent(meta: ModelPiece): number { U.pe(true, 'metodo esclusivo a MClass'); return null; }
-  getAttributeIndex_ByMetaParent(meta: IAttribute): number { U.pe(true, 'metodo esclusivo a MClass'); return null; }
-  getReferenceIndex_ByMetaParent(meta: IReference): number { U.pe(true, 'metodo esclusivo a MClass'); return null; }
+  refreshGUI_Alone(debug: boolean = true): void { }
 }

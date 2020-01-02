@@ -1,20 +1,21 @@
-import {
+/*import {
   Dictionary,
   EdgeModes,
   EdgePoint, EdgePointStyle,
   EdgeStyle,
   GraphPoint, GraphSize,
   IAttribute,
-  IClass, IEdge,
+  M2Class, IEdge,
   IModel,
   IReference, Json, ModelPiece,
   Point,
-  Status,
-  U,
-} from '../common/Joiner';
-import {MatTabGroup} from '@angular/material';
-import {InputPopup, ShortAttribETypes} from '../common/util';
+  Status, InputPopup, ShortAttribETypes,
+  U, IClass, MetaModel, M2Attribute, M2Reference, Model,
+}                  from '../common/Joiner';
+
 import ClickEvent = JQuery.ClickEvent;
+import {ViewPoint} from '../GuiStyles/viewpoint';
+
 export class StatusOptions {
   typeAliasDictionary: Dictionary<ShortAttribETypes, string> = {};
   aliasTypeDictionary: Dictionary<string, ShortAttribETypes> = {};
@@ -46,18 +47,18 @@ export class EdgeOptions {
   selected: EdgeStyle = null;
   midPoints: EdgePointOption[] = [];
 
-  /*loadEdgeOptions(m: IClass | IReference): void {
+  /*loadEdgeOptions(m: M2Class | IReference): void {
     let i = -1;
     const e = m.edge;
     U.pe(!e, 'se l\'edge è null ora, lo dev\'essere stato anche prima, ma in tal caso le edgeoptions non dovevano essere state prodotte.');
     // if (!e) { return; }
     U.pe(e.midNodes.length > 0, 'failed to load midpoints: the edge already have some points, even before the loading of savefile.');
     while (++i < this.midPoints.length) {
-      const mp: EdgePointOption = this.midPoints[i];
-      e.midNodes.push(new EdgePoint(e, mp.pos));
+      const ownermp: EdgePointOption = this.midPoints[i];
+      e.midNodes.push(new EdgePoint(e, ownermp.pos));
     }
     e.refreshGui();
-  }*/
+  }* /
 }
 export class ModelPieceOptions {
   fullnameTarget: string = null;
@@ -65,11 +66,11 @@ export class ModelPieceOptions {
   instancesStyle: string = null;
 
   /*loadModelPieceOptions(m: ModelPiece): void {
-    m.customStyle = this.ownStyle;
+    m.customStyleToErase = this.ownStyle;
     m.styleOfInstances = this.instancesStyle;
     const namePos = this.fullnameTarget.lastIndexOf('.');
     m.setName(this.fullnameTarget.substr(namePos + 1));
-  }*/
+  }* /
 }
 export class ClassOptions extends ModelPieceOptions {
   displayAsEdge = false;
@@ -79,18 +80,18 @@ export class ClassOptions extends ModelPieceOptions {
   size: GraphSize = null;
   // pos: GraphPoint = null;
 
-  static FindTargetingClass(fullnameTarget: string, m: IModel) {
-    const classes: IClass[] = m.getAllClasses();
+  static FindTargetingClass(fullnameTarget: string, m: MetaModel) {
+    const classes: M2Class[] = m.getAllClasses();
     let i = -1;
     while (++i < classes.length) {
-      if (classes[i].fullname === fullnameTarget) { return classes[i]; }
+      if (classes[i].fullname() === fullnameTarget) { return classes[i]; }
     }
     U.pe(true, 'target of classOption not found.', ' classname:', fullnameTarget, ', Model:', m);
     return null;
   }
-  // findTargetingClass(m: IModel): IClass { return ClassOptions.FindTargetingClass(this.fullnameTarget, m); }
+  // findTargetingClass(m: IModel): M2Class { return ClassOptions.FindTargetingClass(this.fullnameTarget, m); }
 /*
-  loadClassOptions(classe: IClass): void {
+  loadClassOptions(classe: M2Class): void {
     const oclasse: ClassOptions = this;
     let oattribute: AttributeOptions;
     let oreference: ReferenceOptions;
@@ -119,18 +120,18 @@ export class ClassOptions extends ModelPieceOptions {
     }
     classe.refreshGUI();
     return; }
-*/
+* /
 }
 export class AttributeOptions extends ModelPieceOptions {
-  static findTargeting(fullnameTarget: string, classe: IClass): IAttribute {
+  static findTargeting(fullnameTarget: string, classe: M2Class): IAttribute {
     let i = -1;
     while (++i < classe.attributes.length) {
-      const attribute: IAttribute = classe.attributes[i];
-      if (fullnameTarget === attribute.fullname) { return attribute; }
+      const attribute: M2Attribute = classe.attributes[i];
+      if (fullnameTarget === attribute.fullname()) { return attribute; }
     }
     U.pe(true, 'AttributeOptions targeting failed. fullnameTarget:', fullnameTarget, ', classe:', classe);
     return null; }
-  // findTargetingAttribute(classe: IClass): IAttribute { return AttributeOptions.findTargeting(this.fullnameTarget, classe); }
+  // findTargetingAttribute(classe: M2Class): IAttribute { return AttributeOptions.findTargeting(this.fullnameTarget, classe); }
 }
 export class ReferenceOptions extends ModelPieceOptions {
   edgeOptions: EdgeOptions[];
@@ -139,54 +140,58 @@ export class ReferenceOptions extends ModelPieceOptions {
     this.edgeOptions = [];
   }
 
-  static findTarget(fullnameTarget: string, m: IClass): IReference {
+  static findTarget(fullnameTarget: string, m: M2Class): M2Reference {
     let i = -1;
     while (++i < m.references.length) {
-      const reference: IReference = m.references[i];
-      if (fullnameTarget === reference.fullname) { return reference; }
+      const reference: M2Reference = m.references[i];
+      if (fullnameTarget === reference.fullname()) { return reference; }
     }
     U.pe(true, 'referenceOptions targeting failed. fullnameTarget:', fullnameTarget, ', classe:', m);
     return null; }
-  // findTargetingReference(classe: IClass): IReference { return ReferenceOptions.findTarget(this.fullnameTarget, classe); }
+  // findTargetingReference(classe: M2Class): IReference { return ReferenceOptions.findTarget(this.fullnameTarget, classe); }
 }
 export class EdgePointOption {
   pos: GraphPoint;
-}
-export class Options {
+}* /
+
+import {Status} from '../common/Joiner';
+
+export class Options {/*
   status: StatusOptions;
   mm: ModelOptions;
   m: ModelOptions;
-  version: number;
-
-
-
+  version: number;* /
 
 
   static Save(isAutosave: boolean, saveAs: boolean) {
     if (localStorage.getItem('autosave') !== 'true') { return; }
-    Options.generateSaveJson().save(isAutosave, saveAs);
+    Options.generateSaveJson().saveToDB(isAutosave, saveAs);
     console.log('autosave style done: ', this);
-    Status.status.mm.save(isAutosave, null);
-    Status.status.m.save(isAutosave, null);
+    Status.status.mm.saveToDB(isAutosave, null);
+    Status.status.m.saveToDB(isAutosave, null);
+    // for (let i = 0; i < Status.status.m.viewpoints.length; i++) { Status.status.m.saveView(Status.status.m.viewpoints[i], isAutosave, null); }
+    // incluso in model.saveToDB() for (let i = 0; i < Status.status.mm.viewpoints.length; i++) {
+    // Status.status.mm.saveView(Status.status.mm.viewpoints[i], isAutosave, null); }
     console.log('autosave fully finished.'); }
+
   static Load(s: Status) {
     Options.LoadFromBrowserMemory(s); }
   static LoadFromBrowserMemory(s, key: string = null): void {
     if (key === null ) { key = 'modelGraphSave_GUI_Damiano'; }
     const value = localStorage.getItem(key);
     if (!value || value === '') { return; }
-    const save: Options = JSON.parse(value);
-    // save = Options.fromJson(save);
+    const saveToDB: Options = JSON.parse(value);
+    // saveToDB = Options.fromJson(saveToDB);
     // console.clear();
-    console.log('save.version:', save.version, ', saveRaw:', value, 'save:', save);
+    console.log('saveToDB.version:', saveToDB.version, ', saveRaw:', value, 'saveToDB:', saveToDB);
     try {
-      switch (save.version) {
-        default: U.pe(true, 'unrecognized optionSave version:', save.version); break;
-        case 1: Options.LoadV1(save, s); break;
+      switch (saveToDB.version) {
+        default: U.pe(true, 'unrecognized optionSave version:', saveToDB.version); break;
+        case 1: Options.LoadV1(saveToDB, s); break;
       }
     } catch (e) {
-      U.pw(true, 'the style save had some errors, it will be resetted. Only style customizations will be lost.');
-      // disable save on exit to avoid error survival.
+      U.pw(true, 'the style saveToDB had some errors, it will be resetted. Only style customizations will be lost.');
+      // disable saveToDB on exit to avoid error survival.
       $(window).off('beforeunload.unload_autosave');
       localStorage.setItem(key, null); }
   }
@@ -197,12 +202,15 @@ export class Options {
     console.log('load(options:', o, 'status:', s, ')');
     Options.LoadV1Model(o.mm, s.mm);
     console.log('load mm done.');
-    Options.LoadV1Model(o.m, s.m);
+    Options.LoadV1ModelM(o.m, s.m);
     console.log('load m done.');
     s.mm.refreshGUI();
-    s.m.refreshGUI();
+    s.m.refreshGUI(); }
+
+  private static LoadV1ModelM(o: ModelOptions, m: Model): void {
+    U.pw(true, 'load m1: todo.');
   }
-  private static LoadV1Model(o: ModelOptions, m: IModel): void {
+  private static LoadV1Model(o: ModelOptions, m: MetaModel): void {
     m.graph.grid = new GraphPoint(o.graph.grid.x, o.graph.grid.y);
     m.graph.zoom = new Point(o.graph.zoom.x, o.graph.zoom.y);
     m.graph.scroll = new GraphPoint(o.graph.scroll.x, o.graph.scroll.y);
@@ -212,13 +220,13 @@ export class Options {
       Options.LoadV1Class(o.class[i], m);
     }
   }
-  private static LoadV1Class(o: ClassOptions, root: IModel): void {
-    const m: IClass = ClassOptions.FindTargetingClass(o.fullnameTarget, root);
+  private static LoadV1Class(o: ClassOptions, root: MetaModel): void {
+    const m: M2Class = ClassOptions.FindTargetingClass(o.fullnameTarget, root);
     if (m.vertex) { m.vertex.setSize(new GraphSize(o.size.x, o.size.y, o.size.w, o.size.h)); }
     m.shouldBeDisplayedAsEdge(o.displayAsEdge);
     let namepos: number = o.fullnameTarget.lastIndexOf('.');
     m.setName(o.fullnameTarget.substr(namepos + 1));
-    m.customStyle = U.toHtml(o.ownStyle);
+    m.customStyleToErase = U.toHtml(o.ownStyle);
     m.styleOfInstances = U.toHtml(o.instancesStyle);
     console.log('eoc:', o.edgeOptions, o);
     Options.LoadV1EdgeOptions(o.edgeOptions, m);
@@ -229,7 +237,7 @@ export class Options {
       namepos = oa.fullnameTarget.lastIndexOf('.');
       a.setName(oa.fullnameTarget.substr(namepos + 1));
       a.styleOfInstances = U.toHtml(oa.instancesStyle);
-      a.customStyle = U.toHtml(oa.ownStyle);
+      a.customStyleToErase = U.toHtml(oa.ownStyle);
     }
     i = -1;
     while (++i < o.references.length) {
@@ -238,13 +246,13 @@ export class Options {
       namepos = or.fullnameTarget.lastIndexOf('.');
       r.setName(or.fullnameTarget.substr(namepos + 1));
       r.styleOfInstances = U.toHtml(or.instancesStyle);
-      r.customStyle = U.toHtml(or.ownStyle);
+      r.customStyleToErase = U.toHtml(or.ownStyle);
       console.log('eor:', or.edgeOptions, or);
       Options.LoadV1EdgeOptions(or.edgeOptions, r);
     }
 
   }
-  private static LoadV1EdgeOptions(eo: EdgeOptions[], r: IReference | IClass): void {
+  private static LoadV1EdgeOptions(eo: EdgeOptions[], r: IReference | M2Class): void {
     if (!eo || eo.length === 0) { return; }
     console.log('eo:', eo);
     r.edgeStyleCommon.style = eo[0].common.style;
@@ -323,12 +331,12 @@ export class Options {
       Object['' + 'assign'](mo.class[i], moj.class[i]);
       // todo: this is hell: dovrei usare assign solo sui primitivi.
       Object['' + 'assign'](mo.class[i].size, moj.class[i].size);
-      // console.log(!mo.class[i].fullnameTarget, mo.class[i].fullnameTarget, 'target:', mo.class[i], 'source:', moj.class[i]);
+      // console.log(!mo.class[i].fullnameTarget, mo.class[i].fullnameTarget, 'classType:', mo.class[i], 'source:', moj.class[i]);
       console.log('autosaveRoot_String:', (localStorage.getItem('modelGraphSave_GUI_Damiano')));
       console.log('autosaveRoot:_JSON', JSON.parse(localStorage.getItem('modelGraphSave_GUI_Damiano')));
-      U.pe(!moj.class[i].fullnameTarget, 'source is wrong (savefile wrong). target:', mo.class[i],
+      U.pe(!moj.class[i].fullnameTarget, 'source is wrong (savefile wrong). classType:', mo.class[i],
         'source:', moj.class[i], 'moj:', moj, 'jj:', jj);
-      U.pe(!mo.class[i].fullnameTarget, 'target is wrong (load wrong). target:', mo.class[i], 'source:', moj.class[i]);
+      U.pe(!mo.class[i].fullnameTarget, 'classType is wrong (load wrong). classType:', mo.class[i], 'source:', moj.class[i]);
       Options.fromJsonAssignEdgeOptions(mo.class[i].edgeOptions, moj.class[i].edgeOptions);
       // alert('assignEdgeOptions done');
       let k = -1;
@@ -366,7 +374,7 @@ export class Options {
   private static load(st: Status, oJson: Options): void {
 
   }
-  */
+  * /
   private static MakeEdgeOptions(logic: IClass | IReference): EdgeOptions[] {
     const edges: IEdge[] = logic.edges;
     let j = -1;
@@ -391,9 +399,9 @@ export class Options {
     return ret; }
   private static MakeClassOption(classe: IClass) {
     const co: ClassOptions = new ClassOptions();
-    co.fullnameTarget = classe.fullname;
+    co.fullnameTarget = classe.fullname();
     co.instancesStyle = classe.styleOfInstances ? classe.styleOfInstances.outerHTML : null;
-    co.ownStyle = classe.customStyle ? classe.customStyle.outerHTML : null;
+    co.ownStyle = classe.customStyleToErase ? classe.customStyleToErase.outerHTML : null;
     co.displayAsEdge = classe.shouldBeDisplayedAsEdge();
     co.edgeOptions = co.displayAsEdge && classe.edges ? Options.MakeEdgeOptions(classe) : null;
     co.size = classe.vertex.size;
@@ -402,8 +410,8 @@ export class Options {
     while (++j < attributes.length) {
       const attribute: IAttribute = attributes[j];
       const ca: AttributeOptions = new AttributeOptions();
-      ca.fullnameTarget = attribute.fullname;
-      ca.ownStyle = attribute.customStyle ? attribute.customStyle.outerHTML : null;
+      ca.fullnameTarget = attribute.fullname();
+      ca.ownStyle = attribute.customStyleToErase ? attribute.customStyleToErase.outerHTML : null;
       ca.instancesStyle = attribute.styleOfInstances ? attribute.styleOfInstances.outerHTML : null;
       co.attributes.push(ca);
     }
@@ -412,8 +420,8 @@ export class Options {
     while (++j < references.length) {
       const reference: IReference = references[j];
       const cr: ReferenceOptions = new ReferenceOptions();
-      cr.fullnameTarget = reference.fullname;
-      cr.ownStyle = reference.customStyle ? reference.customStyle.outerHTML : null;
+      cr.fullnameTarget = reference.fullname();
+      cr.ownStyle = reference.customStyleToErase ? reference.customStyleToErase.outerHTML : null;
       cr.instancesStyle = reference.styleOfInstances ? reference.styleOfInstances.outerHTML : null;
       cr.edgeOptions = reference.edges ? Options.MakeEdgeOptions(reference) : null;
       co.references.push(cr);
@@ -465,13 +473,13 @@ export class Options {
     this.status = new StatusOptions();
   }
 
-  private save(isAutosave: boolean, saveAs: boolean) {
+  private saveToDB(isAutosave: boolean, saveAs: boolean) {
     U.pe(saveAs, 'style.SaveAs() to do.');
     this.saveInBrowserMemory(saveAs);
   }
   private saveInBrowserMemory(saveAs: boolean, key: string = null, value: string = null): void {
     if (key === null ) { key = 'modelGraphSave_GUI_Damiano'; }
-    U.pe(!key || key === '', 'cannot save with null or empty name.');
+    U.pe(!key || key === '', 'cannot saveToDB with null or empty name.');
     if (value === null) { value = JSON.stringify(this); }
     localStorage.setItem(key, value);
   }
@@ -495,12 +503,12 @@ export class Options {
     s.m.graph.zoom         = this.m.graph.zoom;
     // s.m.graph.setZoom(this.m.graph.zoom);
     s.m.graph.scroll       = this.m.graph.scroll;
-    let classe: IClass;
+    let classe: M2Class;
     let oclasse: ClassOptions;
     let i: number;
 
     i = -1;
-    console.log('save:', this);
+    console.log('saveToDB:', this);
     while (++i < this.mm.class.length) {
       oclasse = this.mm.class[i];
       classe = oclasse.findTargetingClass(s.mm);
@@ -520,6 +528,7 @@ export class Options {
     s.m.refreshGUI();
     s.mm.refreshGUI();
   }
-*/
+* /
 
 }
+*/
