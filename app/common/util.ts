@@ -1242,8 +1242,13 @@ export class U {
     // c = p0-o
     // console.log('lrtb: ', l, r, t, b);
     // console.log('ptcoinc: ', puntoDaFarCoinciderePT, ' cursor:', cursor, ' size:', size, 'adjust:', add);
-    U.resizingContainer.style.width = U.resizingContainer.style.maxWidth = U.resizingContainer.style.minWidth = (size.w + add.x) + 'px';
-    U.resizingContainer.style.height = U.resizingContainer.style.maxHeight = U.resizingContainer.style.minHeight = (size.h + add.y) + 'px';
+    size.w += add.x;
+    size.h += add.y;
+    const borderSize: Size = U.sizeof(U.resizingBorder);
+    if (l || r) { size.w = Math.max(size.w, borderSize.w * 2); }
+    if (t || b) { size.h = Math.max(size.h, borderSize.h * 2); }
+    U.resizingContainer.style.width = U.resizingContainer.style.maxWidth = U.resizingContainer.style.minWidth = (size.w) + 'px';
+    U.resizingContainer.style.height = U.resizingContainer.style.maxHeight = U.resizingContainer.style.minHeight = (size.h) + 'px';
     // console.log('result:' + U.resizingContainer.style.width);
     U.resizingContainer.style.flexBasis = 'unset'; }
 
@@ -1372,7 +1377,12 @@ export class U {
     container.appendChild(hstripM);
     container.appendChild(hstripB);
     container.style.border = 'none';
-    content.style.border = 'none'; }
+    content.style.border = 'none';
+    content.style.width = '100%';
+    content.style.minWidth = '0';
+    content.style.height = '100%';
+    content.style.minHeight = '0';
+  }
 
   static copyStyle(from: HTMLElement | SVGGElement, to: HTMLElement | SVGGElement, computedStyle: CSSStyleDeclaration = null): boolean {
     // trying to figure out which style object we need to use depense on the browser support, so we try until we have one.

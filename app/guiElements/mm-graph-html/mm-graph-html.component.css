@@ -77,7 +77,7 @@
   display: none;
 }
 
-.property_sidebar, .sidebarShell, .editorShell, .propertyBarContainer{
+.property_sidebar, .editorShell, .propertyBarContainer{/*.sidebarShell,*/
   flex-basis: 0;/* calc(var(--sidebarW));*/
   flex-grow: 1;
   background-color: var(--mainBackgroundColor);

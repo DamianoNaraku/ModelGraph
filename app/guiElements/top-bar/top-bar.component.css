@@ -132,10 +132,6 @@ li.dropdownContent:hover {
   background-color: var(--secondaryBorderColor);
 }
 
-.dropdownContainer:hover>ul.dropdownContent {
-  display: block;
-}
-
 .dropdownContainer:hover>.dropdownTitle {
   background-color: var(--secondaryBorderColor);
 }
@@ -157,4 +153,24 @@ li.dropdownContent:hover {
 .buttonGrid {
   width: 45px;
   height: 45px;
+}
+
+
+ul.dropdownContent{
+  min-height: 100%;
+}
+.dropdownContainer:hover>ul.dropdownContent {
+  display: block;
+}
+.dropdownContainer:hover > ul.dropdownContent:empty{
+  display:flex;
+}
+ul.dropdownContent:empty:before{
+  content: '... Empty ...';
+  margin: auto;
+  display: flex;
+}
+ul.dropdownContent:empty:hover{
+  background-color: darkred !important;
+  cursor: not-allowed !important;
 }

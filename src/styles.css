@@ -1,4 +1,4 @@
-/* You can add global styles to this file, and also import other style files */
+/*@import '../src/themes/squaredTabs.css'; /* You can add global styles to this file, and also import other style files */
 ::-webkit-scrollbar {
   background-color: rgba(00, 132, 255, 0.1);
   /* background-color: var(--mainBorderColor); */
@@ -74,9 +74,6 @@ app-graph-tab-html{
   flex-grow: 1;
   position: relative;
   display: flex;
-}
-.UtabContainer.main{
-  flex-grow: 1;
 }
 #MM_INPUT{
   display: none;
@@ -185,7 +182,13 @@ button.edit:not(.btn) { background-image: url(../img/black/edit.png); }
   margin-bottom: 5px;
 }
 
-
+.UtabContainer{
+  flex-grow: 1;
+  flex-basis: 0;
+  overflow: auto;
+  display: flex;
+  flex-flow: column;
+}
 .UtabContentContainer{
   flex-grow: 1;
   flex-basis: 0;
@@ -200,10 +203,14 @@ button.edit:not(.btn) { background-image: url(../img/black/edit.png); }
   padding-right: calc(17px - 10px); /*for scrollbar ?*/
   flex-grow: 1;
 }
+.UtabContent.main{
+  padding:0;
+}
 .UtabHeader{
   padding-top: 10px;
   padding-bottom: 10px;
-  margin: 10px;
+  margin: 6px;
+  margin-left: 0;
   /*
   border: var(--mainBorder);
   */
@@ -214,6 +221,7 @@ button.edit:not(.btn) { background-image: url(../img/black/edit.png); }
   flex-basis: 0;
   text-align: center;
 }
+.UtabHeader:last-of-type{ margin-right: 0; }
 .UtabHeader[selected="true"]{
   font-weight: bold;
   background-color: var(--mainBorderColor);
@@ -223,20 +231,8 @@ button.edit:not(.btn) { background-image: url(../img/black/edit.png); }
   padding: 0;
   margin: 0;
   display: flex;}
-/* for squared * /
-.UtabHeader{
-  border-radius: 0;
-  border-left: none;
-  margin: 0;
-}
-.UtabHeader:first-of-type{ margin-left: calc( var(--mainBorderWidth) * -1); }
-.UtabHeader:last-of-type{ margin-right: calc( var(--mainBorderWidth) * -1); }
+/* for squared */
 /* for squared end*/
-/* circle tab headers*/
-.UtabHeader{
-  border-radius: 22.5px;
-}
-/* circle tab headers end*/
 /* glowing tab headers* /
 .UtabHeader {
   border: none !important;

@@ -20,9 +20,73 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.structure.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/theme.min.css" rel="stylesheet">
-
 </head>
 <body>
+  <fakehader>
+    <!-- required because angular will always insert styles.css at the bottom of the head, but i want those after it. -->
+    <!-- cannot link them as css files hosted on this webserver
+    because the node server will always reply with the homepage as instructed by angular's routing. -->
+    <style class="theme squaredTabs">
+      /*.UtabHeader{
+        border-radius: 0;
+        border-left: none;
+        margin: 0;
+        margin-top: 10px;
+      }
+      .UtabHeader:first-of-type{ margin-left: calc( var(--mainBorderWidth) * -1); }
+      */
+
+    </style>
+    <style class="theme roundedTabs">
+      .UtabHeader{
+        border-radius: 22.5px;
+      }
+    </style>
+    <style class="theme glowingTabs">
+      .UtabHeader {
+        border: none !important;
+        margin: 2px !important;
+        margin-top: 4px !important;
+        margin-bottom: 4px !important;
+        box-shadow: 2px 2px 3px #506894, 2px -2px 3px #506894, -2px 2px 3px #506894, -2px -2px 3px #506894, 2px 0px 3px #506894, 0px 2px 3px #506894, -2px 0px 3px #506894, 0px -2px 3px #506894;
+        box-shadow: 2px 2px 3px #606373, 2px -2px 3px #606373, -2px 2px 3px #606373, -2px -2px 3px #606373, 2px 0px 3px #606373, 0px 2px 3px #606373, -2px 0px 3px #606373, 0px -2px 3px #606373;
+        box-shadow: 1px 1px 3px #606373, 1px -1px 3px #606373, -1px 1px 3px #606373, -1px -1px 3px #606373, 1px 0px 3px #606373, 0px 1px 3px #606373, -1px 0px 3px #606373, 0px -1px 3px #606373;
+      }
+      .UtabHeader[selected="true"] {
+        box-shadow: 2px 2px 3px #606373, 2px -2px 3px #606373, -2px 2px 3px #606373, -2px -2px 3px #606373, 2px 0px 3px #606373, 0px 2px 3px #606373, -2px 0px 3px #606373, 0px -2px 3px #606373;
+        box-shadow: 2px 2px 3px #506894, 2px -2px 3px #506894, -2px 2px 3px #506894, -2px -2px 3px #506894, 2px 0px 3px #506894, 0px 2px 3px #506894, -2px 0px 3px #506894, 0px -2px 3px #506894;
+        box-shadow: none;
+      }
+    </style>
+    <style class="theme topBoundTabs">
+/*
+      .UtabHeaderContainer{
+        background-color: var(--mainBackgroundColor);
+      }
+      .UtabHeader{
+        margin-bottom: 0;
+        border-top: 10px solid var(--mainBorderColor);
+        margin-top: 0;
+      }
+      .UtabHeader[selected="true"]{
+        border-bottom-left-radius: 30px;
+        border-bottom-right-radius: 30px;
+      }
+      .UtabHeader[selected="true"]:last-of-type{ border-bottom-right-radius:0; }
+      .UtabHeader[selected="true"]:first-of-type{ border-bottom-left-radius:0; }*/
+    </style>
+    <style class="asymmetricalTopBarContent">/*
+    don't
+      ul.dropdownContent{
+        border-bottom-left-radius: 40px;
+      }
+      li.dropdownContent:last-child,
+      li.dropdownContent:last-child>.dropdownContainer.right,
+      li.dropdownContent:last-child>.dropdownContainer.right>.dropdownTitle.right{
+        border-bottom-left-radius: 30px;
+      }*/
+    </style>
+  </fakehader>
   <app-console></app-console>
   <app-top-bar></app-top-bar>
   <app-graph-tab-html></app-graph-tab-html>

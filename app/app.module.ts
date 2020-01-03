@@ -339,11 +339,23 @@ function main() {
   // inputStr = atob(inputStr);
   Status.status.mmm = new MetaMetaModel(null);
   useless = new TopBar();
-  Status.status.mm = new MetaModel(JSON.parse(MetaModelinputStr), Status.status.mmm);
+  try {
+    Status.status.mm = new MetaModel(JSON.parse(MetaModelinputStr), Status.status.mmm);
+  } catch(e) {
+    U.pw(true, 'Failed to load the metamodel.');
+    console.log(e);
+    Status.status.mm = new MetaModel(JSON.parse(MetaModel.emptyModel), Status.status.mmm);
+  }
   // console.log('m3:', Status.status.mmm, 'm2:', Status.status.mm, 'm1:', Status.status.m); return;
   Type.linkAll();
   M2Class.updateSuperClasses();
-  Status.status.m = new Model(JSON.parse(ModelInputStr), Status.status.mm);
+  try {
+    Status.status.m = new Model(JSON.parse(ModelInputStr), Status.status.mm);
+  } catch(e) {
+    U.pw(true, 'Failed to load the model. Does it conform to the metamodel?');
+    console.log(e);
+    Status.status.m = new Model(JSON.parse(Model.emptyModel), Status.status.mm);
+  }
   console.log('m3:', Status.status.mmm, 'm2:', Status.status.mm, 'm1:', Status.status.m);
   // Status.status.m.LinkToMetaParent(Status.status.mm);
   // Status.status.m.fixReferences(); already linked at parse time.
