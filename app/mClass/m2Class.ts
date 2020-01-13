@@ -215,7 +215,9 @@ export class M2Class extends IClass {
     return ref; }
 
   addAttribute(): M2Attribute {
+    console.log('addAttribute: pre', this);
     const attr: M2Attribute = new M2Attribute(this, null);
+    console.log('addAttribute: post', this, attr);
     this.refreshGUI();
     return attr; }
 

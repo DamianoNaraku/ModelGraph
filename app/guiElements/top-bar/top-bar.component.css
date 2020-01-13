@@ -90,10 +90,6 @@
   padding: 12px 16px;
   cursor: inherit;
 }
-.dropdownTitle.right, .dropdownpadding{
-  font-size: inherit;
-  padding: 12px 16px;
-}
 .dropdownContainer {
   position: relative;
   display: inline-block;
@@ -128,11 +124,31 @@ li.dropdownContent {
   display: block;
 }
 
-li.dropdownContent:hover {
-  background-color: var(--secondaryBorderColor);
+ul.dropdownContent:not(:empty){
+  border-bottom-left-radius: 33px;
+}
+.dropdownTitle.right, .dropdownpadding{
+  font-size: inherit;
+  padding: 12px 16px;
 }
 
-.dropdownContainer:hover>.dropdownTitle {
+.dropdownTitle.right:hover, .dropdownContainer.right:hover, .dropdownpadding:hover{
+  border-bottom-left-radius: 23px;
+}
+.dropdownTitle.right.todo, .dropdownpadding.todo{ border-bottom-left-radius: 0; }
+/*.dropdownTitle.right.todo:last-child, .dropdownpadding.todo:last-child{ border-bottom-left-radius: 33px; }*/
+li.dropdownContent:hover {
+  background-color: var(--secondaryBorderColor);
+  /*padding-left: 12px;*/
+  border-left: 8px solid #ff0000a0;
+  border-bottom-left-radius: 30px;
+  /*margin-left: -12px; bottom-round border, trouble con stili sovrapposti che lo ri-squadrano.
+   border-top-left-radius: 24px;*/
+}
+#topbar>.dropdownContainer:hover>.dropdownTitle{
+  border-top-left-radius: 30px;
+  border-top-right-radius: 30px;}
+#topbar>.dropdownContainer:hover>.dropdownTitle {
   background-color: var(--secondaryBorderColor);
 }
 

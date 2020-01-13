@@ -141,11 +141,11 @@ table.attributeTable td:last-child {
 }
 
 
-/*//////////////////////////////////////////////////  css.css */
-
+/*//////////////////////////////////////////////////  css.css nothing of this should work*/
+/*
 .sidebarShell, .editorShell, .property_sidebar{
-  display: inline-block;/*flex;*/
-  /* height: calc(100vh - (var(--topbarH) + var(--tabH)));*/
+  display: inline-block;/*flex;* /
+  /* height: calc(100vh - (var(--topbarH) + var(--tabH)));* /
   overflow: hidden;
   flex-wrap: wrap;}
 .sidebarShell{
@@ -163,7 +163,7 @@ table.attributeTable td:last-child {
   flex-grow: 1;
   width: calc(100vw - var(--sidebarW));
 }
-
+*/
 #metamodel_tab, #model_tab{
   display: flex;
   flex-direction: row;

@@ -29,12 +29,13 @@ export class Model extends IModel {
 
   getClassRoot(): MClass {
     if (this.classRoot) { return this.classRoot; }
-    U.pw(true, 'failed to get m1 class root');
+    if (this.getAllClasses().length) U.pw(true, 'failed to get m1 class root.', this);
     return null; }
 
   parse(json: Json, destructive: boolean, metamodel: MetaModel = null): void {
     if (!metamodel) {metamodel = Status.status.mm; }
     U.pe(!metamodel, 'parsing a model requires a metamodel linked');
+    U.pe(json === '' + json, 'ModelPiece.parse() parameter must be a parsed ECORE/json');
     if (destructive) { this.childrens = []; }
     let key: string;
     for (key in json) {

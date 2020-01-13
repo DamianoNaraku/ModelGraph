@@ -327,6 +327,7 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
 
   }
   private static midPointMouseUp(e: JQuery.MouseUpEvent) { }*/
+  canBeLinkedTo(target: IClass): boolean { return this.logic.canBeLinkedTo(target); }
 
   refreshGui(debug: boolean = false, useRealEndVertex: boolean = null, usemidnodes: boolean = null) {
     debug = false;

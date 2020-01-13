@@ -46,7 +46,7 @@ import {
   IReference,
   M3Reference,
   MAttribute,
-  prjson2xml, prxml2json, Type
+  prjson2xml, prxml2json, Type, LocalStorage, ViewPoint, SaveListEntry, EType, IClassifier, GraphSize
 } from './common/Joiner';
 import { PropertyBarrComponent }   from './guiElements/property-barr/property-barr.component';
 import { MGraphHtmlComponent }     from './guiElements/m-graph-html/m-graph-html.component';
@@ -54,9 +54,6 @@ import { DamContextMenuComponent } from './guiElements/dam-context-menu/dam-cont
 import { StyleEditorComponent }    from './guiElements/style-editor/style-editor.component';
 import { ConsoleComponent }        from './guiElements/console/console.component';
 import KeyDownEvent = JQuery.KeyDownEvent;
-import {saveEntries}               from './Database/LocalStorage';
-import {ViewPoint}                 from './GuiStyles/viewpoint';
-import {EType}                     from './mClass/classChild/Type';
 // @ts-ignore
 // @ts-ignore
 // @ts-ignore
@@ -146,6 +143,8 @@ export class Status {
   autosave(): void {
     this.mm.save(true, null);
     this.m.save(true, null);
+
+
     console.log('autosave completed.');
   }
 }
@@ -235,10 +234,12 @@ function globalevents(): void {
     'destroy (the backup)',
     'discardSave (stop autosave)'];
   window['' + 'destroy'] = () => {
-    localStorage.setItem('m1_' + saveEntries.lastOpened, null);
-    localStorage.setItem('m2_' + saveEntries.lastOpened, null);
-    localStorage.setItem('m1_' + saveEntries.lastOpenedView, null);
-    localStorage.setItem('m2_' + saveEntries.lastOpenedView, null);
+    localStorage.setItem('m1_' + SaveListEntry.model.lastopened, null);
+    localStorage.setItem('m2_' + SaveListEntry.model.lastopened, null);
+    localStorage.setItem('m1_' + SaveListEntry.view.lastopened, null);
+    localStorage.setItem('m2_' + SaveListEntry.view.lastopened, null);
+    localStorage.setItem('m1_' + SaveListEntry.vertexPos.lastopened, null);
+    localStorage.setItem('m2_' + SaveListEntry.vertexPos.lastopened, null);
     localStorage.setItem('backupMM', null);
     localStorage.setItem('backupGUI', null);
     localStorage.setItem('backupM', null);
@@ -318,29 +319,22 @@ function main() {
   EType.staticInit();
   DamContextMenuComponent.staticInit();
 
-  let m2Viewpoints: Json[] = [];
-  let m1Viewpoints: Json[] = [];
-  tmp = localStorage.getItem('m2_' + saveEntries.lastOpened);
-  if (tmp && tmp !== '' && tmp !== 'null' && tmp !== 'undefined') { MetaModelinputStr = tmp; }
+  const savem2 = LocalStorage.getLastOpened(2);
+  const savem1 = LocalStorage.getLastOpened(1);
+  /*let MetaMetaModelStr = MetaMetaModel.emptyMetaMetaModel;
+  let MetaModelinputStr = MetaModel.emptyModel;
+  let ModelinputStr = Model.emptyModel;*/
+  const validate = (thing: string, defaultvalue: string): string => { return tmp && tmp !== '' && tmp !== 'null' && tmp !== 'undefined' ? thing : defaultvalue};
+  savem2.model = validate(savem2.model, MetaModel.emptyModel);
+  savem1.model = validate(savem1.model, Model.emptyModel);
 
-  tmp = localStorage.getItem('m1_' + saveEntries.lastOpened);
-  if (tmp && tmp !== '' && tmp !== 'null' && tmp !== 'undefined') { ModelInputStr = tmp; }
+  console.log('loading MM:', savem2);
+  console.log('loading M:', savem1);
 
-  tmp = localStorage.getItem('m2_' + saveEntries.lastOpenedView);
-  if (tmp && tmp !== '' && tmp !== 'null' && tmp !== 'undefined') { m2Viewpoints = tmp; }
-  tmp = localStorage.getItem('m1_' + saveEntries.lastOpenedView);
-  if (tmp && tmp !== '' && tmp !== 'null' && tmp !== 'undefined') { m1Viewpoints = tmp; }
-
-  console.log('loading MMM:', MetaMetaModelStr);
-  console.log('loading MM:', MetaModelinputStr);
-  console.log('loading M:', ModelInputStr);
-  console.log('loading MM_viewpoints:', m2Viewpoints);
-  console.log('loading M_viewpoints:', m1Viewpoints);
-  // inputStr = atob(inputStr);
   Status.status.mmm = new MetaMetaModel(null);
   useless = new TopBar();
   try {
-    Status.status.mm = new MetaModel(JSON.parse(MetaModelinputStr), Status.status.mmm);
+    Status.status.mm = new MetaModel(JSON.parse(savem2.model), Status.status.mmm);
   } catch(e) {
     U.pw(true, 'Failed to load the metamodel.');
     console.log(e);
@@ -350,7 +344,7 @@ function main() {
   Type.linkAll();
   M2Class.updateSuperClasses();
   try {
-    Status.status.m = new Model(JSON.parse(ModelInputStr), Status.status.mm);
+    Status.status.m = new Model(JSON.parse(savem1.model), Status.status.mm);
   } catch(e) {
     U.pw(true, 'Failed to load the model. Does it conform to the metamodel?');
     console.log(e);
@@ -362,28 +356,53 @@ function main() {
   Status.status.loadedLogic = true;
   useless = new ISidebar(Status.status.mmm, document.getElementById('metamodel_sidebar'));
   useless = new ISidebar(Status.status.mm, document.getElementById('model_sidebar'));
-  useless = new IGraph(Status.status.mm, document.getElementById('metamodel_editor') as unknown as SVGElement);
-  useless = new IGraph(Status.status.m, document.getElementById('model_editor') as unknown as SVGElement);
+  useless = new IGraph(Status.status.mm, document.getElementById('metamodel_editor') as unknown as SVGSVGElement);
+  useless = new IGraph(Status.status.m, document.getElementById('model_editor') as unknown as SVGSVGElement);
   Status.status.loadedGUI = true;
   Status.status.mm.graph.propertyBar.show(Status.status.mm, null, false);
   Status.status.m.graph.propertyBar.show(Status.status.m, null, false);
   Type.updateTypeSelectors(null, true, true, true);
-  setTimeout( () => { Status.status.mm.graph.ShowGrid(); Status.status.m.graph.ShowGrid(); }, 1);
-  // M2Class.updateAllMClassSelectors();
-  // Imposto un autosave raramente (minuti) giusto nel caso di crash improvvisi o disconnessioni
-  // per evitare di perdere oltre X minuti di lavoro.
-  // In condizioni normali non è necessario perchè il salvataggio è effettuato al cambio di pagina asincronamente
-  // e con consegna dei dati garantita dal browser anche a pagina chiusa (navigator.beacon)
+
+  if (!savem2.vertexpos || !savem2.view){
+    const tmpp: {view: string, vertexPos: string} = Status.status.mm.storage.getViewPoints();
+    savem2.view = savem2.view || tmpp.view;
+    savem2.vertexpos = savem2.vertexpos || tmpp.vertexPos; }
+
+  if (!savem1.vertexpos || !savem1.view){
+    const tmpp: {view: string, vertexPos: string} = Status.status.m.storage.getViewPoints();
+    savem1.view = savem1.view || tmpp.view;
+    savem1.vertexpos = savem1.vertexpos || tmpp.vertexPos; }
+
+  savem2.view = validate(savem2.view, '[]');
+  savem2.vertexpos = validate(savem2.vertexpos, '{}');
+  savem1.view = validate(savem1.view, '[]');
+  savem1.vertexpos = validate(savem1.vertexpos, '{}');
   let marr: IModel[] = [Status.status.mm, Status.status.m];
-  let vpmatjson: Json[][] = [m2Viewpoints, m1Viewpoints];
-  console.log(m2Viewpoints, m1Viewpoints, Status.status.mm.graph.viewPointShell);
+  let vpmatjson: Json[][] = [JSON.parse(savem2.view || '[]'), JSON.parse(savem1.view || '[]')] as Json[][];
+  const vertexposMat: Dictionary<string, GraphPoint>[] = [JSON.parse(savem2.vertexpos), JSON.parse(savem1.vertexpos)] as Dictionary<string, GraphPoint>[];
+  // console.log(vpmatjson, Status.status.mm.graph.viewPointShell);
+
   let j: number;
-  for (j = 0; j < marr.length; j++) {
-    const vparr: Json[] = vpmatjson[j];
+  for (j = 0; j < vertexposMat.length; j++) {
+    const vdic: Dictionary<string, GraphPoint> = vertexposMat[j];
+    const m: IModel = marr[j];
+    for (let key in vdic) {
+      console.log('key:', key, 'varr:', vdic);
+      const mp: IClassifier = ModelPiece.getByKeyStr(key) as IClassifier;
+      const size: GraphSize = new GraphSize().clone(vdic[key]);
+      U.pw(!mp || !(mp instanceof IClassifier), 'invalid vertexposition save, failed to get classifier:', key, vdic);
+      mp.getVertex().setSize(size);
+    }
+  }
+
+  for (j = 0; j < vpmatjson.length; j++) {
+    const vparr: ViewPoint[] = vpmatjson[j] as ViewPoint[];
     const m: IModel = marr[j];
     let v: ViewPoint;
     for (i = 0; i < vparr.length; i++) {
-      const jsonvp: ViewPoint = vparr[i] as any;
+      const jsonvp: ViewPoint = vparr[i];
+      // console.clear();
+      // console.log('looping this:', jsonvp, ', vpmatjson:', vpmatjson);
       v = new ViewPoint(m);
       v.clone(jsonvp);
       v.updateTarget(m);
@@ -396,157 +415,13 @@ function main() {
       m.graph.viewPointShell.add(v, false); // [persistent isApplied] STEP 1: qui setto checked sulla gui in base al v.isApplied salvato.
       v.isApplied = false; }
     m.graph.viewPointShell.refreshApplied(); // STEP 3: qui vedo che non è stato applicato, ma è stato ordinato dalla gui di applicarlo -> lo applico.
-  }/*
-  ViewPoint.deserializeAndApply(m1Viewpoints, Status.status.m);
-  ViewPoint.deserializeAndApply(m2Viewpoints, Status.status.mm);
-  if (!m2Viewpoints.length) new ViewPoint(Status.status.mm.fullname(),  Status.status.mm).apply(Status.status.mm);
-  if (!m1Viewpoints.length) new ViewPoint(Status.status.m.fullname(),  Status.status.m).apply(Status.status.m);*/
-  // U.pe(true,'');
+  }
 
-  window['' + 'jsonxml'] = prjson2xml.json2xml;
-  window['' + 'xmljson'] = prxml2json.xml2json;
-  window['' + 'xmlstr'] = '<?xml version="1.0" encoding="UTF-8"?>\n' +
-    '<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n' +
-    '    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="ermesMM" nsURI="https://ermes-project.org/ermes-core-mm" nsPrefix="ermesCoreMM">\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="NamedElement" abstract="true">\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="nome" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>\n' +
-    '  </eClassifiers>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="EnteFisico" abstract="true" eSuperTypes="#//NamedElement"/>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="EnteLogico" abstract="true" eSuperTypes="#//NamedElement"/>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="Ferro" abstract="true" eSuperTypes="#//EnteFisico">\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="dx" eType="#//Ferro"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="sx" eType="#//Ferro"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="lunghezza" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"/>\n' +
-    '  </eClassifiers>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="Binario" eSuperTypes="#//Ferro"/>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="Deviatoio" abstract="true" eSuperTypes="#//Ferro"/>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="DeviatoioSemplice" eSuperTypes="#//Deviatoio">\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="normalmenteDispostoRamoDeviato"\n' +
-    '        lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"\n' +
-    '        defaultValueLiteral="false"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="elettromagnete" eType="#//Elettromagnete"\n' +
-    '        containment="true"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="tallonabilita" lowerBound="1"\n' +
-    '        eType="#//TallonabilitaDeviatoio" defaultValueLiteral="Tallonabile"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="ramoDeviato" lowerBound="1"\n' +
-    '        eType="#//Binario" containment="true"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="posizioneInizialeRovescia"\n' +
-    '        lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"\n' +
-    '        defaultValueLiteral="false"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="direzionePunta" lowerBound="1"\n' +
-    '        eType="#//Direzione"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="normaleADestra" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"\n' +
-    '        defaultValueLiteral="false"/>\n' +
-    '  </eClassifiers>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="FabbricatoViaggiatori" eSuperTypes="#//EnteFisico"/>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="CircuitoDiBinario" eSuperTypes="#//EnteFisico">\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="ferriCDB" lowerBound="1"\n' +
-    '        upperBound="-1" eType="#//Ferro"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="stazionamento" lowerBound="1"\n' +
-    '        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean" defaultValueLiteral="false"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="diLinea" lowerBound="1"\n' +
-    '        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean" defaultValueLiteral="false"/>\n' +
-    '  </eClassifiers>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="Segnale" abstract="true" eSuperTypes="#//EnteFisico">\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="ferroSegnale" lowerBound="1"\n' +
-    '        eType="#//Ferro"/>\n' +
-    '  </eClassifiers>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="Scudetto" eSuperTypes="#//EnteLogico">\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="direzione" lowerBound="1"\n' +
-    '        eType="#//DirezioneScudetto" defaultValueLiteral="Bidirezionale"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="ferroScudetto" lowerBound="1"\n' +
-    '        eType="#//Ferro"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="inibizioneLiberoTransito"\n' +
-    '        lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"\n' +
-    '        defaultValueLiteral="false"/>\n' +
-    '  </eClassifiers>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="Blocco" eSuperTypes="#//EnteLogico">\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="reversibile" lowerBound="1"\n' +
-    '        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean" defaultValueLiteral="true"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="NormalePercorrenza" lowerBound="1"\n' +
-    '        eType="#//NormalePercorrenzaBlocco" defaultValueLiteral="DX"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="ferroBlocco" lowerBound="1"\n' +
-    '        eType="#//Ferro"/>\n' +
-    '  </eClassifiers>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="SegnaleAlto" eSuperTypes="#//Segnale">\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="segnaleAvvio" eType="#//SegnaleAvvio"\n' +
-    '        containment="true"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="segnaleAvanzamento" eType="#//SegnaleAvanzamento"\n' +
-    '        containment="true"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="indicatoreAltoDiPartenza"\n' +
-    '        eType="#//IndicatoreAltoDiPartenza" containment="true"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="primaLuce" lowerBound="1"\n' +
-    '        eType="#//PrimaLuce" containment="true"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="secondaLuce" eType="#//SecondaLuce"\n' +
-    '        containment="true"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="terzaLuce" eType="#//TerzaLuce"\n' +
-    '        containment="true"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="direzioneSegnale" lowerBound="1"\n' +
-    '        eType="#//Direzione"/>\n' +
-    '  </eClassifiers>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="SegnaleBasso" eSuperTypes="#//Segnale"/>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="SegnaleAvvio" eSuperTypes="#//EnteFisico"/>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="SegnaleAvanzamento" eSuperTypes="#//EnteFisico"/>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="PS" eSuperTypes="#//EnteLogico">\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="fabbricatiViaggiatori"\n' +
-    '        lowerBound="1" upperBound="-1" eType="#//FabbricatoViaggiatori" containment="true"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="ferri" upperBound="-1"\n' +
-    '        eType="#//Ferro" containment="true"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="scudetti" upperBound="-1"\n' +
-    '        eType="#//Scudetto" containment="true"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="segnali" upperBound="-1"\n' +
-    '        eType="#//Segnale" containment="true"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="blocchi" upperBound="-1"\n' +
-    '        eType="#//Blocco" containment="true"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="circuitiDiBinario" upperBound="-1"\n' +
-    '        eType="#//CircuitoDiBinario" containment="true"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="rte" upperBound="-1" eType="#//RTE"\n' +
-    '        containment="true"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="regimiStazione" upperBound="-1"\n' +
-    '        eType="#//RegimeStazione" containment="true"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="soccorsiTxTcl" upperBound="-1"\n' +
-    '        eType="#//SoccorsoTxTcl" containment="true"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="trasmettiChiave" upperBound="-1"\n' +
-    '        eType="#//Trasmettichiave" containment="true"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="tracciatiPermanenti" upperBound="-1"\n' +
-    '        eType="#//TracciatoPermanente" containment="true"/>\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="tracciatiPermanentiManovra"\n' +
-    '        upperBound="-1" eType="#//TracciatoPermanenteManovra" containment="true"/>\n' +
-    '  </eClassifiers>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="Luce" abstract="true" eSuperTypes="#//EnteFisico"/>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="PrimaLuce" eSuperTypes="#//Luce"/>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="SecondaLuce" eSuperTypes="#//Luce"/>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="TerzaLuce" eSuperTypes="#//Luce"/>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="IndicatoreAltoDiPartenza" eSuperTypes="#//EnteFisico"/>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="Elettromagnete" eSuperTypes="#//EnteFisico"/>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="RTE" eSuperTypes="#//EnteFisico">\n' +
-    '    <eStructuralFeatures xsi:type="ecore:EReference" name="deviatoiRTE" upperBound="-1"\n' +
-    '        eType="#//Deviatoio"/>\n' +
-    '  </eClassifiers>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="RegimeStazione" eSuperTypes="#//EnteLogico"/>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="SoccorsoTxTcl" eSuperTypes="#//EnteLogico"/>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="Trasmettichiave" eSuperTypes="#//EnteLogico"/>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="TracciatoPermanente" eSuperTypes="#//EnteLogico"/>\n' +
-    '  <eClassifiers xsi:type="ecore:EClass" name="TracciatoPermanenteManovra" eSuperTypes="#//EnteLogico"/>\n' +
-    '  <eClassifiers xsi:type="ecore:EEnum" name="NormalePercorrenzaBlocco">\n' +
-    '    <eLiterals name="DX"/>\n' +
-    '    <eLiterals name="SX" value="1"/>\n' +
-    '  </eClassifiers>\n' +
-    '  <eClassifiers xsi:type="ecore:EEnum" name="DirezioneScudetto">\n' +
-    '    <eLiterals name="Bidirezionale"/>\n' +
-    '    <eLiterals name="OrientamentoSX" value="1"/>\n' +
-    '    <eLiterals name="OrientamentoDX" value="2"/>\n' +
-    '  </eClassifiers>\n' +
-    '  <eClassifiers xsi:type="ecore:EEnum" name="TallonabilitaDeviatoio">\n' +
-    '    <eLiterals name="Tallonabile"/>\n' +
-    '    <eLiterals name="Intallonabile" value="1"/>\n' +
-    '    <eLiterals name="IntallonabileAComando" value="2"/>\n' +
-    '  </eClassifiers>\n' +
-    '  <eClassifiers xsi:type="ecore:EEnum" name="Direzione">\n' +
-    '    <eLiterals name="Destra"/>\n' +
-    '    <eLiterals name="Sinistra" value="1"/>\n' +
-    '  </eClassifiers>\n' +
-    '</ecore:EPackage>\n'
+  setTimeout( () => { Status.status.mm.graph.ShowGrid(); Status.status.m.graph.ShowGrid(); }, 1);
+  // Imposto un autosave raramente (minuti) giusto nel caso di crash improvvisi o disconnessioni
+  // per evitare di perdere oltre X minuti di lavoro.
+  // In condizioni normali non è necessario perchè il salvataggio è effettuato al cambio di pagina asincronamente
+  // e con consegna dei dati garantita dal browser anche a pagina chiusa (navigator.beacon)
   return;
   Status.status.enableAutosave(2 * 60 * 1000);
   //Options.enableAutosave(2 * 60 * 1000);
@@ -554,100 +429,3 @@ function main() {
 
 }
 main0();
-const inputStrJsonMMM: string = '{\n' +
-  '  "ecore:EPackage": {\n' +
-  '    "@xmlns:xmi": "http://www.omg.org/XMI",\n' +
-  '    "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",\n' +
-  '    "@xmlns:ecore": "http://www.eclipse.org/emf/2002/Ecore",\n' +
-  '    "@xmi:version": "2.0",\n' +
-  '    "@name": "eCore MMM",\n' +
-  '    "@nsURI": "http://???",\n' +
-  '    "@nsPrefix": "org.???",\n' +
-  '    "eClassifiers": [\n' +
-  '      {\n' +
-  '        "@xsi:type": "ecore:EClass",\n' +
-  '        "@name": "Class",\n' +
-  '        "eStructuralFeatures": {\n' +
-//  '          "@xsi:type": "ecore:FakeElement",\n' +
-//  '          "@name": "Add Feature.",\n' +
-//  '          "@eType": "ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//FakeElement"\n' +
-  '        }\n' +
-  '      },\n' +
-  '      {\n' +
-  '        "@xsi:type": "ecore:EClass",\n' +
-  '        "@name": "Package",\n' +
-  '        "eStructuralFeatures": {\n' +
-//  '          "@xsi:type": "ecore:FakeElement",\n' +
-//  '          "@name": "Add Feature.",\n' +
-//  '          "@eType": "ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//FakeElement"\n' +
-  '        }\n' +
-  '      }\n' +
-  '    ]\n' +
-  '  }\n' +
-  '}';
-const inputStrJsonMM: string = '{\n' +
-  '  "ecore:EPackage": {\n' +
-  '    "@xmlns:xmi": "http://www.omg.org/XMI",\n' +
-  '    "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",\n' +
-  '    "@xmlns:ecore": "http://www.eclipse.org/emf/2002/Ecore",\n' +
-  '    "@xmi:version": "2.0",\n' +
-  '    "@name": "bowling",\n' +
-  '    "@nsURI": "http://org/eclipse/example/bowling",\n' +
-  '    "@nsPrefix": "org.eclipse.example.bowling",\n' +
-  '    "eClassifiers": [\n' +
-  '      {\n' +
-  '        "@xsi:type": "ecore:EClass",\n' +
-  '        "@name": "Player",\n' +
-  '        "eStructuralFeatures": {\n' +
-  '          "@xsi:type": "ecore:EAttribute",\n' +
-  '          "@name": "name",\n' +
-  '          "@eType": "ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"\n' +
-  '        }\n' +
-  '      },\n' +
-  '      {\n' +
-  '        "@xsi:type": "ecore:EClass",\n' +
-  '        "@name": "League",\n' +
-  '        "eStructuralFeatures": [\n' +
-  '          {\n' +
-  '            "@xsi:type": "ecore:EAttribute",\n' +
-  '            "@name": "name",\n' +
-  '            "@eType": "ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"\n' +
-  '          },\n' +
-  '          {\n' +
-  '            "@xsi:type": "ecore:EReference",\n' +
-  '            "@name": "players",\n' +
-  '            "@upperBound": "@1",\n' +
-  '            "@eType": "#//Player",\n' +
-  '            "@containment": "true"\n' +
-  '          }\n' +
-  '        ]\n' +
-  '      }\n' +
-  '    ]\n' +
-  '  }\n' +
-  '}';
-const inputStrJsonMOLD = '{\n' +
-  '  "ecore:EPackage": {\n' +
-  '    "@xmlns:xmi": "http://www.omg.org/XMI",\n' +
-  '    "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",\n' +
-  '    "@xmlns:ecore": "http://www.eclipse.org/emf/2002/Ecore",\n' +
-  '    "@xmi:version": "2.0",\n' +
-  '    "@name": "defaultPackage",\n' +
-  '    "@nsURI": "http://???",\n' +
-  '    "@nsPrefix": "org.???",\n' +
-  '    "eClassifiers": []\n' +
-  '  }\n' +
-  '}';
-const inputStrJsonM = '{\n' +
-  '  "org.eclipse.example.bowling:League": {\n' +
-  '    "@xmlns:xmi": "http://www.omg.org/XMI",\n' +
-  '    "@xmlns:org.eclipse.example.bowling": "https://org/eclipse/example/bowling",\n' +
-  '    "@xmi:version": "2.0",\n' +
-  '    "Players": [\n' +
-  '      { "@name": "tizio" },\n' +
-  '      { "@name": "asd" }\n' +
-  '    ]\n' +
-  '  }\n' +
-  '}';
-const MetaMetaModelStr: string = MetaMetaModel.emptyMetaMetaModel;
-let MetaModelinputStr: string = inputStrJsonMM;
-let ModelInputStr: string = inputStrJsonM;

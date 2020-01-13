@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {
   IAttribute, M2Class, IEdge, IModel, IPackage, IReference, ModelPiece, PropertyBarr, Status, U, IClass,
-  EdgeModes, EOperation, EParameter, Database, Size, AttribETypes, Vieww, ViewHtmlSettings, StyleComplexEntry, ViewPoint, Type
+  EdgeModes, EOperation, EParameter, Database, Size, AttribETypes, ViewRule, ViewHtmlSettings, StyleComplexEntry, ViewPoint, Type
 } from '../../common/Joiner';
 import ChangeEvent = JQuery.ChangeEvent;
 import BlurEvent = JQuery.BlurEvent;
@@ -234,8 +234,8 @@ export class StyleEditor {
       } else
       $(obj.editAllowed).on('click', (e: ClickEvent) => {
         const mptarget: ModelPiece = isInherited ? mp.metaParent : mp;
-        let v: Vieww = lastvp.viewsDictionary[mptarget.id];
-        if (!v) v = new Vieww(lastvp);
+        let v: ViewRule = lastvp.viewsDictionary[mptarget.id];
+        if (!v) v = new ViewRule(lastvp);
         if (isOwn) {
           U.pe(!!v.htmlo, 'htmlo should be undefined at this point.');
           v.htmlo = new ViewHtmlSettings();
@@ -349,14 +349,14 @@ export class StyleEditor {
     optgroup.append(o);
     console.log('viewpointSelect: ', mp.views);
     for (i = 0; i < mp.views.length; i++) {
-      const v: Vieww = mp.views[i];
+      const v: ViewRule = mp.views[i];
       o = document.createElement('option');
       o.value = '' + v.id;
       o.text = v.getViewPoint().name + ' (own)';
       if (v === style.view) o.selected = true;
       optgroup.append(o); }
     for (i = 0; mp.metaParent && i < mp.metaParent.views.length; i++) {
-      const v: Vieww = mp.metaParent.views[i];
+      const v: ViewRule = mp.metaParent.views[i];
       o = document.createElement('option');
       o.value = '' + v.id;
       o.text = v.getViewPoint().name + ' (inherited)';

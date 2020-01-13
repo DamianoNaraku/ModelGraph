@@ -25,7 +25,7 @@ import {
   M2Package,
   IClass,
   M3Attribute,
-  M3Class, Vieww, ViewPoint
+  M3Class, ViewRule, ViewPoint
 } from '../../common/Joiner';
 
 

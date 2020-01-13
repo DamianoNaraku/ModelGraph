@@ -324,8 +324,16 @@ export class IGraph {
   fitToGrid(pt0: GraphPoint, clone: boolean = true, debug: boolean = false, fitHorizontal = true, fitVertical = true): GraphPoint {
     const pt: GraphPoint = clone ? pt0.clone() : pt0;
     U.pe(!this.grid, 'grid not initialized.');
-    if (fitHorizontal && !isNaN(this.grid.x) && this.grid.x > 0) { pt.x = U.trunc(pt.x / this.grid.x) * this.grid.x; }
-    if (fitVertical && !isNaN(this.grid.y) && this.grid.y > 0) { pt.y = U.trunc(pt.y / this.grid.y) * this.grid.y; }
+    if (fitHorizontal && !isNaN(this.grid.x) && this.grid.x > 0) { pt.x = Math.round(pt.x / this.grid.x) * this.grid.x; }
+    if (fitVertical && !isNaN(this.grid.y) && this.grid.y > 0) { pt.y = Math.round(pt.y / this.grid.y) * this.grid.y; }
+    U.pif(debug, 'fitToGrid(', pt0, '); this.grid:', this.grid, ' = ', pt);
+    return pt; }
+
+  fitToGridS(pt0: GraphSize, clone: boolean = true, debug: boolean = false, fitHorizontal = true, fitVertical = true): GraphSize {
+    const pt: GraphSize = clone ? pt0.duplicate() : pt0;
+    U.pe(!this.grid, 'grid not initialized.');
+    if (fitHorizontal && !isNaN(this.grid.x) && this.grid.x > 0) { pt.x = Math.round(pt.x / this.grid.x) * this.grid.x; }
+    if (fitVertical && !isNaN(this.grid.y) && this.grid.y > 0) { pt.y = Math.round(pt.y / this.grid.y) * this.grid.y; }
     U.pif(debug, 'fitToGrid(', pt0, '); this.grid:', this.grid, ' = ', pt);
     return pt; }
 
@@ -405,7 +413,7 @@ export class IGraph {
     this.scroll.x = this.clickedScroll.x - offset.x;
     this.scroll.y = this.clickedScroll.y - offset.y;
     this.setGridPos();
-    console.log('scroll:', this.scroll, 'offset:', offset, ' scroll0: ', this.clickedScroll, ' currentCursor:', this.isMoving);
+    // console.log('scroll:', this.scroll, 'offset:', offset, ' scroll0: ', this.clickedScroll, ' currentCursor:', this.isMoving);
     this.updateViewbox(); }
 
   edgeChangingAbort(e: KeyDownEvent | MouseDownEvent): void {

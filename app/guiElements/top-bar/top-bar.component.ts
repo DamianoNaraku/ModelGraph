@@ -2,12 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import {
   AttribETypes, IModel, Json,
   MClass, MetaModel, Model, prjson2xml, Status, U, // Options,
-  ShortAttribETypes, InputPopup, myFileReader, prxml2json
+  ShortAttribETypes, InputPopup, myFileReader, prxml2json, EType, LocalStorage
 }                            from '../../common/Joiner';
 import ChangeEvent = JQuery.ChangeEvent;
 import ClickEvent = JQuery.ClickEvent;
-import {saveEntries}         from '../../Database/LocalStorage';
-import {EType}               from '../../mClass/classChild/Type';
+import {Local}               from 'protractor/built/driverProviders';
 
 // @ts-ignore
 @Component({
@@ -71,14 +70,13 @@ export class TopBar {
 
   static load(json: string, prefix: string) {
     const m: IModel = prefix === 'm' ? Status.status.m : Status.status.mm;
+    const num: 1 | 2 = prefix === 'm' ? 1 : 2;
     window['' + 'discardSave']();
     if (m.name) m.save(false);
-    if (m.isM2()
-    ) {
+    if (m.isM2()) {
       Status.status.m.save(false);
-      localStorage.setItem( Status.status.m.getPrefixNum() + '_' + saveEntries.lastOpened, Model.emptyModel);
-    }
-    localStorage.setItem( m.getPrefixNum() + '_' + saveEntries.lastOpened, json);
+      LocalStorage.deleteLastOpened(1); }
+    LocalStorage.setLastOpened(num, json, null, null);
     U.refreshPage(); }
 
   static load_JSON_Text(e: JQuery.ClickEvent, prefix: string) {

@@ -10,8 +10,8 @@ import {
   ModelPiece,
   ShortAttribETypes, Type,
   U
-} from '../../../common/Joiner';
-import {Vieww} from '../../../GuiStyles/viewpoint';
+}                 from '../../../common/Joiner';
+import {ViewRule} from '../../../GuiStyles/viewpoint';
 // export abstract class EOperation extends Typedd {}
 /*
 export class OperationVisibility {
@@ -45,6 +45,7 @@ export class EOperation extends Typedd {
 
   constructor(parent: M2Class | M3Class, json: Json) {
     super(parent, null);
+    if (parent instanceof M2Class) parent.operations.push(this);
     this.parse(json); }
 
   getVisibilityChar(): string {

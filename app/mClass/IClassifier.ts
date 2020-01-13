@@ -37,7 +37,7 @@ import {
   M3Attribute,
   M3Feature,
   EdgeModes,
-  EdgePointStyle, EOperation, EParameter, Typedd, Type, EEnum, GraphSize, Vieww,
+  EdgePointStyle, EOperation, EParameter, Typedd, Type, EEnum, GraphSize, ViewRule,
 } from '../common/Joiner';
 
 
@@ -53,7 +53,7 @@ export abstract class IClassifier extends ModelPiece{
     return U.toHtml<HTMLElement>('<div class="sidebarNode class"><p class="sidebarNodeName">$##name$</p></div>'); }
 
   generateVertex(): IVertex {
-    const lastView: Vieww = this.getLastViewWith('vertexSize');
+    const lastView: ViewRule = this.getLastViewWith('vertexSize');
     const size: GraphSize =  lastView ? lastView.vertexSize : null;
     const v: IVertex = this.vertex = new IVertex(this, size);
     return v; }
@@ -88,22 +88,4 @@ export abstract class IClassifier extends ModelPiece{
     return Type.classTypePrefix + this.parent.name;
   }
 
-  getLastViewWith(fieldname: string): Vieww {
-    let i: number = this.views.length;
-    while (--i >= 0) {
-      const v: Vieww = this.views[i];
-      const val: any = v['' + fieldname];
-      U.pe(fieldname in v, 'property |' + fieldname + '| does not exist in Vieww. Field name has changed without changing the string accordingly.');
-      if (val !== undefined && val !== null) return v;
-    }
-    if (!this.metaParent) return null;
-    i = this.metaParent.views.length;
-    while (--i >= 0) {
-      const v: Vieww = this.metaParent.views[i];
-      const val: any = v['' + fieldname];
-      U.pe(fieldname in v, 'property |' + fieldname + '| does not exist in Vieww. Field name has changed without changing the string accordingly.(2)');
-      if (val !== undefined && val !== null) return v;
-    }
-    return null;
-  }
 }

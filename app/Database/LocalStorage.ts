@@ -1,99 +1,143 @@
-import {IModel, Json, TopBar, U, InputPopup} from '../common/Joiner';
+import {IModel, Json, TopBar, U, InputPopup, ViewRule, ViewPoint, Dictionary, GraphSize} from '../common/Joiner';
 import ChangeEvent = JQuery.ChangeEvent;
-import {Vieww, ViewPoint}                    from '../GuiStyles/viewpoint';
 import KeyDownEvent = JQuery.KeyDownEvent;
 import BlurEvent = JQuery.BlurEvent;
-export enum saveEntries {
-  saveListView = '_SaveListView',
-  lastOpenedView = '_LastOpenedView',
-  saveList = '_SaveList',
-  lastOpened = '_LastOpened', }
 
+export class SaveListEntry {
+  static vertexPos = new SaveListEntry('_LastOpenedVertexPos', 'VertexPos', '_SaveListVertexPos');
+  static view = new SaveListEntry('_LastOpenedView', 'ViewRule', '_SaveListView');
+  static model = new SaveListEntry('_LastOpened', '', '_SaveList');
+  lastopened: string;
+  prefix: string;
+  listname: string;
+
+  constructor(lastopened: string, prefix: string, listname: string) {
+    this.lastopened = lastopened;
+    this.prefix = prefix;
+    this.listname = listname; }
+}
 
 export class LocalStorage {
+  private static reservedprefix: string = '_';
   prefix: string = '' + '';
   print = true;
   popupTmp: InputPopup = null;
-  private modeltmp: IModel = null;
+  private model: IModel = null;
   private isAutosavetmp: boolean;
   private saveAstmp: boolean;
+  private vertexSaveStr: string;
 
-  constructor(model?: IModel, style: boolean = false) {
-    this.prefix = style ? 'Style_' : '';
-    if (model) { this.prefix = model.getPrefixNum() + '_'; }
-  }
+  static getLastOpened(modelNumber: 1 | 2): {model: string, vertexpos: string, view: string} {
+    const ret: {model: string, vertexpos: string, view: string} = {model: null, vertexpos: null, view: null};
+    ret.model = localStorage.getItem(LocalStorage.reservedprefix + 'm' + modelNumber + '_' + SaveListEntry.model.lastopened);
+    ret.view = localStorage.getItem(LocalStorage.reservedprefix + 'm' + modelNumber + '_' + SaveListEntry.view.lastopened);
+    ret.vertexpos = localStorage.getItem(LocalStorage.reservedprefix + 'm' + modelNumber + '_' + SaveListEntry.vertexPos.lastopened);
+    return ret; }
 
-  private setObj(key: string, val: Json, forViews: boolean): void { return this.set(key, JSON.stringify(val), forViews); }
+  static deleteLastOpened(modelNumber: 1 | 2): void { this.setLastOpened(modelNumber, null, null, null); }
 
-  private set(key: string, val: string, forViews: boolean): void {
-    if (val !== '' + val) { return this.setObj(key, val, forViews); }
-    const saveKeyList: string[] = this.getKeyList(forViews, null);
-    const savelistkey = forViews ? saveEntries.saveListView : saveEntries.saveList;
-    if (key !== savelistkey && saveKeyList.indexOf(key) === -1) {
-      saveKeyList.push(key);
-      this.setObj(savelistkey, saveKeyList, forViews); }
-    localStorage.setItem(this.prefix + key, val);
-    if (key === savelistkey) { TopBar.topbar.updateRecents(); }
-  }
+  static setLastOpened(modelNumber: 1 | 2, model: string = null, view: string = null, vertex: string = null): void {
+    const prefix = LocalStorage.reservedprefix + 'm' + modelNumber + '_';
+    if (model) localStorage.setItem(prefix + SaveListEntry.model.lastopened, model);
+    else localStorage.removeItem(prefix +  SaveListEntry.model.lastopened);
+    if (view) localStorage.setItem(prefix + SaveListEntry.view.lastopened, view);
+    else localStorage.removeItem(prefix +  SaveListEntry.view.lastopened);
+    if (vertex) localStorage.setItem(prefix + SaveListEntry.vertexPos.lastopened, vertex);
+    else localStorage.removeItem(prefix +  SaveListEntry.vertexPos.lastopened); }
 
-  remove(oldKey: string, forViews: boolean): void {
-    const keyList: string[] = this.getKeyList(forViews, null);
-    U.arrayRemoveAll(keyList, oldKey);
-    this.setObj(forViews ? saveEntries.saveListView : saveEntries.saveList, keyList, forViews); }
+  getViewPoints(): {view: string, vertexPos: string} {
+    const m: IModel = this.model;
+    const ret = {view: null, vertexPos: null};
+    if (!m.name) return ret;
+    ret.view = this.get(m.name, SaveListEntry.view);
+    ret.vertexPos = this.get(m.name, SaveListEntry.vertexPos);
+    return ret; }
 
+  constructor(model: IModel) {
+    this.model = model;
+    this.prefix = model.getPrefixNum() + '_'; }
 
-  getRaw(key: string): string { return localStorage.getItem(this.prefix + key); }
-  get<T>(key: string): T {
-    // todo: autoupdate the recent list se load un modelSave?
-    const strVal: string = this.getRaw(key);
-    if (!strVal || strVal === '' || strVal === '' + null || strVal === '' + undefined) { return null; }
-    return JSON.parse(strVal) as T; }
+  private addToList(key: string, listname: string): void {
+    const saveKeyList: string[] = this.getKeyList(listname, null);
+    if (U.arrayContains(saveKeyList, key)) return;
+    saveKeyList.push(key);
+    this.overwriteList(listname, saveKeyList); }
 
-  getLast(): Json { return this.get(this.prefix + saveEntries.lastOpened); }
+  private removeFromList(key: string, listname: string): void {
+    const saveKeyList: string[] = this.getKeyList(listname, null);
+    if (!U.arrayContains(saveKeyList, key)) return;
+    U.arrayRemoveAll(saveKeyList, key);
+    this.overwriteList(listname, saveKeyList); }
 
-  p(arg1: any, ...restArgs: any[]): void { U.pif(this.print, arg1, ...restArgs); }
+  private overwriteList(listname: string, value: string[]): void {
+    U.pe(!Array.isArray(value), 'recent savelist must be an array.');
+    localStorage.setItem(LocalStorage.reservedprefix + this.prefix + listname, JSON.stringify(value));
+    TopBar.topbar.updateRecents(); }
 
-  getKeyList(forViews: boolean, limit: number = null): string[] {
-    const ret: string[] = this.get<string[]>(forViews ? saveEntries.saveListView : saveEntries.saveList);
+  getKeyList(listname: string, limit: number = null): string[] {
+    const ret: string[] = JSON.parse(localStorage.getItem(LocalStorage.reservedprefix + this.prefix + listname));
     if (!ret) { return []; }
     U.pe(!Array.isArray(ret), 'savelist got is not an array:', ret);
     return isNaN(limit) ? ret : ret.splice(limit); }
 
-  getRecentKeyList(limit: number = 10): string[] { return this.getKeyList(false, limit); }
-
-  contains(key: string, forViews: boolean): boolean { return this.getKeyList(forViews, null).indexOf(key) !== -1; }
-
-  private finishSave(saveKey: string, saveVal: string, v: ViewPoint): void {
-    if (this.popupTmp) { this.popupTmp = this.popupTmp.destroy(); }
-    // const saveListKey = v ? saveEntries.saveListView : saveEntries.saveList;
-    this.set(saveKey, saveVal, !!v);
-    /*const saveList: string[] = this.get<string[]>(saveListKey);
-    saveList.push(saveKey);
-    this.setObj(saveListKey, saveList, !!v);*/
-    this.p(saveKey + ' saved:', saveVal);
-    U.pe(!!this.modeltmp !== !v, 'those 2 conditions should be equivalent, assertion failed.', this.modeltmp, v);
-    if (!this.modeltmp || v) return;
-    const viewpoints: ViewPoint[] = this.modeltmp.viewpoints;
-    for(let i = 0; i < viewpoints.length; i++) { this.save(null, this.isAutosavetmp, this.saveAstmp, viewpoints[i]); }
+  add(key: string = null, val: string, saveList: SaveListEntry): void {
+    U.pe(val !== '' + val, 'parameter should be string:', val);
+    if (val !== '' + val) { val = JSON.stringify(val); }
+    key = key ? this.prefix + saveList.prefix + key : null;
+    if (val !== 'null' && val !== 'undefined') localStorage.setItem(LocalStorage.reservedprefix + this.prefix + saveList.lastopened, val);
+    else localStorage.removeItem(LocalStorage.reservedprefix + this.prefix + saveList.lastopened);
+    if (!key) { return; }
+    this.addToList(key, saveList.listname);
+    localStorage.setItem(key, val);
   }
 
-  private save_BlurEvent(e: BlurEvent | KeyDownEvent, saveKey: string, saveVal: string, v: ViewPoint): void {
+  remove(oldKey: string, saveList: SaveListEntry): void {
+    if (!oldKey) return;
+    oldKey = this.prefix + saveList.prefix + oldKey;
+    this.removeFromList(oldKey, saveList.listname);
+    localStorage.removeItem(oldKey); }
+
+  get(key: string, saveList: SaveListEntry): string {
+    key = this.prefix + saveList.prefix + key;
+    return localStorage.getItem(key); }
+
+  rename(oldKey: string, newKey: string, saveList: SaveListEntry): void {
+    const oldVal: any = this.get(oldKey, saveList);
+    this.remove(oldKey, saveList);
+    this.add(newKey, oldVal, saveList); }
+
+  p(arg1: any, ...restArgs: any[]): void { U.pif(this.print, arg1, ...restArgs); }
+
+  private finishSave(saveVal: string): void {
+    const m: IModel = this.model;
+    if (this.popupTmp) { this.popupTmp = this.popupTmp.destroy(); }
+    U.pe(!m.name, 'model name should be filled with a validated user input.');
+
+    // must be recalculated, model.name might have been changed by user input (saveas or un-named model being given a name)
+    let viewpointSave: string = JSON.stringify(m.generateViewPointSaveArr());
+    this.add(m.name, saveVal, SaveListEntry.model);
+    this.add(m.name, viewpointSave, SaveListEntry.view);
+    this.add(m.name, this.vertexSaveStr, SaveListEntry.vertexPos);
+    this.p(m.name + ' VertexPositions saved:', saveVal);
+    this.p(m.name + ' ViewPoints saved:', viewpointSave);
+    this.p(m.name + ' Model saved:', this.vertexSaveStr);
+  }
+
+  private save_BlurEvent(e: BlurEvent | KeyDownEvent, saveVal: string): void {
     const input: HTMLInputElement = e.currentTarget as HTMLInputElement;
     if (!+input.getAttribute('valid')) return;
-    if (this.popupTmp) { this.popupTmp = this.popupTmp.destroy(); }
-    this.finishSave(saveKey, saveVal, v); }
+    this.finishSave(saveVal); }
 
-  private save_OnKeyDown(e: KeyDownEvent, saveKey: string, saveVal: string, v: ViewPoint): void {
+  private save_OnKeyDown(e: KeyDownEvent, saveVal: string): void {
     // this.save_OnChange(e, popup, model);
     if (e.key !== 'return') { return; }
-    this.save_BlurEvent(e, saveKey, saveVal, v); }
+    this.save_BlurEvent(e, saveVal); }
 
-  private save_OnChange(e: ChangeEvent, model: IModel, v: ViewPoint): void {
+  private save_OnChange(e: ChangeEvent, model: IModel): void {
     this.p('onchange');
     const input: HTMLInputElement = e.currentTarget as HTMLInputElement;
-    let error: boolean = false && false;
-    U.pe(!!v, 'input dialog should not happen on viewpoints.');
-    try { model.setName(input.value); } catch (e) { error = false; } finally {}
+    let error: boolean = false;
+    try { model.setName(input.value); } catch (e) { error = true; } finally {}
     if (error || input.value !== model.name) {
       this.popupTmp.setPostText('invalid or already registered name, a fix');
       input.setAttribute('valid', '0');
@@ -101,49 +145,48 @@ export class LocalStorage {
       return; }
     input.setAttribute('valid', '1'); }
 
-  saveView(m: IModel, viewPoint: ViewPoint, isAutosave: boolean, saveas: boolean) { this.save(m, isAutosave, saveas, viewPoint); }
-  save(model: IModel, isAutosave: boolean, saveAs: boolean = false, v: ViewPoint = null): void {
+  saveModel(isAutosave: boolean, saveAs: boolean = false): void {
     U.pe(!!this.popupTmp, 'should not be allowed to have 2 popup for the same Storage. this would lead to a conflict mixing data.');
-    this.modeltmp = model;
     this.isAutosavetmp = isAutosave;
     this.saveAstmp = saveAs;
-    // const prefix: string = model.getPrefix();
-    const ecoreJSONStr: string = v ? v.toString() : model.generateModelString();
-    const name = v ? v.name : model.name;
-    this.p('save ' + this.prefix + (v ? 'Viewpoint[' : 'Model[') + name + '] = ', ecoreJSONStr);
-    this.set(v ? saveEntries.lastOpenedView : saveEntries.lastOpened, ecoreJSONStr, !!v);
-    let popup: InputPopup;
-    const onblur = (e: BlurEvent) => { this.save_BlurEvent(e, name, ecoreJSONStr, v); };
-    const onkeydown = (e: KeyDownEvent) => { this.save_OnKeyDown(e, name, ecoreJSONStr, v); };
-    const onchange = (e: ChangeEvent) => { this.save_OnChange(e, model, v); };
-    const oninput = (e: any) => { this.save_OnChange(e, model, v); };
+    const model: IModel = this.model;
+    const ecoreJSONStr: string = model.generateModelString();
+    this.vertexSaveStr = JSON.stringify(model.generateVertexPositionSaveArr() as Dictionary<string, GraphSize>);
+    const name = model.name;
+    const viepointJSONStr: string = JSON.stringify(model.generateViewPointSaveArr() as Json[]);
+    this.p('save ' + this.prefix + 'Model[' + name + '] = ', ecoreJSONStr, 'viewpoints:', viepointJSONStr);
 
-    this.p('isAutosave:', isAutosave, 'saveAs:', saveAs, (v ? 'viewpoint' : 'model') + '.name:', v ? v.name : model.name);
-// todo: se model è anonimo non parte mai finishsave (parte solo il salvataggio in LastModelOpened) e non parte mai il salvataggio dei viewpoint.
-    //if (v) { this.finishSave(name, ecoreJSONStr, v);}
-    if (isAutosave) {
-      if (name && name !== '') { this.finishSave(name, ecoreJSONStr, v); }
-    } else
-    if (saveAs || !name || name === '') {
-      popup = new InputPopup('Choose a name for the ' + ( v ? 'Viewpoint' : model.friendlyClassName()),
-        '', '', [['input', oninput], ['change', onchange]],
+    this.add(null, ecoreJSONStr, SaveListEntry.model);
+    this.add(null, viepointJSONStr, SaveListEntry.view);
+    this.add(null, this.vertexSaveStr, SaveListEntry.vertexPos);
+
+    let popup: InputPopup;
+    const onblur = (e: BlurEvent) => { this.save_BlurEvent(e, ecoreJSONStr); };
+    const onkeydown = (e: KeyDownEvent) => { this.save_OnKeyDown(e, ecoreJSONStr); };
+    const onchange = (e: any) => { this.save_OnChange(e, model); };
+    this.p('isAutosave:', isAutosave, 'saveAs:', saveAs, 'model.name:', model.name);
+
+    // save with a name.
+    if (name && name !== '') { this.finishSave(ecoreJSONStr); return; }
+    // autosave without a name.
+    if (isAutosave) { return; }
+    // saveas without a name.
+    if (saveAs) {
+      popup = new InputPopup('Choose a name for the ' + model.friendlyClassName(),
+        '', '', [['change', onchange], ['keydown', onkeydown], ['blur', onblur]],
         'Viewpoint', model.friendlyClassName() + ' name', '');
-      popup.show(); }
+      popup.show(); return; }
+    // user clicked save without a name
   }
+
   pushToServer(): void {}
 
-
-  rename(oldKey: string, newKey: string, forViews: boolean) {
-    const oldVal: any = this.get(oldKey);
-    this.remove(oldKey, forViews);
-    this.set(newKey, oldVal, forViews);
-  }
-
-  autosave(turn: boolean, permanent: boolean = false) {
-    // todo: ?
+  autosave(turn: boolean, permanendNotImplemented: boolean = false): void {
+    localStorage.setItem('autosave', '' + turn);
   }
 
 }
+
 export class LocalStorageM {
 
 

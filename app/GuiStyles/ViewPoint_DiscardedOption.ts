@@ -152,14 +152,14 @@ delete(): null {
   return null; }
 
 }
-export abstract class Vieww {
-  static byID: Dictionary<number, Vieww> = {};
+export abstract class ViewRule {
+  static byID: Dictionary<number, ViewRule> = {};
   static absoluteindex: number = 1;
   key: number[];
   id: number;
   own: ViewHtmlSettings;
   instances: ViewHtmlSettings;
-  parent: Vieww;
+  parent: ViewRule;
   // instancesStyleObjKey: string;
   // ownStyleObjKey: string;
   /*  ownStyle: string = null;
@@ -169,19 +169,19 @@ export abstract class Vieww {
   // static getKey(m: ModelPiece): number[] { return U.getIndexesPath(m, 'parent', 'childrens'); }
   // todo: setta l'id che verrà letto qui
 
-  constructor(parent: Vieww) {
+  constructor(parent: ViewRule) {
     this.parent = parent;
     console.log('this:', this);
-    this.id = Vieww.absoluteindex++;
-    Vieww.byID[this.id] = this;
+    this.id = ViewRule.absoluteindex++;
+    ViewRule.byID[this.id] = this;
     this.own = new ViewHtmlSettings(null);
     this.instances = new ViewHtmlSettings(null); }
 
-  static get(html: HTMLElement | SVGElement): Vieww {
+  static get(html: HTMLElement | SVGElement): ViewRule {
     while (html && html.dataset && !html.dataset.styleid) html = html.parentNode as HTMLElement | SVGElement;
-    return Vieww.getbyID(html && html.dataset ? +html.dataset.styleid : null); }
+    return ViewRule.getbyID(html && html.dataset ? +html.dataset.styleid : null); }
 
-  static getbyID(id: number): Vieww { return Vieww.byID[id]; }
+  static getbyID(id: number): ViewRule { return ViewRule.byID[id]; }
 
   findTarget<T extends ModelPiece>(model: IModel, path: number[] = null): T {
     if (!path) { path = this.key; }
@@ -193,7 +193,7 @@ export abstract class Vieww {
     return target; }
 
   abstract clone(obj0: Json): void;
-  private emptyconstructor(): Vieww {
+  private emptyconstructor(): ViewRule {
     if (this instanceof ModelView) return new ModelView(null, null);
     if (this instanceof PackageView) return new PackageView(null);
     if (this instanceof ClassView) return new ClassView(null);
@@ -201,27 +201,27 @@ export abstract class Vieww {
     if (this instanceof AttributeView) return new AttributeView(null);
     if (this instanceof OperationView) return new OperationView(null);
     if (this instanceof ParameterView) return new ParameterView(null);
-    if (this instanceof EdgeView) return new EdgeView(null);
+    if (this instanceof EdgeViewRule) return new EdgeViewRule(null);
     if (this instanceof EdgePointView) return new EdgePointView(null);
     U.pe(true, 'unable to find view constructor type:', this);
     return null; }
 
   isEmpty(): boolean { return this.equals(this.emptyconstructor()); }
 
-  equals(other: Vieww, debug: boolean = true): boolean {
+  equals(other: ViewRule, debug: boolean = true): boolean {
     const s1 = JSON.stringify(this, (key, val) => key === 'id' ? undefined : val);
     const s2 = JSON.stringify(other);
     const ret = s1 === s2;
     U.pif(debug,'view.equals():' + ret + ' --> |'+s1+'| =?= |'+s2+'|');
     return ret; }
 
-  duplicate(): Vieww {
+  duplicate(): ViewRule {
     const duplicate =  this.emptyconstructor();
     duplicate.clone(this);
     return duplicate; }
 
   clone0(obj0: Json): void {
-    const obj = obj0 as Vieww;
+    const obj = obj0 as ViewRule;
     this.key = obj.key;
     /*this.instancesStyle = obj.instancesStyle;
     this.ownStyle = obj.ownStyle;* /
@@ -235,7 +235,7 @@ export abstract class Vieww {
     U.pw(!m, 'failed to get target of views:', this, 'in model:', model);
     if (!m) return null;
     m.addView(this);
-    // TODO: apply adesso è inutile dato che c'è un field Vieww diretto dentro ModelPiece.
+    // TODO: apply adesso è inutile dato che c'è un field ViewRule diretto dentro ModelPiece.
     /*
     if (exclusive || !this.own) { m.customStyleToErase = U.toHtml(this.ownStyle); }
     if (exclusive || !this.ownStyle) { m.customStyleToErase = U.toHtml(this.ownStyle); }
@@ -246,7 +246,7 @@ export abstract class Vieww {
     // m.styleOfInstances = instancesStyle; // m.setStyle_InstancesLevel_2(U.toHtml(this.instancesStyle));
     return m; }
 
-  abstract initializeFromModel(m: ModelPiece): Vieww;
+  abstract initializeFromModel(m: ModelPiece): ViewRule;
   initializeFromModel0(m: ModelPiece): void {
     this.instances = new ViewHtmlSettings();
     // this.instancesStyle = m.styleOfInstances.outerHTML;
@@ -263,14 +263,14 @@ export abstract class Vieww {
       if(m.metaParent && m.metaParent.views &&  m.metaParent.views.instances && m.metaParent.views.instances.html) return m.metaParent.views.instances.html;
       return m.getGlobalLevelStyle(); }*/
 
-  // getHtml(m: ModelPiece): StyleComplexEntry { return Vieww.getHtml(this); }
+  // getHtml(m: ModelPiece): StyleComplexEntry { return ViewRule.getHtml(this); }
   /*
   static getHtml(m: ModelPiece): StyleComplexEntry {
     let j: number;
     let i: number;
     const ret: StyleComplexEntry = {html:null, htmlobj:null, view:null, ownermp:null, isownhtml:null, isinstanceshtml:null, isGlobalhtml:null};
     for (j = m.views.length; --j >=0 ;){
-      const v: Vieww = m.views[j];
+      const v: ViewRule = m.views[j];
       if (!v.own || !v.own.html) continue;
       ret.html = v.own.html;
       ret.htmlobj = v.own;
@@ -282,7 +282,7 @@ export abstract class Vieww {
       return ret; }
     if (m.metaParent) {
       for (i = m.metaParent.views.length; --i >= 0;) {
-        let v: Vieww = m.metaParent.views[i];
+        let v: ViewRule = m.metaParent.views[i];
         if (!v.instances || v.instances.html) continue;
         ret.html = v.instances.html;
         ret.htmlobj = v.instances;
@@ -302,19 +302,19 @@ export abstract class Vieww {
     return ret; }* /
 
   getViewPoint(): ViewPoint {
-    let elem: Vieww = this;
+    let elem: ViewRule = this;
     while (elem.parent) { elem = elem.parent;}
     return (elem as ModelView).viewpoint; }
 }
 
-export class ModelView extends Vieww{
+export class ModelView extends ViewRule{
   zoom: Point;
   scroll: GraphPoint;
   gridShow: boolean;
   grid: GraphPoint;
   packageViews: PackageView[] = [];
   viewpoint: ViewPoint;
-  constructor(parent: Vieww, viewpoint: ViewPoint) {
+  constructor(parent: ViewRule, viewpoint: ViewPoint) {
     super(null);
     this.viewpoint = viewpoint;
   }
@@ -355,7 +355,7 @@ export class ModelView extends Vieww{
     return this; }
 }
 
-export class PackageView extends Vieww{
+export class PackageView extends ViewRule{
   classViews: ClassView[];
 
   apply(model: IModel, exclusive: boolean): void {
@@ -378,11 +378,11 @@ export class PackageView extends Vieww{
     return this; }
 }
 
-export class ClassView extends Vieww{
+export class ClassView extends ViewRule{
   public displayAsEdge: boolean = false;
   public size: GraphSize;
   parent: PackageView;
-  edgeView: EdgeView[];
+  edgeView: EdgeViewRule[];
   attributeViews: AttributeView[];
   referenceViews: ReferenceView[];
   operationViews: OperationView[]; // todo: check utilizzi di attributeview e aggiorna pure operationviews.
@@ -415,7 +415,7 @@ export class ClassView extends Vieww{
     for (let i = 0; i < m.childrens.length; i++) { this.attributeViews.push(new AttributeView(this).initializeFromModel(m.attributes[i])); }
     for (let i = 0; i < m.childrens.length; i++) { this.referenceViews.push(new ReferenceView(this).initializeFromModel(m.references[i])); }
     const edges: IEdge[] = m.getEdges();
-    for (let i = 0; i < m.childrens.length; i++) { this.edgeView.push(new EdgeView(this).generateew(edges[i])); }
+    for (let i = 0; i < m.childrens.length; i++) { this.edgeView.push(new EdgeViewRule(this).generateew(edges[i])); }
     const v: IVertex = m.getVertex();
     this.size = v.getSize();
     this.displayAsEdge = m.shouldBeDisplayedAsEdge();
@@ -430,11 +430,11 @@ export class ClassView extends Vieww{
     if (this.parent) U.ArrayAdd(this.parent.classViews, this);
     for (let i = 0; i < obj.attributeViews.length; i++) { this.attributeViews.push(new AttributeView(this).clone(this.attributeViews[i] as Json)); }
     for (let i = 0; i < obj.referenceViews.length; i++) { this.referenceViews.push(new ReferenceView(this).clone(this.referenceViews[i] as Json)); }
-    for (let i = 0; i < obj.edgeView.length; i++) { this.edgeView.push(new EdgeView(this).clone(this.edgeView[i] as Json)); }
+    for (let i = 0; i < obj.edgeView.length; i++) { this.edgeView.push(new EdgeViewRule(this).clone(this.edgeView[i] as Json)); }
     return this; }
 }
 
-export class AttributeView extends Vieww {
+export class AttributeView extends ViewRule {
   parent: ClassView;
 
   apply(model: IModel, exclusive: boolean): void {
@@ -453,8 +453,8 @@ export class AttributeView extends Vieww {
     return this; }
 }
 
-export class ReferenceView extends Vieww {
-  edgeView: EdgeView[] = [];
+export class ReferenceView extends ViewRule {
+  edgeView: EdgeViewRule[] = [];
   parent: ClassView;
 
   apply(model: IModel, exclusive: boolean): void {
@@ -466,18 +466,18 @@ export class ReferenceView extends Vieww {
   initializeFromModel(m: IReference): ReferenceView {
     this.initializeFromModel0(m);
     const edges: IEdge[] = m.getEdges();
-    for (let i = 0; i < m.childrens.length; i++) { this.edgeView.push(new EdgeView(this).generateew(edges[i])); }
+    for (let i = 0; i < m.childrens.length; i++) { this.edgeView.push(new EdgeViewRule(this).generateew(edges[i])); }
     return this; }
 
   clone(obj0: Json): ReferenceView {
     this.clone0(obj0);
     const obj: ReferenceView = obj0 as ReferenceView;
     if (this.parent) U.ArrayAdd(this.parent.referenceViews, this);
-    for (let i = 0; i < obj.edgeView.length; i++) { this.edgeView.push(new EdgeView(this).clone(this.edgeView[i] as Json)); }
+    for (let i = 0; i < obj.edgeView.length; i++) { this.edgeView.push(new EdgeViewRule(this).clone(this.edgeView[i] as Json)); }
     return this; }
 }
 
-export class OperationView extends Vieww {
+export class OperationView extends ViewRule {
   parameterView: ParameterView[];
   parent: ClassView;
   apply(model: IModel, exclusive: boolean): void {
@@ -491,7 +491,7 @@ export class OperationView extends Vieww {
   }
 }
 
-export class ParameterView extends Vieww {
+export class ParameterView extends ViewRule {
   parent: OperationView;
   apply(model: IModel, exclusive: boolean): void {
   }
@@ -503,16 +503,16 @@ export class ParameterView extends Vieww {
     return undefined;
   }
 }
-export class EdgePointView extends Vieww {
+export class EdgePointView extends ViewRule {
   parent: ReferenceView | ClassView;
   apply(model: IModel, exclusive: boolean): void {  }
 
   clone(obj0: Json): void { }
 
-  initializeFromModel(m: ModelPiece): Vieww { U.pe(true, 'call Edgeview.generateew instead.'); return this; }
+  initializeFromModel(m: ModelPiece): ViewRule { U.pe(true, 'call Edgeview.generateew instead.'); return this; }
 
 }
-export class EdgeView extends Vieww {
+export class EdgeViewRule extends ViewRule {
   public common: EdgeStyle;
   public highlight: EdgeStyle;
   public selected: EdgeStyle;
@@ -526,12 +526,12 @@ export class EdgeView extends Vieww {
 
   }
 
-  initializeFromModel(m: ModelPiece): Vieww { U.pe(true, 'call Edgeview.generateew instead.'); return this; }
-  generateew(m: IEdge): EdgeView {
+  initializeFromModel(m: ModelPiece): ViewRule { U.pe(true, 'call Edgeview.generateew instead.'); return this; }
+  generateew(m: IEdge): EdgeViewRule {
 
     return this; }
 
-  clone(obj0: Json): EdgeView {
+  clone(obj0: Json): EdgeViewRule {
     return this;
   }
 }

@@ -14,6 +14,20 @@
   bottom: 0;
   right: 0;
 }
+
+.sidebarClassContainer{
+  padding-top: 16px;
+  padding-left: 10px;
+  padding-right: 5px;
+}
+.sidebarNode{
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+.sidebarNodeName{
+  display: flex;
+  margin: auto;
+}
 .modelTab{
   background-color: var(--mainBackgroundColor);
   margin-top: -11px;

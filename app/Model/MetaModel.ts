@@ -28,7 +28,8 @@ import {
   Status,
   ViewPoint,
   Type, Dictionary
-} from '../common/Joiner';
+}                    from '../common/Joiner';
+import {EAnnotation} from './EAnnotation';
 
 
 export class MetaModel extends IModel {
@@ -97,12 +98,19 @@ export class MetaModel extends IModel {
   parse(json: Json, destructive: boolean = true): void {
     if (destructive) { this.childrens = []; }
     const childrens = Json.getChildrens(json);
+    const annotations = Json.getAnnotations(json);
     let i;
+    for (i = 0; i < annotations.length; i++) {
+      const child = annotations[i];
+      // metaParent = U.findMetaParentP(this, child);
+      if (destructive) { new EAnnotation(this, child); continue; }
+      U.pe(true, 'Non-destructive m2-model parse: to do');
+    }
     for (i = 0; i < childrens.length; i++) {
       const child = childrens[i];
       const metaParent: M3Package = null;
       // metaParent = U.findMetaParentP(this, child);
-      if (destructive) { U.ArrayAdd(this.childrens, new M2Package(this, child)); continue; }
+      if (destructive) { new M2Package(this, child); continue; }
       U.pe(true, 'Non-destructive m2-model parse: to do');
     }
   }

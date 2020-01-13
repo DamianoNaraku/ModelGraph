@@ -11,9 +11,10 @@ import {
   IFeature,
   IReference,
   IAttribute,
-  IClass
+  IClass, ExtEdge, IEdge, IClassifier, IModel
 } from '../../common/Joiner';
 import ClickEvent = JQuery.ClickEvent;
+import ContextMenuEvent = JQuery.ContextMenuEvent;
 
 @Component({
   selector: 'app-dam-context-menu',
@@ -23,17 +24,30 @@ import ClickEvent = JQuery.ClickEvent;
 
 export class DamContextMenuComponent implements OnInit {
   static contextMenu: DamContextMenuComponent = null;
-  private templateContainer: HTMLElement = null;
-  private $templateContainer: JQuery<HTMLElement> = null;
-  private currentlyOpened: HTMLElement = null;
+  private html: HTMLElement = null;
+  private $html: JQuery<HTMLElement> = null;
+  // private currentlyOpened: HTMLElement = null;
   private clickTarget: HTMLElement | SVGElement;
+  private $vertexcontext: JQuery<HTMLUListElement>;
+  private $edgecontext: JQuery<HTMLUListElement>;
+  private $extedgecontext: JQuery<HTMLUListElement>;
+  private vertexcontext: HTMLUListElement;
+  private edgecontext: HTMLUListElement;
+  private extedgecontext: HTMLUListElement;
   static staticInit() {
     DamContextMenuComponent.contextMenu = new DamContextMenuComponent();
   }
   constructor() {
-    this.$templateContainer = $('#damContextMenuTemplateContainer');
-    this.templateContainer = this.$templateContainer[0];
+    this.$html = $('#damContextMenuTemplateContainer');
+    this.html = this.$html[0];
     $(document).off('click.hideContextMenu').on('click.hideContextMenu', (e: ClickEvent) => this.checkIfHide(e));
+    this.$vertexcontext = this.$html.find('ul.vertex') as JQuery<HTMLUListElement>;
+    this.$edgecontext = this.$html.find('ul.edge') as JQuery<HTMLUListElement>;
+    this.$extedgecontext = this.$html.find('ul.extedge') as JQuery<HTMLUListElement>;
+    this.vertexcontext = this.$vertexcontext[0];
+    this.edgecontext = this.$edgecontext[0];
+    this.extedgecontext = this.$extedgecontext[0];
+    this.$html.on('contextmenu', (e: ContextMenuEvent): boolean => { e.preventDefault(); e.stopPropagation(); return false; });
   }
 
   ngOnInit() { }
@@ -41,47 +55,62 @@ export class DamContextMenuComponent implements OnInit {
   show(location: Point, classSelector: string, target: HTMLElement | SVGElement) {
     U.pe(!target, 'target is null.');
     this.clickTarget = target;
-    console.log('clicktarget:', this.clickTarget);
-    const templateSelector = '#MM_VertexContextMenu';
-    this.hide();
-    const $current = this.$templateContainer.find(templateSelector);
-    U.pe($current.length !== 1, 'Unable to find a single template with contextMenu selector:', templateSelector,
-      '. templateList:', this.templateContainer, ', found:', $current);
-    this.currentlyOpened = U.cloneHtml($current[0]);
-    this.currentlyOpened.id = 'currentlyOpenedContextMenu';
-    const $currentlyOpened = $(this.currentlyOpened);
-    console.log('hide:', $currentlyOpened.find('ul.contextMenu>li').hide());
-    $currentlyOpened.find(classSelector).show();
-    console.log('original:', $current[0], 'cloned:', this.currentlyOpened);
-    document.body.appendChild(this.currentlyOpened);
-    this.currentlyOpened.style.display = 'inline-block';
-    const templateSize: Size = U.sizeof(this.currentlyOpened);
+    this.addEventListeners(); // must be done here, per facilità di fare binding usando variabili esterne agli eventi.
+    this.html.style.display = 'none'; // if was already displaying, start the scrollDown animation without doing the scrollUp()
+    this.$html.slideDown();
+    const vertex: IVertex = IVertex.getvertexByHtml(target);
+
+    let edge: IEdge = IEdge.getByHtml(target);
+    let extedge: ExtEdge = null;
+    if (edge instanceof ExtEdge) { extedge = edge; edge = null; }
+
+    console.log('contextmenu target:', this.clickTarget);
+
+    const templateSize: Size = U.sizeof(this.html);
     // todo:
     const viewPortSize: Size = new Size(0, 0, window.innerWidth, window.innerHeight);
     location.x = Math.max(0, location.x );
     location.y = Math.max(0, location.y );
     location.x = Math.min(viewPortSize.w - (templateSize.w), location.x );
-    console.log('vp.w:', viewPortSize.w, ' - t.w:', templateSize.w, ', loc.x', location.x, ', t.size:', templateSize, this.currentlyOpened);
+    console.log('vp.w:', viewPortSize.w, ' - t.w:', templateSize.w, ', loc.x', location.x, ', t.size:', templateSize, this.html);
     location.y = Math.min(viewPortSize.h - (templateSize.h), location.y );
-    this.currentlyOpened.style.position = 'absolute';
-    this.currentlyOpened.style.zIndex = '1000';
-    this.currentlyOpened.style.left = '' + location.x + 'px';
-    this.currentlyOpened.style.top = '' + location.y + 'px';
-    console.log('contextMenu.show() = ', this.currentlyOpened);
-    this.addEventListeners();
+    this.html.style.position = 'absolute';
+    this.html.style.zIndex = '1000';
+    this.html.style.left = '' + location.x + 'px';
+    this.html.style.top = '' + location.y + 'px';
+    this.extedgecontext.style.display = 'none';
+    this.edgecontext.style.display  = 'none';
+    this.vertexcontext.style.display = 'none';
+    this.edgecontext.style.display = edge ? '' : 'none';
+    this.extedgecontext.style.display = extedge ? '' : 'none';
+    this.vertexcontext.style.display = vertex ? '' : 'none';
+    if (vertex) {
+      const mp: ModelPiece = ModelPiece.getLogic(target);
+      const model: IModel = mp.getModelRoot();
+      if (model.isM1()) {
+        this.$vertexcontext.find('.m1hide').hide();
+        this.$vertexcontext.find('.m2hide').show(); }
+      else {
+        this.$vertexcontext.find('.m1hide').show();
+        this.$vertexcontext.find('.m2hide').hide(); }
+
+      if (mp instanceof IClassifier) {
+        this.$vertexcontext.find('.Feature').hide();
+        this.$vertexcontext.find('.Vertex').show();
+      }
+      else {
+        this.$vertexcontext.find('.Feature').show();
+        this.$vertexcontext.find('.Vertex').hide();
+      }
+    }
+
   }
   hide(): void {
-    $('#currentlyOpenedContextMenu').remove();
-    if (!this.currentlyOpened) { return; }
-    const parent = this.currentlyOpened.parentNode;
-    if (parent === this.templateContainer) {
-      parent.removeChild(this.currentlyOpened);
-      this.templateContainer.appendChild(this.currentlyOpened); }
-    this.currentlyOpened = null;
+    this.$html.slideUp();
   }
 
   private addEventListeners() {
-    const html = this.currentlyOpened;
+    const html = this.html;
     const $html = $(html);
     console.log(this.clickTarget);
     const v: IVertex = IVertex.getvertexByHtml(this.clickTarget);
@@ -117,6 +146,7 @@ export class DamContextMenuComponent implements OnInit {
   }
   private checkIfHide(e: ClickEvent) {
     const originalTarget: HTMLElement = e.target;
-    if ( U.isParentOf(this.clickTarget, originalTarget)) { return; } else { this.hide(); }
+    const cond: boolean = true; // !U.isParentOf(this.html, originalTarget);
+    if (cond) { this.hide(); }
   }
 }

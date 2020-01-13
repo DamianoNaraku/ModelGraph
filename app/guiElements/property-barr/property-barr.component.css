@@ -49,11 +49,22 @@ input[disabled]:hover, select[disabled]:hover{
   display: none;
 }
 .wastemplate.minimized:hover {
-  background-color: green;
+  display: flex;
+  border-color: var(--secondary);
+}
+.wastemplate.minimized:before {
+  color: dodgerblue;
+  content: '+';
+  font-size: 20px;
+  margin: auto;
+  line-height: 0;
+}
+.wastemplate.minimized:hover:before {
+  color: var(--secondary);
 }
 .minimizer:hover, .attributeMinimizer:hover{
-  border-left: 4px dashed darkblue;
-  border-bottom: 4px dashed darkblue;
+  border-left: 2px dashed var(--secondary);
+  border-bottom: 2px dashed var(--secondary);
 }
 .wastemplate.minimized{
   border: 2px solid dodgerblue;

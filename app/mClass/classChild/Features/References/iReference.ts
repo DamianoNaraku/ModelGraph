@@ -25,6 +25,7 @@ export abstract class IReference extends IFeature {
   edgeStyleSelected: EdgeStyle;
   constructor(parent: IClass, meta: IReference) {
     super(parent, meta);
+    if (parent) parent.references.push(this);
     this.edgeStyleCommon = new EdgeStyle(EdgeModes.straight, 2, '#ffffff',
       new EdgePointStyle(5, 2, '#ffffff', '#000000'));
     this.edgeStyleHighlight = new EdgeStyle(EdgeModes.straight, 4, '#ffffff',

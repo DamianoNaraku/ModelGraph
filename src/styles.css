@@ -121,10 +121,12 @@ button.edit:not(.btn) { background-image: url(../img/black/edit.png); }
   color: #FFFFFF;
   text-shadow: 2px 2px 3px #4074b5, 2px -2px 3px #4074b5, -2px 2px 3px #4074b5, -2px -2px 3px #4074b5, 2px 0px 3px #4074b5, 0px 2px 3px #4074b5, -2px 0px 3px #4074b5, 0px -2px 3px #4074b5;
   text-shadow: 2px 2px 3px #000000, 2px -2px 3px #000000, -2px 2px 3px #000000, -2px -2px 3px #000000, 2px 0px 3px #000000, 0px 2px 3px #000000, -2px 0px 3px #000000, 0px -2px 3px #000000;
+  text-shadow: 1px 1px 0px #777777, 1px -1px 0px #777777, -1px 1px 0px #777777, -1px -1px 0px #777777, 1px 0px 0px #777777, 0px 1px 0px #777777, -1px 0px 0px #777777, 0px -1px 0px #777777
 }
 .viewpointShell h6 {
   color: #FFFFFF;
-  text-shadow: 2px 2px 3px #4074b5, 2px -2px 3px #4074b5, -2px 2px 3px #4074b5, -2px -2px 3px #4074b5, 2px 0px 3px #4074b5, 0px 2px 3px #4074b5, -2px 0px 3px #4074b5, 0px -2px 3px #4074b5;
+  /*text-shadow: 2px 2px 3px #4074b5, 2px -2px 3px #4074b5, -2px 2px 3px #4074b5, -2px -2px 3px #4074b5, 2px 0px 3px #4074b5, 0px 2px 3px #4074b5, -2px 0px 3px #4074b5, 0px -2px 3px #4074b5;*/
+  text-shadow: 1px 1px 1.3px #777777, 1px -1px 1.3px #777777, -1px 1px 1.3px #777777, -1px -1px 1.3px #777777, 1px 0px 1.3px #777777, 0px 1px 1.3px #777777, -1px 0px 1.3px #777777, 0px -1px 1.3px #777777;
 }
 .viewpointShell input{
   margin-top: auto;
@@ -248,3 +250,14 @@ button.edit:not(.btn) { background-image: url(../img/black/edit.png); }
   box-shadow: none;
 }
 /* glowing tab headers end*/
+.sidebarShell:first-child {
+  padding-top: 15px;
+  padding-left: 10px;
+}
+.sidebarShell {
+  padding: 0; /*required for U.resizingBorders*/
+}
+
+
+
+/****/

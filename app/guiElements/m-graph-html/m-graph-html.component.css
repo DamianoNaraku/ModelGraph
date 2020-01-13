@@ -1,4 +1,3 @@
-
 /************************************************** statici */
 
 .template, .MDefaultStyles{
@@ -47,37 +46,7 @@
                 align-content: flex-start;/*accatasta tutto verticalmente verso la cima invece di spaziarli.*/
                 padding-right:5px;
               }
-.sidebarNode{
-  display: flex;
-  margin: auto;
-  border: solid 1px var(--secondaryBorderColor);
-  width: 100%;
-  height: auto;
-}
-.sidebarNodeName{
-  display: flex;
-  margin: auto;
-}
 
-/*
-#sidebarResizer, .sidebarResizer{
-    margin: 0px;
-    padding: 0px;
-    width: var(--mainBorderWidth);
-    cursor: ew-resize;
-    background-color: var(--mainBorderColor);
-    user-drag: none;
-    user-select: none;
-    -moz-user-select: none;
-    -webkit-user-drag: none;
-    -webkit-user-select: none;
-    -ms-user-select: none;
-}*/
-
-
-.vertexEdgeSeparator{
-  order: 2;
-}
 #msidebar>*:first-child, #metamodel_sidebar>*:first-child, #model_sidebar>*:first-child{
   background-color: var(--mainBorderColor);
   width: var(--mainBorderWidth);
@@ -113,23 +82,10 @@
 }
 
 
-/* property bar raws */
-::ng-deep .propertyBarContainer .mat-tab-label{
-  display: flex;
-  height: 20px;
-  flex-grow: 1;
-  flex-basis: 0;
-  min-width: 0 !important;
-  /*width: auto !important;*/
-  max-width: 50% !important
-}
-::ng-deep .propertyBarContainer .mat-tab-header-pagination{
-  display: none !important;
-}
 .rawContainer{
   display: flex;
   flex-flow: column;
-  height: -webkit-fill-available;
+  height: 100%;
 }
 h2.rawTitle{
   display: flex;

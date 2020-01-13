@@ -20,7 +20,7 @@ import {
   // Options,
   Point,
   GraphPoint,
-  IVertex, GraphSize, EdgeStyle, Json, StyleComplexEntry,
+  IVertex, GraphSize, EdgeStyle, Json, StyleComplexEntry, IClassifier,
 } from '../common/Joiner';
 import ChangeEvent = JQuery.ChangeEvent;
 import BlurEvent = JQuery.BlurEvent;
@@ -127,21 +127,22 @@ export class ViewHtmlSettings{
   public getHtml(): Element { return this.html; }
   public getHtmlstr(): string { return this.html.outerHTML; }
 
-  clone(instances: ViewHtmlSettings) {
-    this.allowedOnClass = instances.allowedOnClass;
-    this.allowedOnAttribute = instances.allowedOnAttribute;
-    this.allowedOnReference = instances.allowedOnReference;
-    this.allowedOnOperation = instances.allowedOnOperation;
-    this.allowedOnParameter = instances.allowedOnParameter;
-    this.AllowedOnM1 = instances.AllowedOnM1;
-    this.AllowedOnM2 = instances.AllowedOnM2;
-    this.elementStylingCount = instances.elementStylingCount;
-    this.featuredependency = instances.featuredependency;
-    this.forkCounter = instances.forkCounter;
-    this.ForkedFromStr_name = instances.ForkedFromStr_name;
-    this.ForkedFromStr_user = instances.ForkedFromStr_user;
-    //this.htmlstr = instances.htmlstr;
-    this.html = U.toHtml(this.htmlstr);
+  clone(json: ViewHtmlSettings) {
+    this.allowedOnClass = json.allowedOnClass;
+    this.allowedOnAttribute = json.allowedOnAttribute;
+    this.allowedOnReference = json.allowedOnReference;
+    this.allowedOnOperation = json.allowedOnOperation;
+    this.allowedOnParameter = json.allowedOnParameter;
+    this.AllowedOnM1 = json.AllowedOnM1;
+    this.AllowedOnM2 = json.AllowedOnM2;
+    this.elementStylingCount = json.elementStylingCount;
+    this.featuredependency = json.featuredependency;
+    this.forkCounter = json.forkCounter;
+    this.ForkedFromStr_name = json.ForkedFromStr_name;
+    this.ForkedFromStr_user = json.ForkedFromStr_user;
+    //this.htmlstr = json.htmlstr;
+    if (json.htmlstr) this.html = U.toHtml(json.htmlstr);
+    U.pe(!(this.html instanceof Element), 'invalid htmlstr:', json.htmlstr, json);
   }
 
   setDependencyArray(featuredependency: {template: string, namesArray: string, typesArray: string}[]): void {
@@ -152,110 +153,115 @@ export class ViewHtmlSettings{
     
   }
 }
-export class Vieww {
-  static allByID: Dictionary<number, Vieww> = {};
+
+export class ViewRule {
+  static allByID: Dictionary<number, ViewRule> = {};
   static maxID: number = 0;
   public id: number;
   public viewpoint: ViewPoint;
   public target: ModelPiece = null;
-  private targetStr: string = null;
+  protected targetStr: string = null;
   htmlo: ViewHtmlSettings = null;
   htmli: ViewHtmlSettings = null;
   /// for classes
   public displayAsEdge: boolean = false;
   public vertexSize: GraphSize = null;
   /// for classes or references
-  public edgeViews: EdgeView[] = [];
-  private viewpointstr: string;
+  public edgeViews: EdgeViewRule[] = [];
+  protected viewpointstr: string;
 
-  static getbyID(id: number): Vieww { return Vieww.allByID[id]; }
-  static getbyHtml(html0: Element): Vieww {
+  static getbyID(id: number): ViewRule { return ViewRule.allByID[id]; }
+  static getbyHtml(html0: Element): ViewRule {
     let html: HTMLElement | SVGElement = html0 as HTMLElement | SVGElement;
     while (html && html.dataset && !html.dataset.styleid) html = html.parentNode as HTMLElement | SVGElement;
-    return Vieww.getbyID(html && html.dataset ? +html.dataset.styleid : null); }
+    return ViewRule.getbyID(html && html.dataset ? +html.dataset.styleid : null); }
 
   constructor(owner: ViewPoint, target: ModelPiece = null) {
-    Vieww[this.id = Vieww.maxID++] = this;
+    ViewRule[this.id = ViewRule.maxID++] = this;
     if (owner) owner.views.push(this);
     this.viewpoint = owner;
     this.target = target;
     this.setTargetStr();
   }
 
+  // will be called by JSON.serialize() before starting, replacing the original parameter.
   toJSON(nameOrIndex: string): Json{
     const copy0: any = {};
     this.setViewpointStr();
     this.setTargetStr();
     for (let key in this) { copy0[key] = this[key]; }
-    const copy: Vieww = copy0;
+    const copy: ViewRule = copy0;
+    if (this.target instanceof IClassifier) this.vertexSize = this.target.getVertex().getSize();
     delete copy.id;
     delete copy.target;
     delete copy.viewpoint;
     return copy; }
-  // toString(): string { return JSON.stringify(this); }
-  toStringOLD(): string {
-    const replacer = (key: string, value: any): string => {
-      if (value === value + '') return value;
-      switch (key) {
-      default: U.pe(true, 'unexpected object key:' + key + ' value:', value); break;
-      case 'target': case 'id': case 'viewpoint': return undefined;
-      case 'viewpointstr': return this.viewpoint.name;
-      case 'htmli': return this.htmli.toString();
-      case 'htmlo': return this.htmlo.toString();
-      case 'vertexSize': return JSON.stringify(this.vertexSize);
-      case 'edgeViews':
-        const pseudoarr = [];
-        for (let i = 0; i < this.edgeViews.length; i++) {
-          const ev = this.edgeViews[i];
-          const s = ev.toString();
-          pseudoarr.push(JSON.parse(s));
-        }
-        return JSON.stringify(pseudoarr);
-      }
-    };
-    // this.vertexSize
-    this.targetStr = this.target.getKeyStr();
-    return JSON.stringify(this, replacer);
+
+  // redundant explicit call toJSON just to make the IDE realize i'm using it.
+  toJsonString(): string { return JSON.stringify(this.toJSON(null)); }
+
+  setViewpointStr(): void { this.viewpointstr = this.viewpoint ? this.viewpoint.name : null; }
+  setTargetStr(): void {
+    this.targetStr = this.target ? this.target.getKeyStr() : null;
+    U.pe(!this.targetStr && !!this.target, 'failed to get targetstr from:', this.target);
   }
 
-  setViewpointStr(): void { this.viewpointstr = this.viewpoint.name; }
-  setTargetStr(): void { this.targetStr = this.target ? this.target.getKeyStr() : null; }
-  updateViewpoint(): void { this.viewpoint = ViewPoint.get(this.viewpointstr);  }
+  updateViewpoint(vp: ViewPoint = null): void {
+    this.viewpoint = vp || ViewPoint.get(this.viewpointstr);
+    const arr = this.edgeViews ? this.edgeViews : [];
+    let i: number;
+    for (i = 0; i < arr.length; i++) { arr[i].updateViewpoint(vp); } }
+
   updateTarget(): void {
     const root: IModel = this.viewpoint.target;
     const path: number[] = JSON.parse(this.targetStr);
     const realindexfollowed: {indexFollowed: string[] | number[], debugArr: {index: string | number, elem: any}[]} = {indexFollowed: [], debugArr:[]};
-    this.target = U.followIndexesPath(root, path, 'childrens', realindexfollowed);
+    this.target = ModelPiece.getByKey(path, realindexfollowed);
     if (realindexfollowed.indexFollowed.length !== path.length) {
       U.pw(true, 'unable to find target of view:', this, ' search output:', realindexfollowed);
       this.target = null; }
   }
-  clone(json: Vieww): void {
+  clone(json: ViewRule): void {
     if(json.setViewpointStr) { json.setViewpointStr(); }
     for(let key in json) {
-      switch (key.toLowerCase()){
-      default: U.pe(true, 'unexpected key'); break;
+      switch (key){
+      default: U.pe(true, 'unexpected key', key, json); break;
       case 'id': case 'target': break;
-      case 'targetstr': this.targetStr = json[key]; break;
-      case 'htmlo': this.htmlo.clone(json.htmlo); break;
-      case 'htmli': this.htmlo.clone(json.htmli); break;
-      case 'viewpointstr': this.viewpointstr = json.viewpointstr; break;
-      }
-      this.updateViewpoint();
-      this.updateTarget();
+      case 'targetStr': this.targetStr = json[key]; break;
+      case 'htmlo':
+        if (!json.htmlo) { this.htmlo = null; break; }
+        if (!this.htmlo) { this.htmlo = new ViewHtmlSettings(); }
+        this.htmlo.clone(json.htmlo); break;
+      case 'htmli':
+        if (!json.htmli) { this.htmli = null; break; }
+        if (!this.htmli) { this.htmli = new ViewHtmlSettings(); }
+        this.htmli.clone(json.htmli); break;
+      case 'displayAsEdge': this.displayAsEdge = json.displayAsEdge; break;
+      case 'vertexSize': this.vertexSize = json.vertexSize ? new GraphSize().clone(json.vertexSize) : null; break;
+      case 'edgeViews':
+        this.edgeViews = [];
+        const arr = json.edgeViews ? json.edgeViews : [];
+        let i: number;
+        for (i = 0; i < arr.length; i++) {
+          U.ArrayAdd(this.edgeViews, new EdgeViewRule(this.viewpoint).clone(arr[i]));
+        }
+        break;
+      case 'viewpointstr': this.viewpointstr = json.viewpointstr; break; }
     }
+    this.updateViewpoint();
+    this.updateTarget();
   }
 
-  duplicate(): Vieww {
-    const duplicate = new Vieww(null);
+  duplicate(): ViewRule {
+    const duplicate = new ViewRule(null);
     duplicate.clone(this);
     return duplicate; }
 
-  isEmpty(): boolean { return this.equals(new Vieww(this.viewpoint)); }
-  equals(other: Vieww): boolean { return this.toString() === other.toString(); }
+  isEmpty(): boolean { return this.equals(new ViewRule(this.viewpoint)); }
+  equals(other: ViewRule): boolean { return this.toString() === other.toString(); }
   // should only be called from ViewPoint
   apply(target: ModelPiece = null): void {
-    this.target = target || this.target;
+    this.target = target || this.target || ModelPiece.getByKeyStr(this.targetStr);
     console.log(this);
     this.viewpoint.viewsDictionary[this.target.id] = this;
     U.ArrayAdd(this.target.views, this);
@@ -266,39 +272,40 @@ export class Vieww {
     U.arrayRemoveAll(this.target.views, this);
     delete this.viewpoint.viewsDictionary[this.target.id];
     this.setTargetStr();
-    // this.target = null; target must never be deleted in Vieww
+    // this.target = null; target must never be deleted in ViewRule
   }
 
   getViewPoint(): ViewPoint { return this.viewpoint; }
 }
 //todo: nuova idea:
 //  creo un set di View[] dentro un ViewPoint.
-//  ogni View ha un target: ModelPiece, e un private targetstr: string usato solo per la serializzazione e de-serializzazione.
-//  la targetstr deve essere presa da ModelPiece.getKey()
-export class ViewPoint extends Vieww{
+//  ogni View ha un target: ModelPiece, e un private targetStr: string usato solo per la serializzazione e de-serializzazione.
+//  la targetStr deve essere presa da ModelPiece.getKey()
+export class ViewPoint extends ViewRule{
   static allnames: Dictionary<string, ViewPoint> = {};
   target: IModel;
   name: string;
-  views: Vieww[];
-  viewsDictionary: Dictionary<number, Vieww>;
-  private targetstr: string;
+  views: ViewRule[];
+  viewsDictionary: Dictionary<number, ViewRule>;
   zoom: Point;
   scroll: GraphPoint;
   gridShow: boolean;
   grid: GraphPoint;
   isApplied: boolean = false;
 
-  static getAppliedViews_TOMOVE(m: ModelPiece): Vieww[] {
+  static getAppliedViews_TOMOVE(m: ModelPiece): ViewRule[] {
     let i: number;
-    const arr: Vieww[] = [];
+    const arr: ViewRule[] = [];
     for (let name in ViewPoint.allnames) {
       const vp: ViewPoint = ViewPoint.allnames[name];
-      const v: Vieww = vp.getMpStyle(m);
+      const v: ViewRule = vp.getMpStyle(m);
       if (v) arr.push(v);
     }
     return arr; }
 
-  static get(value: string): ViewPoint { return ViewPoint.allnames[value]; }
+  static get(value: string): ViewPoint {
+    return ViewPoint.allnames[value];
+  }
   // abstract _isApplied(): boolean;
   constructor(target: IModel, name: string = null) {
     super(null);
@@ -312,7 +319,7 @@ export class ViewPoint extends Vieww{
 
   updateTarget(m: IModel = null): void { this.apply(m, true); }
 
-  getMpStyle(m: ModelPiece): Vieww { return this.viewsDictionary[m.id]; }
+  getMpStyle(m: ModelPiece): ViewRule { return this.viewsDictionary[m.id]; }
   setname(s: string) {
     if (!s) s = 'ViewPoint 1';
     if (s === this.name) return;
@@ -325,6 +332,8 @@ export class ViewPoint extends Vieww{
     this.setTargetStr();
     for (let key in this) { copy0[key] = this[key]; }
     const copy: ViewPoint = copy0;
+    delete copy.viewpoint;
+    delete copy.viewpointstr;
     delete copy.viewsDictionary;
     delete copy.target;
     return copy; }
@@ -347,7 +356,7 @@ export class ViewPoint extends Vieww{
     if (onlyAttach) return;
     let i: number;
     for (i  = 0; i < this.views.length; i++) {
-      let v: Vieww = this.views[i];
+      let v: ViewRule = this.views[i];
       v.apply();
     }
     this.isApplied = true;
@@ -360,7 +369,7 @@ export class ViewPoint extends Vieww{
     // NB: don't remove from model.viewPoints, just de-apply it.
     for(let istr in this.viewsDictionary) {
       let i: number = +istr;
-      let v: Vieww = this.viewsDictionary[i];
+      let v: ViewRule = this.viewsDictionary[i];
       v.detach();
     }
     this.isApplied = false;
@@ -376,31 +385,52 @@ export class ViewPoint extends Vieww{
     if (json.target && json.setTargetStr) json.setTargetStr();
     let i: number;
     for(let key in json) {
-      switch (key.toLowerCase()){
-      default: U.pe(true, 'unexpected key'); break;
-      case 'id': case 'target': break;
+      switch (key){
+      default: U.pe(true, 'unexpected key:', key, json); break;
+      case 'id': case 'target': case 'viewpoint': break;
+      case 'htmlo':
+        if (!json.htmlo) { this.htmlo = null; continue; }
+        if (!this.htmlo) this.htmlo = new ViewHtmlSettings();
+        this.htmlo.clone(json.htmlo);
+        break;
+      case 'htmli':
+        if (!json.htmli) { this.htmli = null; continue; }
+        if (!this.htmli) this.htmli = new ViewHtmlSettings();
+        this.htmli.clone(json.htmli as ViewHtmlSettings);
+        break;
       case 'isApplied': this.isApplied = json.isApplied; break;
       case 'name': this.setname(json.name); break;
-      case 'targetstr':
-        this.targetstr = json.targetstr;
-        const m: IModel = IModel.getByKey(this.targetstr);
-        U.pe(!m, 'failed to find VP.target:', this, this.targetstr, Status.status);
-        this.updateTarget(m);
+      case 'targetStr':
+        if (!json.targetStr) break;
+        this.targetStr = json.targetStr;
+        const m: IModel = ModelPiece.getByKeyStr(this.targetStr) as IModel;
+        U.pe(!m, 'failed to find VP.target:', this, this.targetStr, Status.status);
+        this.updateTarget(m); break;
+      case 'edgeViews':
+        this.edgeViews = [];
+        if (!json.edgeViews) continue;
+        for (i = 0; i < json.edgeViews.length; i++) {
+          const v: EdgeViewRule = new EdgeViewRule(this);
+          v.clone(json.edgeViews[i]);
+          U.ArrayAdd(this.edgeViews, v); } break;
       case 'views':
         this.views = [];
+        if (!json.views) continue;
         for (i = 0; i < json.views.length; i++) {
-          const v: Vieww = new Vieww(this);
+          const v: ViewRule = new ViewRule(this);
           v.clone(json.views[i]);
-          this.views.push(v); } break;
+          U.ArrayAdd(this.views, v); } break;
       case 'grid': this.grid = new Point(json.grid.x, json.grid.y); break;
       case 'gridShow': this.gridShow = json.gridShow; break;
       case 'scroll': this.scroll = new GraphPoint(json.scroll.x, json.scroll.y); break;
       case 'zoom': this.zoom = new GraphPoint(json.zoom.x, json.zoom.y);  break;
+      case 'vertexSize': this.vertexSize = json.vertexSize ? new GraphSize(json.vertexSize.x, json.vertexSize.y) : null; break;
+      case 'displayAsEdge': this.displayAsEdge = json.displayAsEdge; break;
       }
     }
   }
 
-  duplicate(): Vieww {
+  duplicate(): ViewRule {
     const duplicate = new ViewPoint(null);
     duplicate.clone(this);
     return duplicate; }
@@ -409,7 +439,7 @@ export class ViewPoint extends Vieww{
     const SingleLinkedTempVp = new ViewPoint(null);
     SingleLinkedTempVp.target = this.target;
     // NB: il target deve essere settato così "raw" non tramite costruttore e funzioni perchè non deve inserirlo nei viewpoints[] del target.
-    return this.equals(SingleLinkedTempVp, false); }
+    return this.equals(SingleLinkedTempVp, true); }
 
   equals(other: ViewPoint, ignoreName: boolean = true): boolean {
     const tmp = this.name;
@@ -419,19 +449,19 @@ export class ViewPoint extends Vieww{
     return ret; }
 }
 
-export class EdgeView extends Vieww {
+export class EdgeViewRule extends ViewRule {
   public common: EdgeStyle;
   public highlight: EdgeStyle;
   public selected: EdgeStyle;
   public midPoints: EdgePointView[];
   public edgeIndex: number;
 
-  clone(obj0: Json): EdgeView {
+  clone(obj0: Json): EdgeViewRule {
     return this;
   }
 }
 
-export class EdgePointView extends Vieww {
+export class EdgePointView extends ViewRule {
   clone(obj0: Json): void { }
 
 

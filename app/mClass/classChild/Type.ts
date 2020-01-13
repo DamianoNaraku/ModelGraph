@@ -159,7 +159,7 @@ export class Type {
 
   private applyTypeStr(): void {
     if (!this.typestr || !Status.status.mm) return;
-    const debug = true;
+    const debug = false;
     let i: number;
     const oldClass = this.classType;
     const oldEnum = this.enumType;

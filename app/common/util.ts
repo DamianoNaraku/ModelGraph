@@ -17,6 +17,19 @@ import MouseDownEvent = JQuery.MouseDownEvent;
 import MouseMoveEvent = JQuery.MouseMoveEvent;
 import MouseUpEvent = JQuery.MouseUpEvent;
 import ContextMenuEvent = JQuery.ContextMenuEvent;
+export class Dictionary<K = string, V = string> extends Object {}
+import * as detectzoooom            from 'detect-zoom';
+import ResizableOptions = JQueryUI.ResizableOptions;
+import DraggableOptions = JQueryUI.DraggableOptions;
+import KeyDownEvent = JQuery.KeyDownEvent;
+import ResizableUIParams = JQueryUI.ResizableUIParams;
+import DraggableEventUIParams = JQueryUI.DraggableEventUIParams;
+import MouseEnterEvent = JQuery.MouseEnterEvent;
+import MouseLeaveEvent = JQuery.MouseLeaveEvent;
+import ChangeEvent = JQuery.ChangeEvent;
+import {IClassifier}                from '../mClass/IClassifier';
+import {ECoreAnnotation, ECoreEnum} from '../Model/iModel';
+import {escapeHtml}                 from '@angular/platform-browser/src/browser/transfer_state';
 
 export class MeasurableArrays {rules: Attr[]; imports: Attr[]; exports: Attr[]; variables: Attr[];
   constraints: Attr[]; chain: Attr[]; chainFinal: Attr[]; dstyle: Attr[]; html: HTMLElement | SVGElement; e: Event}
@@ -176,13 +189,19 @@ export class U {
   private static resizingBorder: HTMLElement = null;
   private static resizingContainer: HTMLElement = null;
   // static he = null;
-  static production = false; // true;
-
+  public static production = false;
   private static addCssAvoidDuplicates: Dictionary<string, HTMLStyleElement> = {};
-
   static $measurableRelativeTargetRoot: JQuery<HTMLElement | SVGElement>;
-
   static varTextToSvg: SVGSVGElement = null;
+  private static dblclickchecker: number = new Date().getTime();// todo: move @ start
+  private static dblclicktimerms: number = 300;// todo: move @ start
+  static checkDblClick(): boolean {
+    const now: number = new Date().getTime();
+    const old: number = U.dblclickchecker;
+    U.dblclickchecker = now;
+    console.log('dblclick time:', now - old, now, old);
+    return (now - old <= U.dblclicktimerms); }
+
 
   static firstToUpper(s: string): string {
     if (!s || s === '') return s;
@@ -229,31 +248,29 @@ export class U {
     const highestTimeoutId: number = setTimeout(() => {}, 1) as any;
     for (let i = 0 ; i < highestTimeoutId ; i++) { clearTimeout(i); }
   }
-  static pe(b: boolean, s: any, ...restArgs: any[]): string {
+  static pe(b: boolean, s: any, ...restArgs: any[]): null {
     if (!b) { return null; }
     if (restArgs === null || restArgs === undefined) { restArgs = []; }
     let str = 'Error:' + s + '';
-    console.log('pe[0/' + (restArgs.length + 1) + ']: ', s);
+    console.error('pe[0/' + (restArgs.length + 1) + ']: ', s);
     for (let i = 0; i < restArgs.length; i++) {
       s = restArgs[i];
       str += 'pe[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ' + s + '\t\t\r\n';
-      console.log('pe[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ', s);
+      console.error('pe[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ', s);
     }
-    if (!U.production) { alert(str); }
-    s = (((b as unknown) as any[])['@makeMeCrash'] as any[])['@makeMeCrash'];
-    return str;
-  }
+    if (!U.production) { alert(str); } else U.pw(true, s, ...restArgs);
+    return (((b as unknown) as any[])['@makeMeCrash'] as any[])['@makeMeCrash']; }
 
   static pw(b: boolean, s: any, ...restArgs: any[]): string {
     if (!b) { return null; }
     if (restArgs === null || restArgs === undefined) { restArgs = []; }
     console['' + 'trace']();
     let str = 'Warning:' + s + '';
-    console.log('pw[0/' + (restArgs.length + 1) + ']: ', s);
+    console.warn('pw[0/' + (restArgs.length + 1) + ']: ', s);
     for (let i = 0; i < restArgs.length; i++) {
       s = restArgs[i];
       str += 'pw[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ' + s + '\t\t\r\n';
-      console.log('pw[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ', s);
+      console.warn('pw[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ', s);
     }
     U.bootstrapPopup(str, 'warning', 3000);
     // s = (((b as unknown) as any[])['@makeMeCrash'] as any[])['@makeMeCrash'];
@@ -267,24 +284,23 @@ export class U {
       restArgs = [];
     }
     let str = 'p: ' + s;
-    console.log('p:', s);
+    console.info('p:', s);
     for (let i = 0; i < restArgs.length; i++) {
       s = restArgs[i];
       str += 'p[' + (i + 1) + '/' + restArgs.length + ']: ' + s + '\t\t\r\n';
-      console.log('p[' + (i + 1) + '/' + restArgs.length + ']: ', s);
+      console.info('p[' + (i + 1) + '/' + restArgs.length + ']: ', s);
     }
     // alert(str);
-    return str;
-  }
+    return str; }
 
   static p(s: any, ...restArgs: any[]): string {
     if (restArgs === null || restArgs === undefined) { restArgs = []; }
     let str = 'p: ' + s;
-    console.log('p:', s);
+    console.info('p:', s);
     for (let i = 0; i < restArgs.length; i++) {
       s = restArgs[i];
       str += 'p[' + (i + 1) + '/' + restArgs.length + ']: ' + s + '\t\t\r\n';
-      console.log('p[' + (i + 1) + '/' + restArgs.length + ']: ', s);
+      console.info('p[' + (i + 1) + '/' + restArgs.length + ']: ', s);
     }
     // alert(str);
     return str;
@@ -427,6 +443,7 @@ export class U {
     // v2) usata: aggiustabile con if...substring(1). https://regex101.com/r/Do2ndU/3
     // get text between 2 single '$' excluding $$, so they can be used as escape character to display a single '$'
     // console.log('html0:', html0, 'html:', html);
+    U.pe(!(html instanceof Element), 'target must be a html node.', html, html0);
     html.innerHTML = U.replaceVarsString(obj, html.innerHTML, debug);
     U.pif(debug, 'ReplaceVars() return = ', html.innerHTML);
     return html; }
@@ -730,7 +747,7 @@ export class U {
 
   static setSvgSize(style: SVGElement, size: GraphSize, defaultsize: GraphSize): GraphSize {
     if (!style) return;
-    if (size) { size = size.clone(); } else { size = defaultsize; defaultsize = null; }
+    if (size) { size = size.duplicate(); } else { size = defaultsize.duplicate(); defaultsize = null; }
     if (!U.isNumber(size.x)) {
       U.pw(true, 'VertexSize Svg x attribute is NaN: ' + size.x + (!defaultsize ? '' : ' will be set to default: ' + defaultsize.x));
       U.pe(!defaultsize || !U.isNumber(defaultsize.x), 'Both size and defaultsize are null.', size, defaultsize, style);
@@ -758,7 +775,7 @@ export class U {
     const defaults: GraphSize = new GraphSize(0, 0, 200, 99);
     const ret0: GraphSize = new GraphSize(+elem.getAttribute('x'), +elem.getAttribute('y'),
       +elem.getAttribute('width'), +elem.getAttribute('height'));
-    const ret: GraphSize = ret0.clone();
+    const ret: GraphSize = ret0.duplicate();
     if (!U.isNumber(ret.x)) {
       U.pw(true, 'Svg x attribute is NaN: ' + elem.getAttribute('x') + ' will be set to default: ' + defaults.x);
       ret.x = defaults.x; }
@@ -1002,8 +1019,8 @@ export class U {
       const opt = $options[i] as HTMLOptionElement;
       if (opt.value === optionValue) { opt.selected = isFound = true; }
     }
-    console.log('SelectOption not found. html:', htmlSelect, ', searchingFor: ', optionValue, ', in options:', $options);
-    U.pe(!isFound && !canFail, 'SelectOption not found. html:', htmlSelect, ', searchingFor: ', optionValue, ', in options:', $options);
+    U.pw(!isFound, 'SelectOption not found. html:', htmlSelect, ', searchingFor: |' + optionValue + '|, in options:', $options);
+    U.pe(!isFound && !canFail, 'SelectOption not found. html:', htmlSelect, ', searchingFor: |' + optionValue + '| in options:', $options);
   }
 
   static tabSetup(root: HTMLElement = document.body): void {
@@ -1206,11 +1223,37 @@ export class U {
       return results; };
     return permuteInner(inputArr); }
 
+  static resizableBorderMouseDblClick(e: MouseDownEvent): void {
+    const size: Size = U.sizeof(U.resizingContainer);
+    const minSize: Size = U.sizeof(U.resizingBorder);
+    const oldSize: Size = new Size(0, 0, +U.resizingContainer.dataset.oldsizew, +U.resizingContainer.dataset.oldsizeh);
+    const horiz: boolean = U.resizingBorder.classList.contains('left') || U.resizingBorder.classList.contains('right');
+    const vertic: boolean = U.resizingBorder.classList.contains('top') || U.resizingBorder.classList.contains('bottom');
+    if (horiz && vertic) return; // do nothing on corner, non voglio che venga resizato sia a minheight che a minwidth, solo uno dei 2.
+    minSize.w *= horiz ? 2 : 1;
+    minSize.h *= vertic ? 2 : 1;
+    minSize.x = size.x;
+    minSize.y = size.y;
+    console.log('old, size, min', oldSize, size, minSize, oldSize.w && size.equals(minSize));
+    if (oldSize.w && size.equals(minSize)) {
+      U.resizingContainer.style.width = U.resizingContainer.style.minWidth = U.resizingContainer.style.maxWidth = oldSize.w + 'px';
+      U.resizingContainer.style.height = U.resizingContainer.style.minHeight = U.resizingContainer.style.maxHeight = oldSize.h + 'px'; }
+    else {
+      U.resizingContainer.style.width = U.resizingContainer.style.minWidth = U.resizingContainer.style.maxWidth = minSize.w + 'px';
+      U.resizingContainer.style.height = U.resizingContainer.style.minHeight = U.resizingContainer.style.maxHeight = minSize.h + 'px';
+      U.resizingContainer.dataset.oldsizew = '' + size.w;
+      U.resizingContainer.dataset.oldsizeh = '' + size.h; }
+  }
+
   static resizableBorderMouseDown(e: MouseDownEvent): void {
     U.resizingBorder = e.currentTarget;
     U.resizingContainer = U.resizingBorder;
+    U.resizingContainer.style.padding = '0';
+    U.resizingContainer.style.flexBasis = '0';
+    // U.resizingContent.style.width = '100%'; required too
     while (!U.resizingContainer.classList.contains('resizableBorderContainer')) {
-      U.resizingContainer = U.resizingContainer.parentNode as HTMLElement; } }
+      U.resizingContainer = U.resizingContainer.parentNode as HTMLElement; }
+    if (U.checkDblClick()) U.resizableBorderMouseDblClick(e); }
 
   static resizableBorderMouseUp(e: MouseDownEvent): void { U.resizingBorder = U.resizingContainer = null; }
   static resizableBorderUnset(e: ContextMenuEvent): void {
@@ -1218,6 +1261,9 @@ export class U {
     const border: HTMLElement = e.currentTarget;
     let container: HTMLElement = border;
     while (container.classList.contains('resizableBorderContainer')) { container = container.parentNode as HTMLElement; }
+    container.style.flexBasis = '';
+    container.style.minHeight = container.style.minWidth =
+    container.style.maxHeight = container.style.maxWidth =
     container.style.height = container.style.width = ''; }
 
   static resizableBorderMouseMove(e: MouseDownEvent): void {
@@ -1255,18 +1301,18 @@ export class U {
   static resizableBorderSetup(root: HTMLElement = document.body): void {
     // todo: addBack is great, aggiungilo tipo ovunque. find() esclude l'elemento radice anche se matcha la query, addback rimedia aggiungendo il
     //  previous matched set che matcha la condizione.
-    const arr = $(root).find('.resizableBorder').addBack('.resizableBorder');
+    const $arr = $(root).find('.resizableBorder').addBack('.resizableBorder');
     let i = -1;
     const nl = '\n';
-    while (++i < arr.length) {
-      U.makeResizableBorder(arr[i]); }
+    while (++i < $arr.length) {
+      U.makeResizableBorder($arr[i]); }
     U.eventiDaAggiungereAlBody(null);
-    $('.resizableBorder.side').off('mousedown.ResizableBorder').on('mousedown.ResizableBorder', U.resizableBorderMouseDown)
-      .off('contextmenu.ResizableBorder').on('contextmenu.ResizableBorder', U.resizableBorderUnset);
-    $('.resizableBorder.corner').off('mousedown.ResizableBorder').on('mousedown.ResizableBorder', U.resizableBorderMouseDown)
-      .off('contextmenu.ResizableBorder').on('contextmenu.ResizableBorder', U.resizableBorderUnset);
     $(document.body).off('mousemove.ResizableBorder').on('mousemove.ResizableBorder', U.resizableBorderMouseMove);
     $(document.body).off('mouseup.ResizableBorder').on('mouseup.ResizableBorder', U.resizableBorderMouseUp);
+    $('.resizableBorder.corner').off('mousedown.ResizableBorder').on('mousedown.ResizableBorder', U.resizableBorderMouseDown)
+      .off('contextmenu.ResizableBorder').on('contextmenu.ResizableBorder', U.resizableBorderUnset);
+    $('.resizableBorder.side').off('mousedown.ResizableBorder').on('mousedown.ResizableBorder', U.resizableBorderMouseDown)
+      .off('contextmenu.ResizableBorder').on('contextmenu.ResizableBorder', U.resizableBorderUnset);
     return; }
 
   static makeResizableBorder(html: HTMLElement, left: boolean = true, top: boolean = true, right: boolean = true, bottom = true): void {
@@ -1339,7 +1385,7 @@ export class U {
     r.style.borderStyle = 'solid';
     t.style.borderStyle = 'solid';
     b.style.borderStyle = 'solid';*/
-    console.log('style.border:', style.border);
+    //console.log('style.border:', style.border);
     /*U.pe(t.style.borderTopStyle === 'none', '1');
     U.pe(isNaN(+t.style.borderWidth), '2');
     U.pe(+t.style.borderWidth === 0, '3');
@@ -1376,12 +1422,19 @@ export class U {
     container.appendChild(hstripT);
     container.appendChild(hstripM);
     container.appendChild(hstripB);
-    container.style.border = 'none';
+    container.style.border = 'none';/*
+    const size: Size = U.sizeof(container);
+    const hbordersize = 10;
+    const vbordersize = 10;
+    container.style.width = Math.max(hbordersize * 2 + size.w) + 'px';
+    container.style.height = Math.max(vbordersize * 2 + size.h) + 'px';*/
     content.style.border = 'none';
-    content.style.width = '100%';
+    if (!content.style.width || content.style.width === 'auto'){
+      content.style.width = '100%';
+      content.style.height = '100%'; }
     content.style.minWidth = '0';
-    content.style.height = '100%';
     content.style.minHeight = '0';
+
   }
 
   static copyStyle(from: HTMLElement | SVGGElement, to: HTMLElement | SVGGElement, computedStyle: CSSStyleDeclaration = null): boolean {
@@ -1871,7 +1924,7 @@ export class U {
     const rule: {destination: string, operator: string, value: any} =
       U.computeResizableAttribute(attr, logic, measurableHtml, size, absTargetSize, relativeSize);
     if (!rule) { return; }
-    const outputSize: Size = size.clone();
+    const outputSize: Size = size.duplicate();
     switch (rule.destination) {
     default: U.pw(true, 'invalid import destination: |' + rule.destination + '| found in html:', measurableHtml); break;
     case 'width': outputSize.w = rule.value; break;
@@ -2018,21 +2071,26 @@ export class U {
     }
     return ret.reverse(); }
 
-  static followIndexesPath(root: any, indexedPath: number[] | string[], childKey: string = null,
-                           outArr: {indexFollowed: number[] | string[], debugArr: {index: string | number, elem: any}[]} = {indexFollowed: [],
-                             debugArr: [{index: 'Start', elem: root}]}): any {
+  static followIndexesPath(root: any, indexedPath: (number | string)[], childKey: string = null,
+                           outArr: {indexFollowed: (number | string)[], debugArr: {index: string | number, elem: any}[]} = {indexFollowed: [],
+                             debugArr: [{index: 'Start', elem: root}]}, debug: boolean = false): any {
     let j: number;
     let ret: any = root;
     let oldret: any = ret;
+    if (outArr) outArr.debugArr.push({index: 'start', elem: root, childKey: childKey} as any);
+    U.pe(childKey && childKey !== '' + childKey, 'U.followIndexesPath() childkey must be a string or a null:', childKey, 'root:', root);
     for (j = 0; j < indexedPath.length; j++) {
-      const key = indexedPath[j];
+      let key: number | string = indexedPath[j];
       let childArr = childKey ? ret[childKey] : ret;
+      U.pif(debug, 'path ' + j + ') = elem.' + childKey + ' = ', childArr);
       if (!childArr) { return oldret; }
       ret = childArr[key];
+      if (key >= childArr.length) { key = 'Key out of boundary: ' + key + '/' + childArr.length + '.'; }
+      U.pif(debug, 'path ' + j + ') = elem.' + childKey + '[ ' + key + '] = ', ret);
+      if (outArr) outArr.debugArr.push({index: key, elem: ret});
       if (!ret) { return oldret; }
+      if (outArr) outArr.indexFollowed.push(key);
       oldret = ret;
-      (outArr.indexFollowed as any[]).push(key);
-      outArr.debugArr.push({index: key, elem: ret});
     }
     return ret; }
 
@@ -2133,6 +2191,7 @@ export class U {
       case ' ':
         if (pt.x === null) {
           pt.x = +num1;
+          foundFloat = false;
           U.pe(isNaN(+pt.x), 'parsed non-number as value of: |' + letter + '| in svg.path attribute: |' + str + '|', ret); break; }
         if (pt.y === null) {
           pt.y = +num2;
@@ -2147,7 +2206,9 @@ export class U {
     endCurrentEntry();
     return ret;
   }
-
+/*
+  static unescapeHtmlEntities(s: string): string { return HE.decode(s); }
+  static escapeHtmlEntities(s: string): string { return HE.encode(s); }*/
 }
 
 export enum AttribETypes {
@@ -2182,9 +2243,17 @@ export enum AttribETypes {
 // export type Json = object;
 export class Json {
   constructor(j: object) {/* U.pe('' + j === j, 'parameter cannot be a string'); */}
-  static getChildrensXMI(json: Json): Json[] {
-    return ['todo childrensxmi'];
-  }
+
+  static getAnnotations(thiss: Json): Json[] {
+    const ret = thiss[ECorePackage.eAnnotations];
+    if (!ret || $.isEmptyObject(ret)) { return []; }
+    if (Array.isArray(ret)) { return ret; } else { return [ret]; } }
+
+  static getDetails(thiss: Json): Json[] {
+    const ret = thiss[ECoreAnnotation.details];
+    if (!ret || $.isEmptyObject(ret)) { return []; }
+    if (Array.isArray(ret)) { return ret; } else { return [ret]; } }
+
   static getChildrens(thiss: Json, throwError: boolean = false, functions: boolean = false): Json[] {
     if (!thiss && !throwError) { return []; }
     const mod = thiss[ECoreRoot.ecoreEPackage];
@@ -2205,27 +2274,26 @@ export class Json {
   }
 
   static read<T>(json: Json, field: string, valueIfNotFound: any = 'read<T>CanThrowError'): T {
-    const ret: T = json ? json[field] as T : null;
+    let ret: any = json ? json[field] : null;
+    if (ret !== null && field.indexOf(Status.status.XMLinlineMarker) !== -1) {
+      U.pe(U.isObject(ret, false, false, true), 'inline value |' + field + '| must be primitive.', ret);
+      ret = U.multiReplaceAll('' + ret, ['&amp;', '&#38;', '&quot;'], ['&', '\'', '"']);
+    }
     if ((ret === null || ret === undefined)) {
       U.pe(valueIfNotFound === 'read<T>CanThrowError', 'Json.read<',  '> failed: field[' + field + '], json: ', json);
       return valueIfNotFound; }
-    return ret; }
-  static write(json: Json, field: string, val: string): string { json[field] = val; return val; }
+    return ret as T ; }
+
+  static write(json: Json, field: string, val: any): string {
+    if (val !== null && field.indexOf(Status.status.XMLinlineMarker) !== -1) {
+      U.pe(val !== '' + val, 'inline value |' + field + '| must be a string.', val);
+      val = U.multiReplaceAll(val, ['&', '\'', '"'], ['&amp;', '&#38;', '&quot;']);
+    }
+    else U.pe(val !== '' + val || !U.isObject(val, true), 'primitive values should be inserted only inline in the xml:', field, val);
+    json[field] = val;
+    return val; }
 }
 
-export class Dictionary<K = string, V = string> extends Object {}
-
-import * as detectzoooom from 'detect-zoom';
-import ResizableOptions = JQueryUI.ResizableOptions;
-import DraggableOptions = JQueryUI.DraggableOptions;
-import KeyDownEvent = JQuery.KeyDownEvent;
-import ResizableUIParams = JQueryUI.ResizableUIParams;
-import DraggableEventUIParams = JQueryUI.DraggableEventUIParams;
-import MouseEnterEvent = JQuery.MouseEnterEvent;
-import MouseLeaveEvent = JQuery.MouseLeaveEvent;
-import ChangeEvent = JQuery.ChangeEvent;
-import {IClassifier}     from '../mClass/IClassifier';
-import {ECoreEnum}       from '../Model/iModel';
 
 export class DetectZoom {
   static device(): number { return detectzoooom.device(); }
@@ -2250,7 +2318,8 @@ export abstract class ISize {
     this.w = w;
     this.h = h; }
   abstract makePoint(x: number, y: number): IPoint;
-  abstract clone(): ISize;
+  abstract clone(otherJson: ISize): ISize;
+  abstract duplicate(): ISize;
   tl(): IPoint { return this.makePoint(   this.x,             this.y         ); }
   tr(): IPoint { return this.makePoint(this.x + this.w,    this.y         ); }
   bl(): IPoint { return this.makePoint(   this.x,          this.y + this.h); }
@@ -2258,14 +2327,14 @@ export abstract class ISize {
   equals(size: ISize): boolean { return this.x === size.x && this.y === size.y && this.w === size.w && this.h === size.h; }
   /// field-wise Math.min()
   min(minSize: ISize, clone: boolean): ISize {
-    const ret: ISize = clone ? this.clone() : this;
+    const ret: ISize = clone ? this.duplicate() : this;
     if (!isNaN(minSize.x) && ret.x < minSize.x) { ret.x = minSize.x; }
     if (!isNaN(minSize.y) && ret.y < minSize.y) { ret.y = minSize.y; }
     if (!isNaN(minSize.w) && ret.w < minSize.w) { ret.w = minSize.w; }
     if (!isNaN(minSize.h) && ret.h < minSize.h) { ret.h = minSize.h; }
     return ret; }
   max(maxSize: ISize, clone: boolean): ISize {
-    const ret: ISize = clone ? this.clone() : this;
+    const ret: ISize = clone ? this.duplicate() : this;
     if (!isNaN(maxSize.x) && ret.x > maxSize.x) { ret.x = maxSize.x; }
     if (!isNaN(maxSize.y) && ret.y > maxSize.y) { ret.y = maxSize.y; }
     if (!isNaN(maxSize.w) && ret.w > maxSize.w) { ret.w = maxSize.w; }
@@ -2280,7 +2349,8 @@ export class Size extends ISize {
     const maxY = Math.max(firstPt.y, secondPt.y);
     return new Size(minX, minY, maxX - minX, maxY - minY); }
   dontMixWithGraphSize: any;
-  clone(): Size { return new Size(this.x, this.y, this.w, this.h); }
+  clone(json: Size): Size { return new Size(json.x, json.y, json.w, json.h); }
+  duplicate(): Size { return new Size().clone(this); }
   makePoint(x: number, y: number): Point { return new Point(x, y); }
   tl(): Point { return super.tl() as Point; }
   tr(): Point { return super.tr() as Point; }
@@ -2389,7 +2459,8 @@ export class GraphSize extends ISize {
     }
     return pt; }
   dontMixWithSize: any;
-  clone(): GraphSize { return new GraphSize(this.x, this.y, this.w, this.h); }
+  clone(json: GraphSize): GraphSize { return new GraphSize(json.x, json.y, json.w, json.h); }
+  duplicate(): GraphSize { return new GraphSize().clone(this); }
   makePoint(x: number, y: number): Point { return new GraphPoint(x, y); }
   tl(): GraphPoint { return super.tl() as GraphPoint; }
   tr(): GraphPoint { return super.tr() as GraphPoint; }

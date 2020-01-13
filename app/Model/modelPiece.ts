@@ -27,16 +27,16 @@ import {
   ViewHtmlSettings,
   M3Reference,
   M2Attribute,
-  M3Attribute, M3Class, M2Reference, M3Package, MPackage, M2Package, Type, ELiteral, EEnum
+  M3Attribute, M3Class, M2Reference, M3Package, MPackage, M2Package, Type, ELiteral, EEnum, EAnnotation
 } from '../common/Joiner';
 
 import ClickEvent = JQuery.ClickEvent;
 import MouseMoveEvent = JQuery.MouseMoveEvent;
 import MouseDownEvent = JQuery.MouseDownEvent;
 import MouseUpEvent = JQuery.MouseUpEvent;
-import {Vieww} from '../GuiStyles/viewpoint';
-import {Style} from '@angular/cli/lib/config/schema';
-export type StyleComplexEntry = {html: Element, htmlobj:ViewHtmlSettings, view: Vieww, ownermp: ModelPiece, isownhtml: boolean, isinstanceshtml: boolean, isGlobalhtml: boolean};
+import {ViewRule} from '../GuiStyles/viewpoint';
+import {Style}    from '@angular/cli/lib/config/schema';
+export type StyleComplexEntry = {html: Element, htmlobj:ViewHtmlSettings, view: ViewRule, ownermp: ModelPiece, isownhtml: boolean, isinstanceshtml: boolean, isGlobalhtml: boolean};
 export class Info {
   static forConsole(obj: any): any {}
 
@@ -95,7 +95,8 @@ export abstract class ModelPiece {
   // customStyleToErase: Element = null;
 //  styleobj: ModelPieceStyleEntry = null;
   key: number[] = null;
-  views: Vieww[] = null;
+  views: ViewRule[] = null;
+  annotations: EAnnotation[] = [];
 
   static GetStyle(model: IModel, tsClass: string, checkCustomizedFirst: boolean = true): HTMLElement | SVGElement {
     let rootSelector: string;
@@ -127,6 +128,17 @@ export abstract class ModelPiece {
     ret.classList.remove('template');
     ret.classList.remove('Customized');
     return ret; }
+
+  public static getByKey(path: number[], realindexfollowed: {indexFollowed: string[] | number[], debugArr: {index: string | number, elem: any}[]} = null): ModelPiece {
+    U.pe(!Array.isArray(path), 'ModelPiece.getByKey() should only be called with an array as key:', path);
+    U.pe(path.length < 1, 'ModelPiece.getByKey() path array must have >= 1 elements:', path);
+    const tmpRoot = {'childrens': [Status.status.m, Status.status.mm, Status.status.mmm]};
+    let ret = U.followIndexesPath(tmpRoot, path, 'childrens', realindexfollowed, true);
+    U.pe(!(ret instanceof ModelPiece), 'ModelPiece.getByKey failed: ', ret, realindexfollowed);
+    return ret; }
+
+  public static getByKeyStr(key: string, realindexfollowed: {indexFollowed: string[] | number[], debugArr: {index: string | number, elem: any}[]} = null): ModelPiece {
+    return ModelPiece.getByKey(JSON.parse(key), realindexfollowed); }
 
   static get(e: JQuery.ChangeEvent | ClickEvent | MouseMoveEvent | MouseDownEvent | MouseUpEvent): ModelPiece {
     return ModelPiece.getLogic(e.target); }
@@ -168,8 +180,10 @@ export abstract class ModelPiece {
   getKeyStr(): string { return JSON.stringify(this.getKey()); }
 
   updateKey(): number[] {
+    const m = this.getModelRoot();
+    const mnum = m.isM3() ? 2 : (m.isM2() ? 1 : 0);
     const pathIndex: number[] = U.getIndexesPath(this, 'parent', 'childrens');
-    return this.key = pathIndex; }
+    return this.key = [mnum, ...pathIndex]; }
 
   replaceVarsSetup(): void { return; }
 
@@ -321,6 +335,20 @@ export abstract class ModelPiece {
     if (refreshGUI) { this.refreshGUI(); }
     return this['' + key]; }
 
+  getChildren(name: string, caseSensitive: boolean = false): ModelPiece {
+    let i: number;
+    U.pe(!name || name !== '' + name, 'ModelPiece.getChildren() name must be a non-empty string, found: |' + name + '|', name);
+    if (!caseSensitive) name = name.toLowerCase();
+    const m: IModel = this.getModelRoot();
+    const ism1: boolean = m.isM1();
+    for (i = 0; i < this.childrens.length; i++){
+      const mp: ModelPiece = this.childrens[i];
+      let name2: string = (ism1 ? mp.metaParent.name : mp.name);
+      if (!caseSensitive) name2 = name2 && name2.toLowerCase();
+      if (name === name2) return mp;
+    }
+    return null;
+  }
   setName(value: string, refreshGUI: boolean = false, warnDuplicateFix: boolean = true): string { return this.setName0(value, refreshGUI, warnDuplicateFix, 'name', false); }
   setNameOld(value: string, refreshGUI: boolean = false, warnDuplicateFix: boolean = true): string {
     const valueOld: string = this.name;
@@ -367,8 +395,8 @@ export abstract class ModelPiece {
     let i: number;
     this.views = [];
     for (i = 0; i < other.views.length; i++) {
-      const v: Vieww = other.views[i];
-      this.views.push(v.duplicate());
+      const v: ViewRule = other.views[i];
+      U.ArrayAdd(this.views, v.duplicate());
     }
     this.parent = newParent ? newParent : other.parent;
     if (this.parent) { U.ArrayAdd(this.parent.childrens, this); }
@@ -443,7 +471,8 @@ export abstract class ModelPiece {
     let i: number;
     const ret: StyleComplexEntry = {html:null, htmlobj:null, view:null, ownermp:null, isownhtml:null, isinstanceshtml:null, isGlobalhtml:null};
     for (i = this.views.length; --i >= 0;) {
-      let v: Vieww = this.views[i];
+      let v: ViewRule = this.views[i];
+      // if (!v.viewpoint.isApplied) continue;
       if (!v.htmli || !v.htmli.getHtml()) continue;
       ret.html = v.htmli.getHtml();
       ret.htmlobj = v.htmli;
@@ -461,7 +490,7 @@ export abstract class ModelPiece {
     let i: number;
     const ret: StyleComplexEntry = {html:null, htmlobj:null, view:null, ownermp:null, isownhtml:null, isinstanceshtml:null, isGlobalhtml:null};
     for (j = this.views.length; --j >=0 ;){
-      const v: Vieww = this.views[j];
+      const v: ViewRule = this.views[j];
       if (!v.htmlo || !v.htmlo.getHtml()) continue;
       ret.html = v.htmlo.getHtml();
       ret.htmlobj = v.htmlo;
@@ -531,16 +560,32 @@ export abstract class ModelPiece {
     html = $(html).find('*[data-modelPieceID="' + this.id + '"]')[0];
     return html ? html : null; }
 
-  getLastView(): Vieww { return this.views[this.views.length - 1];
-    // todo: deve diventare una array.
-  }
+  getLastViewWith(fieldname: string): ViewRule {
+    let i: number = this.views.length;
+    while (--i >= 0) {
+      const v: ViewRule = this.views[i];
+      const val: any = v['' + fieldname];
+      U.pe(fieldname in v, 'property |' + fieldname + '| does not exist in ViewRule. Field name has changed without changing the string accordingly.');
+      if (val !== undefined && val !== null) return v;
+    }
+    if (!this.metaParent) return null;
+    i = this.metaParent.views.length;
+    while (--i >= 0) {
+      const v: ViewRule = this.metaParent.views[i];
+      const val: any = v['' + fieldname];
+      U.pe(fieldname in v, 'property |' + fieldname + '| does not exist in ViewRule. Field name has changed without changing the string accordingly.(2)');
+      if (val !== undefined && val !== null) return v;
+    }
+    return null; }
 
-  addView(v: Vieww): void {
+  getLastView(): ViewRule { return this.views[this.views.length - 1]; }
+/*
+  addView(v: ViewRule): void {
     // if (!v.viewpoint.viewsDictionary[this.id]) {  v.viewpoint.viewsDictionary[this.id] = []; }
     v.viewpoint.viewsDictionary[this.id] = v;
     U.ArrayAdd(this.views, v); }
   resetViews(): void { this.views = []; }
-
+*/
   getClassName(): string {
     if(this instanceof M3Class) { return 'm3Class'; }
     if(this instanceof M2Class) { return 'm2Class'; }

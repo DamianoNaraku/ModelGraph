@@ -295,14 +295,14 @@ export class M3Class extends IClass {
 
   parse(json: Json, destructive?: boolean): void {
     this.name = 'Class';
+    this.childrens = [];
+    this.attributes = [];
+    this.references = [];
+    this.instances = [];
     const a: M3Attribute = new M3Attribute(this, null);
     const r: M3Reference = new M3Reference(this, null);
     const o: EOperation = new EOperation(this, null);
     const p: EParameter = new EParameter(o, null);
-    o.childrens = [p];
-    this.childrens = [a, r, o];
-    this.attributes = [a];
-    this.references = [r];
   }
 
   refreshGUI_Alone(debug: boolean = true): void { }

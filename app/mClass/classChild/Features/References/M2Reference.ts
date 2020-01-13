@@ -160,6 +160,8 @@ export class M2Reference extends IReference {
 
 
    canBeLinkedTo(hoveringTarget: M2Class): boolean {
-    return (this.type.classType === hoveringTarget || this.type.classType.isExtending(hoveringTarget)); }// && !(hoveringTarget instanceof EEnum); }
+    return (hoveringTarget instanceof M2Class);
+  //  return (this.type.classType === hoveringTarget || this.type.classType.isExtending(hoveringTarget));
+  }// && !(hoveringTarget instanceof EEnum); }
 
 }

@@ -45,14 +45,10 @@
 }
 ::ng-deep .viewpointrow input[type="text"]{ min-width: 0; height: 21px; background: transparent; border: none; }
 /* ::ng-deep .viewpointrow:hover input[type="text"]{ box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25); }*/
-::ng-deep .viewpointrow input[type='checkbox'], .viewpointrow input[type='radio']{
+::ng-deep .viewpointrow input[type='checkbox'], ::ng-deep .viewpointrow input[type='radio']{
   width: 17px;
   min-width: 17px;
-  height: 17px;/*
-  width: 21px;
-  min-width: 21px;
-  height: 21px;
-  margin-right: 5px;*/
+  height: 17px;
 }
 ::ng-deep .viewpointrow button{ margin: auto; background-color: transparent }
 ::ng-deep .viewpointrow input[readonly]{ background-color: transparent; border: none; }
@@ -103,19 +99,6 @@
   padding-right:5px;
 }
 
-.sidebarNode{
-  display: flex;
-  margin: auto;
-  border: solid 1px var(--secondaryBorderColor);
-  width: 100%;
-  height: auto;
-}
-
-.sidebarNodeName{
-  display: flex;
-  margin: auto;
-}
-
 /*
 #sidebarResizer, .sidebarResizer{
     margin: 0px;
@@ -131,10 +114,6 @@
     -ms-user-select: none;
 }*/
 
-
-.vertexEdgeSeparator{
-  order: 2;
-}
 #sidebar>*:first-child, #metamodel_sidebar>*:first-child, #model_sidebar>*:first-child{
   background-color: var(--mainBorderColor);
   width: var(--mainBorderWidth);
@@ -186,7 +165,7 @@
 .rawContainer{
   display: flex;
   flex-flow: column;
-  height: -webkit-fill-available;
+  height: 100%;
 }
 h2.rawTitle{
   display: flex;

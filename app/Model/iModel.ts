@@ -11,9 +11,27 @@ import {
   Json,
   U,
   ModelPiece,
-  ISidebar, MetaMetaModel, LocalStorage,
-  IGraph, IReference, MetaModel, MClass, TopBar, ModelNone, IClass, Model, M3Package, M3Class, ViewPoint, EEnum, //, Options
-} from '../common/Joiner';
+  ISidebar,
+  MetaMetaModel,
+  LocalStorage,
+  IGraph,
+  IReference,
+  MetaModel,
+  MClass,
+  TopBar,
+  ModelNone,
+  IClass,
+  Model,
+  M3Package,
+  M3Class,
+  ViewPoint,
+  EEnum,
+  IClassifier,
+  GraphSize,
+  Dictionary,
+  SaveListEntry, //, Options
+}             from '../common/Joiner';
+import {Meta} from '@angular/platform-browser';
 
 export abstract class IModel extends ModelPiece {
   parent: ModelNone;
@@ -42,7 +60,7 @@ export abstract class IModel extends ModelPiece {
 
   constructor(metaVersion?: IModel) {
     super(null, metaVersion);
-    this.storage = new LocalStorage(this, false); }
+    this.storage = new LocalStorage(this); }
 
   uri(str: string = null): string {
     if (str) { if (IModel.isValidURI(str)) { return this.uriVar = str; } else { return null; } }
@@ -122,28 +140,37 @@ export abstract class IModel extends ModelPiece {
 
   abstract duplicate(nameAppend?: string): IModel;
 
-  delete(): void { this.storage.remove(this.name, false); this.storage.autosave(false); U.refreshPage(); }
+  getEmptyModel(): string {
+    if (this instanceof MetaMetaModel) return MetaMetaModel.emptyMetaMetaModel;
+    if (this instanceof MetaModel) return MetaModel.emptyModel;
+    if (this instanceof Model) return Model.emptyModel;
+    return null; }
+
+  delete(): void {
+    this.storage.remove(this.name, SaveListEntry.model);
+    // set empty (meta)model as most recent anonymous savefile and next to be opened.
+    LocalStorage.deleteLastOpened(this instanceof MetaModel ? 2 : 1);
+    /*this.storage.add(null, null, SaveListEntry.model);
+    this.storage.add(null, null, SaveListEntry.view);
+    this.storage.add(null, null, SaveListEntry.vertexPos);*/
+    U.refreshPage(); }
 
   refreshGUI_Alone(debug: boolean = true): void {
     let i: number;
     for (i = 0; i < this.childrens.length; i++ ) { this.childrens[i].refreshGUI_Alone(debug); } }
 
-  isNameTaken(name: string): boolean { return this.storage.contains(name, false); }
+  isNameTaken(name: string): boolean { return !!this.storage.get(name, SaveListEntry.model); }
 
   setName(value: string, refreshGUI: boolean = false): string {
     const oldname: string = this.name;
-    if (this.isNameTaken(value)) { U.pw(true, 'tryed to saveToDB a model with a name already in use'); return oldname; }
+    if (this.isNameTaken(value)) { U.pw(true, 'tried to saveToDB a model with a name already in use'); return oldname; }
     super.setName(value);
-    this.storage.rename(oldname, this.name, false);
+    this.storage.rename(oldname, this.name, SaveListEntry.model);
     this.graph.propertyBar.refreshGUI();
     return this.name; }
 
-  saveView(viewPoint: ViewPoint, isAutosave: boolean, saveas:boolean = null) { this.storage.save(this, isAutosave, saveas, viewPoint); }
-  save(isAutosave: boolean, saveAs: boolean = null): void {
-    this.storage.save(this, isAutosave, saveAs); }
-
-  getKey(): number[] { return null; }
-  getKeyStr(): string { return this.fullname(); }
+  save(isAutosave: boolean, saveAs: boolean = false): void {
+    this.storage.saveModel(isAutosave, saveAs); }
 
   abstract getDefaultPackage(): IPackage;
   abstract isM3(): boolean;
@@ -153,27 +180,6 @@ export abstract class IModel extends ModelPiece {
   isMMM(): boolean { return this.isM3(); }
   isMM(): boolean { return this.isM2(); }
   isM(): boolean { return this.isM1(); }
-
-
-  /*linkToMetaParent(meta: IModel) {
-    U.pe(true, 'linkToMetaParent: todo.');
-    const outObj: any = {};
-    const comformability: number = this.comformability(meta, outObj);
-    if (comformability !== 1) {
-      U.pw(true, 'IModel: ' + this.name + ' not fully conform to ' + meta.name + '. Compatibility = ' + comformability * 100 + '%' );
-      return; }
-    this.metaParent = meta;
-    let i: number;
-    const pkgPermutation: number[] = outObj.pkgPermutation;
-    i = -1;
-    while (++i < pkgPermutation.length) { this.childrens[i].LinkToMetaParent(meta.childrens[pkgPermutation[i]]); }
-  }*/
-
-  comformability(meta: IModel, outObj: any = null/*.classPermutation*/): number {
-    // todo: abilita package multipli e copia da IPackage e M2Class.conformability();
-    if (outObj) {outObj.pkgPermutation = [0]; }
-    return 1;
-  }
 
   abstract getPrefix(): string;
   abstract getPrefixNum(): string;
@@ -196,12 +202,35 @@ export abstract class IModel extends ModelPiece {
       return null;
     }
 
-  public static getByKey(key: string) { return IModel.getByName(key); }
   public static getByName(name: string): IModel {
     if (Status.status.mmm.fullname() === name) return Status.status.mmm;
     if (Status.status.mm.fullname() === name) return Status.status.mm;
     if (Status.status.m.fullname() === name) return Status.status.m;
     return null; }
+
+  readVertexPositionSaveArr(dic: Dictionary<string, GraphSize>): void {
+    for (let key in dic) {
+      const value: GraphSize = new GraphSize().clone(dic[key]);
+      const mp = ModelPiece.getByKeyStr(key);
+      if (!mp) { U.pw(true, 'invalid vertex save, failed to get targetmodelpiece: ', key, dic, this); continue; }
+      mp.getVertex().setSize(value);
+    }
+  }
+  generateVertexPositionSaveArr(): Dictionary<string, GraphSize> {
+    let i: number;
+    let j: number;
+    let ret: Dictionary<string, GraphSize> = {};
+    let arr: IClassifier[][] = [this.getAllEnums(), this.getAllClasses()];
+    for (j = 0; j < arr.length; j++)
+      for (i = 0; i < arr[j].length; i++) { ret[arr[j][i].getKeyStr()] = arr[j][i].getVertex().getSize(); }
+    return ret; }
+
+  generateViewPointSaveArr(): Json[] {
+    /*let i: number;
+    let tmp: any = [];
+    for (i = 0; i < this.viewpoints.length; i++) { tmp.push(this.viewpoints[i].toJSON()); }
+    return tmp;*/
+    return this.viewpoints; }
 }
 
 
@@ -209,6 +238,15 @@ export class ECoreRoot {
   static ecoreEPackage: string;
   public static initializeAllECoreEnums(): void {
     ECoreRoot.ecoreEPackage = 'ecore:EPackage';
+
+    ECorePackage.eAnnotations = ECoreClass.eAnnotations = ECoreEnum.eAnnotations = EcoreLiteral.eAnnotations =
+      ECoreReference.eAnnotations = ECoreAttribute.eAnnotations = ECoreOperation.eAnnotations = ECoreParameter.eAnnotations = 'eAnnotations';
+
+    ECoreAnnotation.source = Status.status.XMLinlineMarker + 'source';
+    ECoreAnnotation.references = Status.status.XMLinlineMarker + 'references'; // "#/" for target = package.
+    ECoreAnnotation.details = 'details'; // arr
+    ECoreDetail.key = Status.status.XMLinlineMarker + 'key'; // can have spaces
+    ECoreDetail.value = Status.status.XMLinlineMarker + 'value';
 
     ECorePackage.eClassifiers = 'eClassifiers';
     ECorePackage.xmlnsxmi = Status.status.XMLinlineMarker + 'xmlns:xmi'; // typical value: http://www.omg.org/XMI
@@ -272,7 +310,17 @@ export class ECoreRoot {
     XMIModel.namee = Status.status.XMLinlineMarker + 'name'; }
 }
 
+export class ECoreAnnotation {
+  static source: string;
+  static references: string;
+  static details: string;}
+
+export class ECoreDetail {
+  static key: string;
+  static value: string; }
+
 export class ECorePackage {
+  static eAnnotations: string;
   static eClassifiers: string;
   static xmlnsxmi: string;
   static xmlnsxsi: string;
@@ -280,9 +328,11 @@ export class ECorePackage {
   static xmlnsecore: string;
   static nsURI: string;
   static nsPrefix: string;
-  static namee: string; }
+  static namee: string;
+}
 
 export class ECoreClass {
+  static eAnnotations: string;
   static eStructuralFeatures: string;
   static xsitype: string;
   static namee: string;
@@ -297,6 +347,7 @@ export class ECoreClass {
 }
 
 export class ECoreEnum {
+  static eAnnotations: string;
   static xsitype: string;
   static namee: string;
   static instanceTypeName: string;
@@ -305,6 +356,7 @@ export class ECoreEnum {
 }
 
 export class EcoreLiteral {
+  static eAnnotations: string;
   static namee: string;
   static value: string;
   static literal: string;
@@ -312,6 +364,7 @@ export class EcoreLiteral {
 
 
 export class ECoreReference {
+  static eAnnotations: string;
   static xsitype: string;
   static eType: string;
   static containment: string;
@@ -320,12 +373,14 @@ export class ECoreReference {
   static namee: string; }
 
 export class ECoreAttribute {
+  static eAnnotations: string;
   static xsitype: string;
   static eType: string;
   static namee: string;
 }
 
 export class ECoreOperation {
+  static eAnnotations: string;
   static eType: string;
   static eexceptions: string;
   static upperBound: string;
@@ -336,6 +391,7 @@ export class ECoreOperation {
   static eParameters: string; }
 
 export class ECoreParameter {
+  static eAnnotations: string;
   static namee: string;
   static ordered: string;
   static unique: string;

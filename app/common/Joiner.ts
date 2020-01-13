@@ -3,13 +3,15 @@
 /* this is undefined in constructors or method calls: likely caused by a reserved class name that is listed in config.ts and is behaving
  differently.*/
 // /*new*/export {Styles, ModelPieceStyleEntry, SortType, StyleVisibility} from '../GuiStyles/styles';
-// /*new*/export {ViewHtmlSettings, ViewPoint, Vieww, ModelView, PackageView, ClassView, AttributeView, EdgeView, ReferenceView, OperationView,
+// /*new*/export {ViewHtmlSettings, ViewPoint, ViewRule, ModelView, PackageView, ClassView, AttributeView, EdgeViewRule, ReferenceView, OperationView,
 // ParameterView} from '../GuiStyles/viewpoint';
-/*new*/import {ECoreEnum, EcoreLiteral} from '../Model/iModel';
 
-export {ViewHtmlSettings, ViewPoint, Vieww, EdgeView} from '../GuiStyles/viewpoint';
+export {ViewHtmlSettings, ViewPoint, ViewRule, EdgeViewRule} from '../GuiStyles/viewpoint';
 export {LocalStorage} from '../Database/LocalStorage';
 export {ModelPiece, Info, ModelNone, StyleComplexEntry} from '../Model/modelPiece';
+/*new*/export {ECoreEnum, EcoreLiteral,
+  ECoreParameter, ECoreOperation, ECoreAttribute, ECoreReference,
+  ECoreClass, ECorePackage, ECoreRoot, ECoreAnnotation, ECoreDetail, XMIModel, IModel} from '../Model/iModel';
 export {ShortAttribETypes, U, Json, AttribETypes,
   InputPopup, DetectZoom, Dictionary, MeasurableArrays,
   IPoint, Point, GraphPoint, ISize, Size, GraphSize, myFileReader} from './util';
@@ -25,10 +27,12 @@ export {ISidebar} from '../guiElements/isidebar/isidebar.component';
 export {PropertyBarr} from '../guiElements/propertyBar/propertyBar';
 export {TopBar} from '../guiElements/top-bar/top-bar.component';
 export {StyleEditor} from '../guiElements/style-editor/style-editor.component';
+/*neww*/ export {SaveListEntry} from '../Database/LocalStorage';
 // export {Options} from '../Save/Save';
-export {MyConsole} from '../guiElements/console/console.component';
+export {MyConsole} from '../guiElements/console/console.component';/*
 export {IModel, ECoreRoot, ECorePackage, ECoreClass, ECoreReference,
-  ECoreAttribute, ECoreParameter, ECoreOperation, XMIModel, EcoreLiteral, ECoreEnum } from '../Model/iModel';
+  ECoreAttribute, ECoreParameter, ECoreOperation, XMIModel, EcoreLiteral, ECoreEnum } from '../Model/iModel';*/
+// export {IModel} from '../Model/iModel';
 export {MetaMetaModel} from '../Model/MetaMetaModel';
 export {MetaModel} from '../Model/MetaModel';
 export {Model} from '../Model/Model';
@@ -50,6 +54,8 @@ export {MReference} from '../mClass/classChild/Features/References/MReference';
 export {IAttribute, M3Attribute} from '../mClass/classChild/Features/Attributes/iAttribute';
 export {M2Attribute} from '../mClass/classChild/Features/Attributes/MMAttribute';
 export {MAttribute} from '../mClass/classChild/Features/Attributes/MAttribute';
+export {EAnnotation} from '../../app/Model/EAnnotation';
+export {EAnnotationDetail} from '../../app/Model/EAnnotationDetail';
 /*new*/export {Database} from '../common/Database';
 export {DamContextMenuComponent} from '../guiElements/dam-context-menu/dam-context-menu.component';
 export {EOperation, OperationVisibility} from '../mClass/classChild/Operations/eOperation';
@@ -72,6 +78,18 @@ export const prjson2xml = _pr_json2xml;
 export const prxml2json = _pr_xml2json;
 export const $$$: JQueryStatic = require('jquery-ui');
 export const $ui: JQueryStatic = $$$;
+/*
+// @ts-ignore
+let enc = he.encode;
+// @ts-ignore
+let dec = he.decode;
+// @ts-ignore
+let esc = he.escape;
+// @ts-ignore
+let unesc = he.unescape;
+// @ts-ignore
+let ver = he.version;
+export const HE = {encode: enc, decode: dec, escape: esc, unescape: unesc, version: ver};*/
 
 
 
