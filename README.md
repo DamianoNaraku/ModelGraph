@@ -1,3 +1,8 @@
+# How to use
+Everything is described in the wiki page: https://github.com/DamianoNaraku/ModelGraph/wiki
+
+
+# Auto-generated documentation:
 # Untitled
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 7.3.2.
