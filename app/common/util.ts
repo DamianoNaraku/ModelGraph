@@ -3,22 +3,86 @@
   IEdge,
   IField,
   IPackage,
-  IClass,
-  IAttribute,
+  M2Class,
+  IAttribute, IReference,
   IFeature,
-  ModelPiece,
-  ISidebar,
-  IGraph, Dictionary, IReference, IModel, Status,
-  Point, GraphPoint, GraphSize
+  ModelPiece, MetaMetaModel,
+  ISidebar, XMIModel,
+  IGraph, IModel, Status,
+  ECoreClass, ECorePackage, ECoreRoot, ECoreOperation, JQueryUI, MAttribute, IClass,
 } from './Joiner';
-import {js2xml} from 'xml-js';
+
 import ClickEvent = JQuery.ClickEvent;
-import {MetaMetaModel} from '../Model/MetaMetaModel';
-import {truncate} from 'fs';
 import MouseDownEvent = JQuery.MouseDownEvent;
 import MouseMoveEvent = JQuery.MouseMoveEvent;
 import MouseUpEvent = JQuery.MouseUpEvent;
 import ContextMenuEvent = JQuery.ContextMenuEvent;
+export class Dictionary<K = string, V = string> extends Object {}
+import * as detectzoooom            from 'detect-zoom';
+import ResizableOptions = JQueryUI.ResizableOptions;
+import DraggableOptions = JQueryUI.DraggableOptions;
+import KeyDownEvent = JQuery.KeyDownEvent;
+import ResizableUIParams = JQueryUI.ResizableUIParams;
+import DraggableEventUIParams = JQueryUI.DraggableEventUIParams;
+import MouseEnterEvent = JQuery.MouseEnterEvent;
+import MouseLeaveEvent = JQuery.MouseLeaveEvent;
+import ChangeEvent = JQuery.ChangeEvent;
+import {IClassifier}                from '../mClass/IClassifier';
+import {ECoreAnnotation, ECoreEnum} from '../Model/iModel';
+import {escapeHtml}                 from '@angular/platform-browser/src/browser/transfer_state';
+
+export class MeasurableArrays {rules: Attr[]; imports: Attr[]; exports: Attr[]; variables: Attr[];
+  constraints: Attr[]; chain: Attr[]; chainFinal: Attr[]; dstyle: Attr[]; html: HTMLElement | SVGElement; e: Event}
+
+export class myFileReader {
+  private static input: HTMLInputElement;
+  private static fileTypes: string [];
+  private static onchange: (e: ChangeEvent) => void;
+  // constructor(onchange: (e: ChangeEvent) => void = null, fileTypes: FileReadTypeEnum[] | string[] = null) { myFileReader.setinfos(fileTypes, onchange); }
+  private static setinfos(fileTypes: FileReadTypeEnum[] | string[] = null, onchange: (e: ChangeEvent, files: FileList, contents: string[]) => void, readcontent: boolean) {
+    myFileReader.fileTypes = (fileTypes || myFileReader.fileTypes) as string[];
+    console.log('fileTypes:', myFileReader.fileTypes, fileTypes);
+    myFileReader.input = document.createElement('input');
+    const input: HTMLInputElement = myFileReader.input;
+    myFileReader.onchange = function (e: ChangeEvent): void {
+      if (!readcontent) { onchange(e, input.files, null); return; }
+      let contentObj = {};
+      let fileLetti: number = 0;
+      for (let i: number = 0; i < input.files.length; i++) {
+        const f: File = input.files[i];
+        console.log('filereadContent['+i+']( file:', f, ')');
+        U.fileReadContent(f, (content: string) => {
+          console.log('file['+i+'] read complete. done: ' + ( 1 + fileLetti) + ' / ' + input.files.length, 'contentObj:', contentObj);
+          contentObj[i] = content; // cannot use array, i'm not sure the callbacks will be called in order. using push is safer but could alter order.
+          // this is last file to read.
+          if (++fileLetti === input.files.length) {
+            const contentArr: string[] = [];
+            for (let j: number = 0; j < input.files.length; j++) { contentArr.push(contentObj[j]); }
+            onchange(e, input.files, contentArr);
+          }
+        });
+      }
+    } || myFileReader.onchange;
+  }
+  private static reset(): void {
+    myFileReader.fileTypes = null;
+    myFileReader.onchange = null;
+    myFileReader.input = null;
+  }
+  public static show(onChange: (e: ChangeEvent, files: FileList, contents: string[]) => void, extensions: string[] | FileReadTypeEnum[] = null, readContent: boolean): void {
+    myFileReader.setinfos(extensions, onChange, readContent);
+    myFileReader.input.setAttribute('type', 'file');
+    if (myFileReader.fileTypes) {
+      let filetypestr: string = '';
+      const sepkey: string = U.getStartSeparatorKey();
+      for (let i = 0; i < myFileReader.fileTypes.length; i++) { filetypestr += U.startSeparator(sepkey, ',') + myFileReader.fileTypes[i]; }
+      myFileReader.input.setAttribute('accept', filetypestr);
+    }
+    console.log('fileTypes:', myFileReader.fileTypes, 'input:', myFileReader.input);
+    $(myFileReader.input).on('change.custom', myFileReader.onchange).trigger('click');
+    myFileReader.reset();
+  }
+}
 export class InputPopup {
   static popupCounter = 0;
   html: HTMLElement;
@@ -38,17 +102,17 @@ export class InputPopup {
     const container: HTMLElement = U.toHtml('' +
       '<div _ngcontent-c3="" data-closebuttontarget="' + id + '" class="screenWideShadow" style="display: none;">' +
       '<div _ngcontent-c3="" class="popupContent">' +
-        '<h1 _ngcontent-c3="" style="text-align: center;">' + title + '</h1>' +
-        '<button _ngcontent-c3="" class="closeButton" data-closebuttontarget="' + id + '">X</button>' +
-        '<br _ngcontent-c3="">' +
-        '<div _ngcontent-c3="" class="TypeList">' +
-        '<table class="typeTable"><tbody>' +
-          '<tr class="typeRow"><td class="alias">' + txtpre + '</td>' +
-          '<' + inputType + ' ' + inputSubType + ' ' + placeholder + ' ' + value + ' class="form-control popupInput" ' +
-              'aria-label="Small" aria-describedby="inputGroup-sizing-sm">' + innerValue + txtpost +
-          '</td>' +
-          '</tr>' +
-        '</tbody></table></div>' +
+      '<h1 _ngcontent-c3="" style="text-align: center;">' + title + '</h1>' +
+      '<button _ngcontent-c3="" class="closeButton" data-closebuttontarget="' + id + '">X</button>' +
+      '<br _ngcontent-c3="">' +
+      '<div _ngcontent-c3="" class="TypeList">' +
+      '<table class="typeTable"><tbody>' +
+      '<tr class="typeRow"><td class="alias textPre">' + txtpre + '</td>' +
+      '<' + inputType + ' ' + inputSubType + ' ' + placeholder + ' ' + value + ' class="form-control popupInput" ' +
+      'aria-label="Small" aria-describedby="inputGroup-sizing-sm">' + innerValue + txtpost +
+      '</td>' +
+      '</tr>' +
+      '</tbody></table></div>' +
       '</div></div>');
     const $input = $(container).find('input');
     U.closeButtonSetup($(container));
@@ -69,10 +133,10 @@ export class InputPopup {
     document.body.appendChild(this.html);
     this.html.style.display = 'block'; }
   hide(): void { this.html.style.display = 'none'; }
-  destroy(): void {
+  destroy(): null {
     if (this.html && this.html.parentNode) {
       this.html.parentNode.removeChild(this.html);
-      this.html = null; }
+      return this.html = null; }
   }
 
   addOkButton(load1: string, finish: () => void) {
@@ -84,22 +148,12 @@ export class InputPopup {
     input.parentNode.appendChild(button);
     $(button).on('click.btnclickpopup', finish);
   }
+
+  setPostText(str: string) { $(this.html).find('.textPre')[0].innerHTML = str; }
 }
-export enum eCoreRoot {
-  ecoreEPackage = 'ecore:EPackage'
-}
-export enum eCorePackage {
-  eClassifiers = 'eClassifiers',
-  xmlnsxmi = '@xmlns:xmi', // typical value: http://www.omg.org/XMI
-  xmlnsxsi = '@xmlns:xsi', // typical value: http://www.w3.org/2001/XMLSchema-instance
-  xmiversion = '@xmi:version', // typical value: "2.0"
-  xmlnsecore = '@xmlns:ecore',
-  nsURI = '@nsURI', // typical value: "http://org/eclipse/example/bowling"
-  nsPrefix = '@nsPrefix', // typical value: org.eclipse.example.bowling
-  name = '@name', // typical value: name of package
- }
 
 export enum ShortAttribETypes {
+  void = 'void',
   EChar  = 'Echar',
   EString  = 'EString',
   EDate  = 'EDate',
@@ -124,144 +178,103 @@ export enum ShortAttribETypes {
   EELIST  = 'EELIST',*/
 
 }
-export enum AttribETypes {
-//  FakeElementAddFeature = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//FakeElement',
-// era il 'pulsante per aggiungere feature nel mm.',
-  // reference = 'reference??',
-
-  EChar = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EChar',
-  EString = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString',
-  EDate = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDate',
-  EFloat = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EFloat',
-  EDouble = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDouble',
-  EBoolean = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean',
-  EByte = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EByte',
-  EShort = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EShort',
-  EInt = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt',
-  ELong = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//ELong',
-  /*
-  ECharObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//ECharObject',
-  EStringObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EStringObject',
-  EDateObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDateObject',
-  EFloatObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EFloatObject',
-  EDoubleObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDoubleObject',
-  EBooleanObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBooleanObj',
-  EByteObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EByteObject',
-  EShortObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EShortObject',
-  EIntObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EIntegerObject',
-  ELongObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//ELongObject', */
-  // EELIST = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EEList', // List<E> = List<?>
- }
-
-export enum eCoreClass {
-  xsitype = '@xsi:type', // "ecore:EClass"
-  name = '@name',
-  eStructuralFeatures = 'eStructuralFeatures',
-}
-export enum eCoreReference {
-  xsitype = '@xsi:type', // "ecore:EReference"
-  eType = '@eType', // "#//Player"
-  containment = '@containment', // "true"
-  upperbound = '@upperBound', // "@1"
-  lowerbound = '@lowerBound', // does even exists?
-  name = '@name',
-}
-export enum eCoreAttribute {
-  xsitype = '@xsi:type', // "ecore:EAttribute",
-  name = '@name',
-  eType = '@eType', // "ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
-}
-export enum eCoreModelInstance {
-  type = '@type',
-  name = '@name',
-}
-
-/*
-export class Json {
-  eClassifiers: any;
-  eStructuralFeatures: any;
-  logical: ModelPiece;
-}*/
-
-// export type Json = object;
-export class Json {
-  constructor(j: object) {/* U.pe('' + j === j, 'parameter cannot be a string'); */}
-  static getChildrensXMI(json: Json): Json[] {
-    return ['todo childrensxmi'];
-  }
-  static getChildrens(thiss: Json): Json[] {
-    const mod = thiss[eCoreRoot.ecoreEPackage];
-    const pkg = thiss[eCorePackage.eClassifiers];
-    const cla = thiss[eCoreClass.eStructuralFeatures];
-    let ret = mod || pkg || cla;
-    /*if ( ret === undefined || ret === null ) {
-      if (thiss['@name'] !== undefined) { ret = thiss; } // if it's the root with only 1 child arrayless
-    }*/
-    // U.pe(true, debug, 'getchildrens(', thiss, ')');
-    U.pe( ret === undefined || ret === null , 'getChildrens() Failed: ', thiss);
-    // console.log('ret = ', ret, ' === ', {}, ' ? ', ($.isEmptyObject(ret) ? [] : [ret]));
-    ret = Array.isArray(ret) ? ret : ( $.isEmptyObject(ret) ? [] : [ret]);
-    // console.log('getchildrens() => ', ret);
-    return ret; }
-
-  static read<T>(json: Json, field: string, valueIfNotFound: any = 'read<T>CanThrowError'): T {
-    const ret = json[field] as T;
-    if ((ret === null || ret === undefined)) {
-      U.pe(valueIfNotFound === 'read<T>CanThrowError', 'Json.read<',  '> failed: field[' + field + '], json: ', json);
-      return valueIfNotFound; }
-    return ret; }
-  static write(json: Json, field: string, val: string): string { json[field] = val; return val; }
-
-}
 
 export class U {
   private static prefix = 'ULibrary_';
-  private static sizeofvar = null;
-  private static $sizeofvar = null;
+  private static sizeofvar: HTMLElement = null;
+  private static $sizeofvar: JQuery<HTMLElement> = null;
   private static clipboardinput: HTMLInputElement = null;
-  static he = null;
+  private static PermuteArr: any[][] = [];
+  private static PermuteUsedChars: any[] = [];
+  private static resizingBorder: HTMLElement = null;
+  private static resizingContainer: HTMLElement = null;
+  // static he = null;
+  public static production = false;
+  private static addCssAvoidDuplicates: Dictionary<string, HTMLStyleElement> = {};
+  static $measurableRelativeTargetRoot: JQuery<HTMLElement | SVGElement>;
+  static varTextToSvg: SVGSVGElement = null;
+  private static dblclickchecker: number = new Date().getTime();// todo: move @ start
+  private static dblclicktimerms: number = 300;// todo: move @ start
+  static checkDblClick(): boolean {
+    const now: number = new Date().getTime();
+    const old: number = U.dblclickchecker;
+    U.dblclickchecker = now;
+    console.log('dblclick time:', now - old, now, old);
+    return (now - old <= U.dblclicktimerms); }
 
-  static production = true; // true;
+
+  static firstToUpper(s: string): string {
+    if (!s || s === '') return s;
+    return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  static fileReadContent(file: File, callback: (content :string) => void): void {
+    const textType = /text.*/;
+    try { if (!file.type || file.type.match(textType)) {
+      let reader = new FileReader();
+      reader.onload = function(e) { callback( '' + reader.result ); };
+      reader.readAsText(file);
+      return;
+    } } catch(e) { U.pe(true, "Exception while trying to read file as text. Error: |", e, "|", file); }
+    U.pe(true, "Wrong file type found: |", file ? file.type : null, "|", file); }
+
+  static fileRead(onChange: (e: ChangeEvent, files: FileList, contents: string[]) => void, extensions: string[] | FileReadTypeEnum[] = null, readContent: boolean): void {
+    myFileReader.show(onChange, extensions, readContent);
+  }
+  public static textToSvg<T extends SVGElement>(str: string): T { return U.textToSvgArr<T>(str)[0]; }
+  static textToSvgArr<T extends SVGElement> (str: string): T[] {
+    if (!U.varTextToSvg) { U.varTextToSvg = U.newSvg<SVGSVGElement>('svg'); }
+    U.varTextToSvg.innerHTML = str;
+    const ret: T[] = [];
+    let i: number;
+    for (i = 0; i < U.varTextToSvg.childNodes.length; i++) { ret.push(U.varTextToSvg.childNodes[i] as T); }
+    return ret; }
+
+  static addCss(key: string, str: string, prepend: boolean = true): void {
+    const css: HTMLStyleElement = document.createElement('style');
+    css.innerHTML = str;
+    const old: HTMLStyleElement = U.addCssAvoidDuplicates[key];
+    if (old) { old.parentNode.removeChild(old); }
+    U.addCssAvoidDuplicates[key] = css;
+    if (prepend) { document.head.prepend(css); } else { document.head.append(css); }
+  }
+
   static clear(htmlNode: HTMLElement | SVGElement) {
     while (htmlNode.firstChild) {
       htmlNode.removeChild(htmlNode.firstChild);
     }
   }
 
-  static pe(b: boolean, s: any, ...restArgs: any[]): string {
-    if (!b) {
-      return null;
-    }
-    if (restArgs === null || restArgs === undefined) {
-      restArgs = [];
-    }
+  static clearAllTimeouts(): void {
+    const highestTimeoutId: number = setTimeout(() => {}, 1) as any;
+    for (let i = 0 ; i < highestTimeoutId ; i++) { clearTimeout(i); }
+  }
+  static pe(b: boolean, s: any, ...restArgs: any[]): null {
+    if (!b) { return null; }
+    if (restArgs === null || restArgs === undefined) { restArgs = []; }
     let str = 'Error:' + s + '';
-    console.log('pe[0/' + (restArgs.length + 1) + ']: ', s);
+    console.error('pe[0/' + (restArgs.length + 1) + ']: ', s);
     for (let i = 0; i < restArgs.length; i++) {
       s = restArgs[i];
       str += 'pe[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ' + s + '\t\t\r\n';
-      console.log('pe[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ', s);
+      console.error('pe[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ', s);
     }
-    if (!U.production) { alert(str); }
-    s = (((b as unknown) as any[])['@makeMeCrash'] as any[])['@makeMeCrash'];
-    return str;
-  }
+    if (!U.production) { alert(str); } else U.pw(true, s, ...restArgs);
+    return (((b as unknown) as any[])['@makeMeCrash'] as any[])['@makeMeCrash']; }
 
   static pw(b: boolean, s: any, ...restArgs: any[]): string {
     if (!b) { return null; }
     if (restArgs === null || restArgs === undefined) { restArgs = []; }
     console['' + 'trace']();
     let str = 'Warning:' + s + '';
-    console.log('pw[0/' + (restArgs.length + 1) + ']: ', s);
+    console.warn('pw[0/' + (restArgs.length + 1) + ']: ', s);
     for (let i = 0; i < restArgs.length; i++) {
       s = restArgs[i];
       str += 'pw[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ' + s + '\t\t\r\n';
-      console.log('pw[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ', s);
+      console.warn('pw[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ', s);
     }
-    if (!U.production) { alert(str); }
+    U.bootstrapPopup(str, 'warning', 3000);
     // s = (((b as unknown) as any[])['@makeMeCrash'] as any[])['@makeMeCrash'];
-    return str;
-  }
+    return str; }
 
   static pif(b: boolean, s: any, ...restArgs: any[]): string {
     if (!b) {
@@ -271,32 +284,53 @@ export class U {
       restArgs = [];
     }
     let str = 'p: ' + s;
-    console.log('p:', s);
+    console.info('p:', s);
     for (let i = 0; i < restArgs.length; i++) {
       s = restArgs[i];
       str += 'p[' + (i + 1) + '/' + restArgs.length + ']: ' + s + '\t\t\r\n';
-      console.log('p[' + (i + 1) + '/' + restArgs.length + ']: ', s);
+      console.info('p[' + (i + 1) + '/' + restArgs.length + ']: ', s);
     }
     // alert(str);
-    return str;
-  }
+    return str; }
 
   static p(s: any, ...restArgs: any[]): string {
-    if (restArgs === null || restArgs === undefined) {
-      restArgs = [];
-    }
+    if (restArgs === null || restArgs === undefined) { restArgs = []; }
     let str = 'p: ' + s;
-    console.log('p:', s);
+    console.info('p:', s);
     for (let i = 0; i < restArgs.length; i++) {
       s = restArgs[i];
       str += 'p[' + (i + 1) + '/' + restArgs.length + ']: ' + s + '\t\t\r\n';
-      console.log('p[' + (i + 1) + '/' + restArgs.length + ']: ', s);
+      console.info('p[' + (i + 1) + '/' + restArgs.length + ']: ', s);
     }
     // alert(str);
     return str;
   }
 
-  static cloneHtml<T extends HTMLElement | SVGElement>(html: T, deep = true, defaultIDNum = 1): T {
+  static $alertcontainer: JQuery<HTMLElement> = null;
+  static alertcontainer: HTMLElement = null;
+  static bootstrapPopup(innerhtmlstr: string, color: 'success' | 'warning' | 'danger', timer: number): void {
+    const div = document.createElement('div');
+    if (!U.$alertcontainer) {
+      U.alertcontainer = document.createElement('div');
+      U.alertcontainer.classList.add('alertcontainer');
+      document.body.appendChild(U.alertcontainer);
+      U.$alertcontainer = $(U.alertcontainer); }
+    const container: HTMLElement = U.alertcontainer;
+    const $container = U.$alertcontainer;
+    const $div = $(div);
+    container.appendChild(div);
+    div.classList.add('alertshell');
+    document.body.appendChild(container);
+    div.setAttribute('role', 'alert');
+    const alertMargin: HTMLElement = document.createElement('div');
+    alertMargin.innerHTML = innerhtmlstr;
+    alertMargin.classList.add('alert');
+    alertMargin.classList.add('alert-' + color);
+    div.appendChild(alertMargin);
+    const end = () => { $div.slideUp(400, () => { container.removeChild(div); }); };
+    $div.hide().slideDown(200, () => setTimeout(end, timer)); }
+
+  static cloneHtml<T extends Element>(html: T, deep = true, defaultIDNum = 1): T {
     const clone: T = html.cloneNode(deep) as T;
     const getLastNum = (str: string): number => {
       let pos = str.length ;
@@ -316,64 +350,135 @@ export class U {
     // const r: HTMLElement = document.createElement(o.tagName);
     // r.innerHTML = o.innerHTML;
     // U.pe( o as HTMLElement !== null, 'non utilizzabile su html');
-    return JSON.parse(JSON.stringify(o)) as Json;
-    // todo: questa funzione non può clonare html.
-    // todo: allow cloneObj of circular objects.
+    return JSON.parse(JSON.stringify(o));
+    // todo: questa funzione non può clonare html. allow cloneObj of circular objects.
   }
 
   static cloneObj2<T extends object>(o: T): T {
     U.pe(true, 'todo: dovrebbe fare una deep copy copiando anche le funzioni (cosa che json.stringify non fa).');
-    return null;
+    return null; }
 
-  }
+  static loadScript(path: string, useEval: boolean = false): void {
+    const script = document.createElement('script');
+    script.src = path;
+    script.type = 'text/javascript';
+    U.pe(useEval, 'useEval: todo. potrebbe essere utile per avviare codice fuori dalle funzioni in futuro.');
+    document.body.append(script); }
 
   static newSvg<T extends SVGElement>(type: string): T {
-    return document.createElementNS('http://www.w3.org/2000/svg', type) as T;
+    return document.createElementNS('http://www.w3.org/2000/svg', type) as T; }
+
+  static measurableGetArrays(measureHtml: HTMLElement | SVGElement, e: Event): MeasurableArrays {
+    if (!measureHtml) {
+      measureHtml = (e.target || e.currentTarget) as HTMLElement | SVGElement; // currentTarget === dicument sometimes.
+//      console.log('html:', measureHtml, 'e: ', e);
+      if (!measureHtml || measureHtml as any === document) {
+        measureHtml = e.target as HTMLElement | SVGElement;
+        while (measureHtml && !measureHtml.classList.contains('measurable')) { measureHtml = measureHtml.parentElement; }
+        U.pe(!measureHtml, ' failed to get measurableRoot. evt:', e);
+      }
+      if(measureHtml.classList.contains('ui-wrapper') && !measureHtml.classList.contains('measurable')
+        && (measureHtml.firstChild as HTMLElement).classList.contains('measurable')) { measureHtml = measureHtml.firstChild as any; }
+    }
+    const ret: {rules: Attr[], imports: Attr[], exports: Attr[], variables: Attr[], constraints: Attr[], chain: Attr[],
+      chainFinal: Attr[], dstyle: Attr[], html: HTMLElement | SVGElement, e: Event} = {} as any;
+    ret.e = e;
+    ret.html = measureHtml;
+    ret.rules = [];
+    ret.constraints = [];
+    ret.rules = [];
+    ret.imports = [];
+    ret.exports = [];
+    ret.variables = [];
+    ret.constraints = [];
+    ret.chain = [];
+    ret.chainFinal = [];
+    ret.dstyle = [];
+    let i: number;
+    for (i = 0; i < measureHtml.attributes.length; i++) {
+      const attr: Attr = measureHtml.attributes[i];
+      const key = attr.name.toLowerCase();
+      if (key.indexOf('_') !== 0) { continue; }
+      if (key.indexOf('_rule') === 0) { ret.rules.push(attr); continue; }
+      if (key.indexOf('_import') === 0) { ret.imports.push(attr); continue; }
+      if (key.indexOf('_export') === 0) { ret.exports.push(attr); continue; }
+      if (key.indexOf('_constraint') === 0) { ret.constraints.push(attr); continue; }
+      if (key.indexOf('_chain') === 0) { ret.chain.push(attr); continue; }
+      if (key.indexOf('_chainfinal') === 0) { ret.chainFinal.push(attr); continue; }
+      if (key.indexOf('_dstyle') === 0) { ret.dstyle.push(attr); continue; }
+      ret.variables.push(attr); }
+    return ret; }
+
+  static measurableElementSetup($root: JQuery<Element>, resizeConfig: ResizableOptions = null, dragConfig: DraggableOptions = null): void {
+    $root.find('.measurable').addBack('.measurable').each(
+      (i: number, h: Element) => U.measurableElementSetupSingle(h as HTMLElement | SVGElement,  resizeConfig, dragConfig)); }
+  static measurableElementSetupSingle(elem: HTMLElement | SVGElement, resizeConfig: ResizableOptions = null, dragConfig: DraggableOptions = null): void {
+    // apply resizableborder AND jquery.resize
+    if (!elem.classList || !elem.classList.contains('measurable') || elem as any === document) {
+      U.pw(true, 'invalid measurable:', elem, !elem.classList, '||', !elem.classList.contains('measurable')); return; }
+    U.resizableBorderSetup(elem as HTMLElement);
+    if (!resizeConfig) { resizeConfig = {}; }
+    if (!dragConfig) { dragConfig = {}; }
+    resizeConfig.create = resizeConfig.create || eval(elem.dataset.r_create);
+    resizeConfig.resize = resizeConfig.resize || eval(elem.dataset.r_resize);
+    resizeConfig.start = resizeConfig.start || eval(elem.dataset.r_start);
+    resizeConfig.stop = resizeConfig.stop || eval(elem.dataset.r_stop);
+    dragConfig.create = dragConfig.create || eval(elem.dataset.d_create);
+    dragConfig.drag = dragConfig.drag || eval(elem.dataset.d_drag);
+    dragConfig.start = dragConfig.start || eval(elem.dataset.d_start);
+    dragConfig.stop = dragConfig.stop || eval(elem.dataset.d_stop);
+    for (const key in resizeConfig) {
+      if (resizeConfig[key] || !elem.dataset['r_' + key]) { continue; }
+      resizeConfig[key] = elem.dataset['r_' + key]; }
+    for (const key in dragConfig) {
+      if (dragConfig[key] || !elem.dataset['d_' + key]) { continue; }
+      dragConfig[key] = elem.dataset['d_' + key]; }
+    $(elem).resizable(resizeConfig).draggable(dragConfig);
   }
 
-
-  static replaceVars<T extends HTMLElement | SVGElement>(obj: object, html0: T, cloneHtml = true, debug: boolean = false): T {
+  static replaceVars<T extends Element>(obj: object, html0: T, cloneHtml = true, debug: boolean = false): T {
     const html: T = cloneHtml ? U.cloneHtml<T>(html0) : html0;
-    /// see it in action & modify or debug at
+    /// see it in action & parse or debug at
     // v1) perfetto ma non supportata in jscript https://regex101.com/r/Do2ndU/1
     // v2) usata: aggiustabile con if...substring(1). https://regex101.com/r/Do2ndU/3
     // get text between 2 single '$' excluding $$, so they can be used as escape character to display a single '$'
     // console.log('html0:', html0, 'html:', html);
+    U.pe(!(html instanceof Element), 'target must be a html node.', html, html0);
     html.innerHTML = U.replaceVarsString(obj, html.innerHTML, debug);
     U.pif(debug, 'ReplaceVars() return = ', html.innerHTML);
-    return html;
-  }
+    return html; }
 
-  static replaceVarsString0(obj: object, str: string, escapeChar: string[] = null, replacer: string[] = null, debug: boolean = false): string {
-    U.pe(escapeChar && !replacer, 'replacer cannot be null if escapeChar is defined.');
-    U.pe(replacer && !escapeChar, 'escapeChar cannot be null if replacer is defined');
-    if (!escapeChar && !replacer) { escapeChar = replacer = []; }
-    U.pe(escapeChar.length !== replacer.length, 'replacer and escapeChar must be arrays of the same length');
+  static replaceVarsString0(obj: object, str: string, escapeC: string[] = null, replacer: string[] = null, debug: boolean = false): string {
+    U.pe(escapeC && !replacer, 'replacer cannot be null if escapeChar is defined.');
+    U.pe(replacer && !escapeC, 'escapeChar cannot be null if replacer is defined');
+    if (!escapeC && !replacer) { escapeC = replacer = []; }
+    U.pe(escapeC.length !== replacer.length, 'replacer and escapeChar must be arrays of the same length');
     str = str.replace(/(^\$|(((?!\$).|^))[\$](?!\$))(.*?)(^\$|((?!\$).|^)[\$](?!\$))/gm,
       (match: string, capture) => {
         // console.log('matched:', match, 'capture: ', capture);
-        if (match === '$') {
-          return '';
-        }
+        if (match === '$') { return ''; }
         let prefixError = '';
         if (match.charAt(0) !== '$') {
           prefixError = match.charAt(0);
-          match = match.substring(1);
-        }
+          match = match.substring(1); }
         // # = default value: {asHtml = true, isbase64 = false}
-        const asHtml = match.charAt(0) === '1' || match.charAt(0) !== '#';
-        const isBase64 = match.charAt(1) === '1' || match.charAt(1) !== '#';
+        const asHtml = match.charAt(1) === '1' || match.charAt(1) !== '#';
+        const isBase64 = match.charAt(2) === '1' || match.charAt(2) !== '#';
         const varname = match.substring(3, match.length - 1);
         const debugtext = varname + '(' + match + ')';
-        const tmp = prefixError + '' + U.replaceSingleVar(obj, varname, isBase64, false);
-        let ret = tmp;
+        U.pif(debug, 'match:', match);
+        const resultarr = U.replaceSingleVar(obj, varname, isBase64, false);
+        let result: string = resultarr[resultarr.length - 1].value;
+        if (result !== '' + result) { try { result = JSON.stringify(result); } catch(e) { result = '{_Cyclic object_}'} }
         let i = -1;
-        if (!asHtml) { while (++i < escapeChar.length) { ret = U.replaceAll(tmp, escapeChar[i], replacer[i]); } }
-        U.pif(debug, 'replaceSingleVar: ' + debugtext + ' --> ' + tmp + ' --> ' + ret, obj);
-        return ret;
+        U.pif(debug, 'replaceSingleVar: ', match, ', arr', resultarr, ', ret', result, ', this:', obj);
+        if (!asHtml) { while (++i < escapeC.length) { result = U.replaceAll(result, escapeC[i], replacer[i]); } }
+        U.pif(debug, 'replaceSingleVar: ' + debugtext + ' --> ' + result + ' --> ' + prefixError, result, obj);
+        if (U.isObject(result)) {  }
+        return prefixError + result;
       });
-    return str; // str.replace(/\$\$/gm, '$');
-  }
+    return str; }
+
   static replaceVarsString(obj: object, htmlStr: string, debug: boolean = false): string {
     U.pe(!obj || !htmlStr, 'parameters cannot be null. obj:', obj, ', htmlString:', htmlStr);
     //  https://stackoverflow.com/questions/38563414/javascript-regex-to-select-quoted-string-but-not-escape-quotes
@@ -385,8 +490,8 @@ export class U {
     htmlStr = U.QuoteReplaceVarString(obj, htmlStr, '\'', debug);
     // replaces what's left outside any quotation. (eventually escaping <>)
     htmlStr = U.replaceVarsString0(obj, htmlStr, ['<', '>'], ['&lt;', '&gt;']); // check here aaaaaaaaaaaaaa $$$$$$$$$$$
-    return htmlStr;
-  }
+    return htmlStr; }
+
   static QuoteReplaceVarString(obj: object, htmlStr: string, quote: string, debug: boolean = false): string {
     U.pe(quote !== '"' && quote !== '\'', 'the only quote supported are single chars " and \'.');
     const quoteEscape = quote === '&quot;' ? '' : '&#39;'; // '\\' + quote;
@@ -408,20 +513,87 @@ export class U {
     return htmlStr;
   }
 
-  static replaceSingleVar(obj: object, varname: string, isBase64: boolean, canThrow: boolean = false): any {
+  //todo: da rimuovere, è stata completamente superata dal nuovo return type array di replaceSingleVar
+  static replaceSingleVarGetParentAndChildKey(obj: object, fullpattern: string, canThrow: boolean = false): {parent: any, childkey: string} {
+    const ret: {parent: any, childkey: string} = {parent: null, childkey: null};
+    let targetPatternParent: string;
+    const pos = fullpattern.indexOf('.');
+    const isBase64 = fullpattern.charAt(2) === '1' || fullpattern.charAt(2) !== '#';
+    U.pe(isBase64, 'currently this method does not support base64 encoded templates. the conversion is still to do.', fullpattern);
+    if (pos === -1) {
+      ret.parent = obj;
+      ret.childkey = fullpattern.substring(3, fullpattern.length - 1);
+      return ret; }
+    try {
+      targetPatternParent = fullpattern.substring(0, pos) + '$';
+      const tmparr = U.replaceSingleVarRaw(obj, targetPatternParent);
+      ret.parent = tmparr[tmparr.length - 1].value;
+      ret.childkey = fullpattern.substring(pos + 1, fullpattern.length - 1);
+    } catch (e) {
+      U.pw(true, 'replaceSingleVarGetParentAndChildKey failed. fullpattern: |' + fullpattern + '| targetPatternParent: |'
+        + targetPatternParent + '| obj: ', obj, ' reason: ', e);
+      return null; }
+    return ret; }
+
+  static replaceSingleVarRaw(obj: object, fullpattern: string, canThrow: boolean = false): {token: string, value: any}[] {
+    fullpattern = fullpattern.trim();
+    const isBase64 = fullpattern.charAt(2) === '1' || fullpattern.charAt(2) !== '#';
+    const varName = fullpattern.substring(3, fullpattern.length - 1);
+    return U.replaceSingleVar(obj, varName, isBase64, canThrow); }
+
+  static replaceSingleVar(obj: object, varname: string, isBase64: boolean, canThrow: boolean = false): {token: string, value: any}[] {
     const debug = false;
     const showErrors = false;
     let debugPathOk = '';
     if (isBase64) { varname = atob(varname); }
     let requestedValue: any = obj;
     const fullpath: string = varname;
-    const tokens: string[] = varname.split('.');
+    const tokens: string[] = varname.split('.'); // varname.split(/\.,/);
+    const ret: {token: string, value: any}[] = [];
+    let j;
+    let token: string = null;
+    for (j = 0; j < tokens.length; j++) {
+      ret.push({token: token === null ? 'this' : token, value: requestedValue});
+      token = tokens[j];
+      U.pif(debug || showErrors, 'replacer: obj[req] = ', requestedValue, '[', token, '] =', (requestedValue ? requestedValue[token] : ''));
+      if (requestedValue === null || requestedValue === undefined) {
+        U.pe(showErrors, 'requested null or undefined:', obj, ', canthrow ? ', canThrow, ', fillplath:', fullpath);
+        if (canThrow) {
+          U.pif(showErrors, 'wrong variable path:', debugPathOk + '.' + token, ': ' + token + ' is undefined. object = ', obj);
+          throw new DOMException('replace_Vars.WrongVariablePath', 'replace_Vars.WrongVariablePath');
+        } else {
+          U.pif(showErrors, 'wrong variable path:', debugPathOk + '.' + token, ': ' + token + ' is undefined. ovjet = ', obj);
+        }
+
+        ret.push({token: token, value: 'Error: ' + debugPathOk + '.' + token + ' = ' + undefined});
+        // ret.push({token: token, value: requestedValue});
+        return ret;
+      } else { debugPathOk += (debugPathOk === '' ? '' : '.') + token; }
+      ////
+      if (requestedValue instanceof ModelPiece) {
+        const info: any = requestedValue.getInfo(true);
+        const key = token.toLowerCase();
+        if (key in info) { requestedValue = info[key]; } else { requestedValue = requestedValue[token]; }
+      } else { requestedValue = (requestedValue === null) ? undefined : requestedValue[token]; }
+    }
+
+    ret.push({token: token, value: requestedValue});
+    return ret; }
+
+  static replaceSingleVar_backup(obj: object, varname: string, isBase64: boolean, canThrow: boolean = false): any {
+    const debug = false;
+    const showErrors = false;
+    let debugPathOk = '';
+    if (isBase64) { varname = atob(varname); }
+    let requestedValue: any = obj;
+    const fullpath: string = varname;
+    const tokens: string[] = varname.split('.'); // varname.split(/\.,/);
     let j;
     for (j = 0; j < tokens.length; j++) {
       const token = tokens[j];
       U.pif(debug || showErrors, 'replacer: obj[req] = ', requestedValue, '[', token, '] =', (requestedValue ? requestedValue[token] : ''));
-      requestedValue = (requestedValue === null) ? undefined : requestedValue[token];
-      if (requestedValue === undefined) {
+
+      if (requestedValue === null || requestedValue === undefined) {
         U.pe(showErrors, 'requested null or undefined:', obj, ', canthrow ? ', canThrow, ', fillplath:', fullpath);
         if (canThrow) {
           U.pif(showErrors, 'wrong variable path:', debugPathOk + '.' + token, ': ' + token + ' is undefined. object = ', obj);
@@ -430,34 +602,67 @@ export class U {
           U.pif(showErrors, 'wrong variable path:', debugPathOk + '.' + token, ': ' + token + ' is undefined. ovjet = ', obj);
         }
         return 'Error: ' + debugPathOk + '.' + token + ' = ' + undefined;
-      } else {
-        debugPathOk += (debugPathOk === '' ? '' : '.') + token;
-      }
+      } else { debugPathOk += (debugPathOk === '' ? '' : '.') + token; }
+      ////
+      if (requestedValue instanceof ModelPiece) {
+        const info: any = requestedValue.getInfo(true);
+        const key = token.toLowerCase();
+        if (key in info) { requestedValue = info[key]; } else { requestedValue = requestedValue[token]; }
+      } else { requestedValue = (requestedValue === null) ? undefined : requestedValue[token]; }
     }
-    return requestedValue;
-  }
+    return requestedValue; }
+
+  static changeVarTemplateDelimitersInMeasurables(innerText: string, toReplace: string = '$', replacement = '£'): string {
+    if (!innerText.indexOf('measurable')) { return innerText; } // + performance su scommessa probabilistica. better avg, worser worst case.
+    const html = document.createElement('div');
+    html.innerHTML = innerText;
+    const $measurables = $(html).find('.measurable');
+    let i: number;
+    let j: number;
+    for (i = 0; i < $measurables.length; i++) {
+      for (j = 0; j < $measurables[i].attributes.length; j++) {
+        if($measurables[i].attributes[j].name[0] !== '_') { continue; }
+        U.changeVarTemplateDelimitersInMeasurablesAttr($measurables[i].attributes[j], toReplace, replacement); } }
+    return html.innerHTML; }
+
+  static changeBackVarTemplateDelimitersInMeasurablesAttr(attrVal: string, toReplace: string = '£', replacement = '$'): string {
+    return U.changeVarTemplateDelimitersInMeasurablesAttrStr(attrVal, toReplace, replacement); }
+
+  private static changeVarTemplateDelimitersInMeasurablesAttr(attr: Attr, toReplace: string = '$', replacement = '£'): void {
+    attr.value = U.changeVarTemplateDelimitersInMeasurablesAttrStr(attr.value, toReplace, replacement); }
+
+  private static changeVarTemplateDelimitersInMeasurablesAttrStr(val: string, toReplace: string, replacement: string): string {
+    const r = toReplace;
+    const rstr = '(^\\' + r + '|(((?!\\' + r + ').|^))[\\' + r + '](?!\\' + r + '))(.*?)(^\\' + r + '|((?!\\' + r + ').|^)[\\' + r + '](?!\\' + r + '))';
+    return val.replace(new RegExp(rstr, 'gm'), (match: string, capture) => {
+      if (match === toReplace) { return toReplace; }
+      let prefixError = '';
+      if (match.charAt(0) !== toReplace) {
+        prefixError = match.charAt(0);
+        match = match.substring(1); }
+      return prefixError + replacement + match.substring(1, match.length - 1) + replacement;
+    }); }
 
   static sizeof<T extends HTMLElement | SVGElement>(element: T, debug: boolean = false): Size {
     U.pif(debug, 'sizeof(', element, ')');
+    U.pe(element as any === document, 'trying to measure document.');
+    if (element as any === document) { element = document.body as any; }
     const $element = $(element);
     U.pe(element.tagName === 'foreignObject', 'SvgForeignElementObject have a bug with size, measure a child instead.');
     let i;
     let tmp;
     let size: Size;
-    if (U.sizeofvar === null) {
+    if (!U.sizeofvar) {
       U.sizeofvar = document.createElement('div');
-      U.$sizeofvar = $(U.sizeofvar);
-      $('body').append(U.sizeofvar);
-    }
+      document.body.append(U.sizeofvar); }
+
     const isOrphan = element.parentNode === null;
     // var visible = element.style.display !== 'none';
     // var visible = $element.is(":visible"); crea bug quando un elemento è teoricamente visibile ma orfano
     const ancestors = U.ancestorArray(element);
     const visibile = [];
-    if (isOrphan) {
-      U.$sizeofvar.append(element);
-    }
-    // show all and save visibility to restore it later
+    if (isOrphan) { U.sizeofvar.append(element); }
+    // show all and saveToDB visibility to restore it later
     for (i = 0; i < ancestors.length; i++) { // document has undefined style
       visibile[i] = (ancestors[i].style === undefined) ? (true) : (ancestors[i].style.display !== 'none');
       if (!visibile[i]) {
@@ -475,9 +680,7 @@ export class U {
         $(ancestors[i]).hide();
       }
     }
-    if (isOrphan) {
-      U.clear(U.sizeofvar);
-    }
+    if (isOrphan) { U.clear(U.sizeofvar); }
     // Status.status.getActiveModel().graph.markS(size, false);
     return size;
   }
@@ -487,17 +690,14 @@ export class U {
     return parent.getElementsByTagName('*');
   }
 
-  static ancestorArray<T extends HTMLElement | SVGElement>(domelem: T): T[] {
+  static ancestorArray<T extends HTMLElement | SVGElement>(domelem: T): Array<T> {
     // [0]=element, [1]=father, [2]=grandfather... [n]=document
-    if (domelem === null || domelem === undefined) {
-      return [];
-    }
+    if (domelem === null || domelem === undefined) { return []; }
     const arr = [domelem];
     let tmp: T = domelem.parentNode as T;
     while (tmp !== null) {
       arr.push(tmp);
-      tmp = tmp.parentNode as T;
-    }
+      tmp = tmp.parentNode as T; }
     return arr;
   }
 
@@ -516,18 +716,16 @@ export class U {
     return U.toHtml<HTMLTableCellElement>(html, U.toHtml('<table><tbody><tr></tr></tbody></table>').firstChild.firstChild as HTMLElement);
   }
 
-  static toHtml<T extends HTMLElement>(html: string, container: HTMLElement = null, containerTag: string = 'div'): T {
-    if (container === null) {
-      container = document.createElement(containerTag);
-    }
+  static toHtml<T extends Element>(html: string, container: HTMLElement | SVGElement = null, containerTag: string = 'div'): T {
+    if (container === null) { container = document.createElement(containerTag); }
     container.innerHTML = html;
-    return container.firstChild as T;
-  }
+    const ret: T = container.firstChild as any;
+    container.removeChild(ret);
+    return ret; }
 
-  static toHtml_RootlessArray(html: string): NodeListOf<HTMLElement> {
-    const o: HTMLElement = document.createElement('div');
-    o.innerHTML = html;
-    return o.childNodes as NodeListOf<HTMLElement>;
+  static toBase64Image(html: Element, container: Element = null, containerTag: string = 'div'): string {
+    // https://github.com/tsayen/dom-to-image
+    return 'HtmlToImage todo: check https://github.com/tsayen/dom-to-image';
   }
 
 
@@ -545,19 +743,66 @@ export class U {
   }
 
   static isChildrenOf(child: HTMLElement | SVGElement, parent: HTMLElement | SVGElement) {
-    return U.isParentOf(parent, child);
-  }
+    return U.isParentOf(parent, child); }
 
-  static getSvgSize(style: SVGElement): GraphSize {
-    const ret = new GraphSize(+style.getAttribute('x'), +style.getAttribute('y'),
-      +style.getAttribute('width'), +style.getAttribute('height'));
-    U.pe(isNaN(ret.x) || isNaN(ret.y) || isNaN(ret.w) || isNaN(ret.h), 'svg attributes missing or invalid (NaN)', style);
-    return ret;
-  }
+  static setSvgSize(style: SVGElement, size: GraphSize, defaultsize: GraphSize): GraphSize {
+    if (!style) return;
+    if (size) { size = size.duplicate(); } else { size = defaultsize.duplicate(); defaultsize = null; }
+    if (!U.isNumber(size.x)) {
+      U.pw(true, 'VertexSize Svg x attribute is NaN: ' + size.x + (!defaultsize ? '' : ' will be set to default: ' + defaultsize.x));
+      U.pe(!defaultsize || !U.isNumber(defaultsize.x), 'Both size and defaultsize are null.', size, defaultsize, style);
+      size.x = defaultsize.x; }
+    if (!U.isNumber(size.y)) {
+      U.pw(true, 'VertexSize Svg y attribute is NaN: ' + size.y + (!defaultsize ? '' : ' will be set to default: ' + defaultsize.y));
+      U.pe(!defaultsize || !U.isNumber(defaultsize.y), 'Both size and defaultsize are null.', size, defaultsize, style);
+      size.y = defaultsize.y; }
+    if (!U.isNumber(size.w)) {
+      U.pw(true, 'VertexSize Svg w attribute is NaN: ' + size.w + (!defaultsize ? '' : ' will be set to default: ' + defaultsize.w));
+      U.pe(!defaultsize || !U.isNumber(defaultsize.w), 'Both size and defaultsize are null.', size, defaultsize, style);
+      size.w = defaultsize.w; }
+    if (!U.isNumber(size.h)) {
+      U.pw(true, 'VertexSize Svg h attribute is NaN: ' + size.h + (!defaultsize ? '' : ' will be set to default: ' + defaultsize.h));
+      U.pe(!defaultsize || !U.isNumber(defaultsize.h), 'Both size and defaultsize are null.', size, defaultsize, style);
+      size.h = defaultsize.h; }
+    // U.pe(true, '100!, ', size, style);
+    style.setAttributeNS(null, 'x', '' + size.x);
+    style.setAttributeNS(null, 'y', '' + size.y);
+    style.setAttributeNS(null, 'width', '' + size.w);
+    style.setAttributeNS(null, 'height', '' + size.h);
+    return size; }
 
-  static findMetaParent<ParentT extends ModelPiece, childT extends ModelPiece>(parent: ParentT, childJson: Json, canFail: boolean): childT {
+  static getSvgSize(elem: SVGElement, minimum: GraphSize = null, maximum: GraphSize = null): GraphSize {
+    const defaults: GraphSize = new GraphSize(0, 0, 200, 99);
+    const ret0: GraphSize = new GraphSize(+elem.getAttribute('x'), +elem.getAttribute('y'),
+      +elem.getAttribute('width'), +elem.getAttribute('height'));
+    const ret: GraphSize = ret0.duplicate();
+    if (!U.isNumber(ret.x)) {
+      U.pw(true, 'Svg x attribute is NaN: ' + elem.getAttribute('x') + ' will be set to default: ' + defaults.x);
+      ret.x = defaults.x; }
+    if (!U.isNumber(ret.y)) {
+      U.pw(true, 'Svg y attribute is NaN: ' + elem.getAttribute('y') + ' will be set to default: ' + defaults.y);
+      ret.y = defaults.y; }
+    if (!U.isNumber(ret.w)) {
+      U.pw(true, 'Svg w attribute is NaN: ' + elem.getAttribute('width') + ' will be set to default: ' + defaults.w);
+      ret.w = defaults.w; }
+    if (!U.isNumber(ret.h)) {
+      U.pw(true, 'Svg h attribute is NaN: ' + elem.getAttribute('height') + ' will be set to default: ' + defaults.h);
+      ret.h = defaults.h; }
+    if (minimum) {
+      if (U.isNumber(minimum.x) && ret.x < minimum.x) { ret.x = minimum.x; }
+      if (U.isNumber(minimum.y) && ret.y < minimum.y) { ret.y = minimum.y; }
+      if (U.isNumber(minimum.w) && ret.w < minimum.w) { ret.w = minimum.w; }
+      if (U.isNumber(minimum.h) && ret.h < minimum.h) { ret.h = minimum.h; } }
+    if (maximum) {
+      if (U.isNumber(maximum.x) && ret.x > maximum.x) { ret.x = maximum.x; }
+      if (U.isNumber(maximum.y) && ret.y > maximum.y) { ret.y = maximum.y; }
+      if (U.isNumber(maximum.w) && ret.w > maximum.w) { ret.w = maximum.w; }
+      if (U.isNumber(maximum.h) && ret.h > maximum.h) { ret.h = maximum.h; } }
+    if (!ret.equals(ret0)) { U.setSvgSize(elem, ret, null); }
+    return ret; }
+
+  static findMetaParent<ParentT extends ModelPiece, childT extends ModelPiece>(parent: ParentT, childJson: Json, canFail: boolean, debug: boolean = true): childT {
     const modelRoot: IModel = parent.getModelRoot();
-    const debug = true;
     // instanceof crasha non so perchè, dà undefined constructor quando non lo è.
     if (U.getClass(modelRoot) === 'MetaMetaModel') { U.pif(debug, 'return null;'); return null; }
     if (U.getClass(modelRoot) === 'MetaModel') { U.pif(debug, 'return null;'); return null; } // potrei ripensarci e collegarlo a m3
@@ -569,7 +814,7 @@ export class U {
     // if (modelRoot === Status.status.mmm || !Status.status.mmm && modelRoot instanceof MetaMetaModel) { return null; }
     // if (modelRoot === Status.status.mm) { return null; }
     const ParentMetaParent: ParentT = parent.metaParent as ParentT;
-    const metaParentName = Json.read<string>(childJson, eCoreModelInstance.name, null);
+    const metaParentName = Json.read<string>(childJson, XMIModel.namee, null);
     // U.pe(!metaParentName, 'type not found.', childJson);
     let i;
     let ret: childT = null;
@@ -590,58 +835,33 @@ export class U {
     U.pe(ret == null && !canFail, 'metaParent not found. metaParentParent:', ParentMetaParent,
       'metaParentName:', metaParentName, 'parent:', parent, 'json:', childJson);
     // console.log('findMetaParent of:', childJson, ' using parent:', parent, ' = ', ret);
-    return ret;
-  }
+    return ret; }
 
-  static findMetaParOld<ParentT extends ModelPiece, childT extends ModelPiece>(parent: ParentT, childJson: Json, canFail: boolean): childT {
-    const modelRoot: IModel = parent.getModelRoot();
-    if (modelRoot === Status.status.mmm) {
-      return null;
+  /*
+    static findMetaParentP(parent: IModel, childJson: Json, canFail: boolean = true): IPackage {
+      return U.findMetaParent<IModel, IPackage>(parent, childJson, canFail);
     }
-    const metaParentPkg: ParentT = parent.metaParent as ParentT;
-    const metaParentName = Json.read<string>(childJson, eCoreModelInstance.type, null);
-    // U.pe(!metaParentName, 'type not found.', childJson);
-    let i;
-    let ret: childT = null;
-    for (i = 0; i < metaParentPkg.childrens.length; i++) {
-      const metaVersionCandidate = metaParentPkg.childrens[i];
-      console.log('is metaparent? of:', metaParentName, ' === ', metaVersionCandidate.fullname,
-        ' ? ', metaVersionCandidate.fullname === metaParentName);
-      if (metaVersionCandidate.fullname === metaParentName) {
-        ret = metaVersionCandidate as childT;
-        break;
-      }
+
+    static findMetaParentC(parent: IPackage, childJson: Json, canFail: boolean = true): M2Class {
+      return U.findMetaParent<IPackage, M2Class>(parent, childJson, canFail);
     }
-    U.pe(ret == null && !canFail, 'metaParent not found. metaParentParent:', metaParentPkg,
-      'metaParentName:', metaParentName, 'parent:', parent, 'json:', childJson);
-    console.log('findMetaParent of:', childJson, ' using parent:', parent, ' = ', ret);
-    return ret;
-  }
 
-  static findMetaParentP(parent: IModel, childJson: Json, canFail: boolean = true): IPackage {
-    return U.findMetaParent<IModel, IPackage>(parent, childJson, canFail);
-  }
+    static findMetaParentA(prnt: M2Class, childJ: Json, canFail: boolean = true): IAttribute {
+      return U.findMetaParent<M2Class, IAttribute>(prnt, childJ, canFail);
+    }
 
-  static findMetaParentC(parent: IPackage, childJson: Json, canFail: boolean = true): IClass {
-    return U.findMetaParent<IPackage, IClass>(parent, childJson, canFail);
-  }
-
-  static findMetaParentA(prnt: IClass, childJ: Json, canFail: boolean = true): IAttribute {
-    return U.findMetaParent<IClass, IAttribute>(prnt, childJ, canFail);
-  }
-
-  static findMetaParentR(prnt: IClass, childJ: Json, canFail: boolean = true): IReference {
-    return U.findMetaParent<IClass, IReference>(prnt, childJ, canFail);
-  }
-
-  static arrayRemoveAll(arr: any[], elem: any): void {
+    static findMetaParentR(prnt: M2Class, childJ: Json, canFail: boolean = true): IReference {
+      return U.findMetaParent<M2Class, IReference>(prnt, childJ, canFail);
+    }
+  */
+  static arrayRemoveAll<T>(arr: Array<T>, elem: T, debug: boolean = false): void {
     let index;
     while (true) {
       index = arr.indexOf(elem);
-      if (index === -1) {
-        return;
-      }
+      U.pif (debug, 'ArrayRemoveAll: index: ', index, '; arr:', arr, '; elem:', elem);
+      if (index === -1) { return; }
       arr.splice(index, 1);
+      U.pif (debug, 'ArrayRemoveAll RemovedOne:', arr);
     }
   }
 
@@ -677,6 +897,33 @@ export class U {
     if (!pt || !shape) { return null; }
     return (pt.y === shape.y + shape.h) && (pt.x >= shape.x && pt.x <= shape.x + shape.w);
   }
+  // usage: var scope1 = makeEvalContext("variable declariation list"); scope1("another eval like: x *=3;");
+  // remarks: variable can be declared only on the first call, further calls on a created context can only modify the context without expanding it.
+
+  static makeEvalContext(declarations: string): (exp: string) => any {
+    eval(declarations);
+    return (str) => eval(str); }
+
+  // same as above, but with dynamic context, although it's only extensible manually and not by the eval code itself.
+  static evalInContext(context, js): any {
+    let value;
+    try { // for expressions
+      value = eval('with(context) { ' + js + ' }');
+    } catch (e) {
+      if (e instanceof SyntaxError) {
+        //try { // for statements
+        value = (new Function('with(this) { ' + js + ' }')).call(context);
+        //} catch (e) { U.pw(true, 'error evaluating')}
+      }
+    }
+    return value; }
+
+  static multiReplaceAllKV(a: string, kv: string[][] = []): string {
+    const keys: string[] = [];
+    const vals: string[] = [];
+    let i: number;
+    for (i = 0; i < kv.length; i++) { keys.push(kv[i][0]); vals.push(kv[i][0]); }
+    return U.multiReplaceAll(a, keys, vals); }
 
   static multiReplaceAll(a: string, searchText: string[] = [], replacement: string[] = []): string {
     U.pe(!(searchText.length === replacement.length), 'search and replacement must be have same length:', searchText, replacement);
@@ -686,8 +933,9 @@ export class U {
   static toFileName(a: string = 'nameless.txt'): string {
     if (!a) { a = 'nameless.txt'; }
     a = U.multiReplaceAll(a.trim(), ['\\', '//', ':', '*', '?', '<', '>', '"', '|'],
-                       ['[lslash]', '[rslash]', ';', '°', '_', '{', '}', '\'', '!']);
+      ['[lslash]', '[rslash]', ';', '°', '_', '{', '}', '\'', '!']);
     return a; }
+
   static download(filename: string = 'nameless.txt', text: string = null, debug: boolean = true): void {
     if (!text) { return; }
     filename = U.toFileName(filename);
@@ -737,32 +985,42 @@ export class U {
     U.pe(oldl + 1 !== arr.length, oldl + ' --> ' + arr.length + '; arr not growing. ret:', ret, arr);
   }
 
-  static setViewBox(svg: SVGElement, size: Size): void {
-    svg.setAttributeNS(null, 'viewbox', size.x + ' ' + size.y + ' ' + size.w + ' ' + size.h);
+  static setViewBox(svg: SVGElement, size: Size = null): void {
+    if (!size) { size = new Size(); size.x = size.y = size.w = size.h = null;}
+    let x = +size.x;
+    let y = +size.y;
+    let w = +size.w;
+    let h = +size.h;
+    let htmlsize: Size = null;
+    if (isNaN(x)) { x = 0; }
+    if (isNaN(y)) { y = 0; }
+    if (isNaN(w)) { w = htmlsize ? htmlsize.w : (htmlsize = U.sizeof(svg)).w; }
+    if (isNaN(h)) { h = htmlsize ? htmlsize.h : (htmlsize = U.sizeof(svg)).h; }
+    svg.setAttributeNS(null, 'viewBox', x + ' ' + y + ' ' + w + ' ' + h);
   }
 
   static getViewBox(svg: SVGElement): Size {
     const str: string = svg.getAttributeNS(null, 'viewbox');
+    if (!str) return U.sizeof(svg);
     const arr: string[] = str.split(' ');
-    const x: number = isNaN(+arr[0]) ? 0 : +arr[0];
-    const y: number = isNaN(+arr[1]) ? 1 : +arr[1];
-    const w: number = isNaN(+arr[2]) ? 2 : +arr[2];
-    const h: number = isNaN(+arr[3]) ? 3 : +arr[3];
-    return new Size(x, y, w, h);
-  }
+    let vbox: Size = new Size(0, 0, 0, 0);
+    if (isNaN(+arr[0])) { vbox = U.sizeof(svg); vbox.x = vbox.y = 0; return vbox; } else { vbox.x = +arr[0]; }
+    if (isNaN(+arr[1])) { vbox = U.sizeof(svg); vbox.x = vbox.y = 0; return vbox; } else { vbox.y = +arr[1]; }
+    if (isNaN(+arr[2])) { vbox = U.sizeof(svg); vbox.x = vbox.y = 0; return vbox; } else { vbox.w = +arr[2]; }
+    if (isNaN(+arr[3])) { vbox = U.sizeof(svg); vbox.x = vbox.y = 0; return vbox; } else { vbox.h = +arr[3]; }
+    return vbox; }
 
   static selectHtml(htmlSelect: HTMLSelectElement, optionValue: string, canFail: boolean = false) {
     const $options: JQuery<HTMLOptionElement> = $(htmlSelect).find('option') as unknown as any;
     let i: number;
     let isFound = false;
+    if (optionValue === null || optionValue === undefined) { return; }
     for (i = 0; i < $options.length; i++) {
       const opt = $options[i] as HTMLOptionElement;
-      if (opt.value === optionValue) {
-        opt.selected = isFound = true;
-      }
+      if (opt.value === optionValue) { opt.selected = isFound = true; }
     }
-    console.log('SelectOption not found. html:', htmlSelect, ', searchingFor: ', optionValue, ', in options:', $options);
-    U.pe(!isFound && !canFail, 'SelectOption not found. html:', htmlSelect, ', searchingFor: ', optionValue, ', in options:', $options);
+    U.pw(!isFound, 'SelectOption not found. html:', htmlSelect, ', searchingFor: |' + optionValue + '|, in options:', $options);
+    U.pe(!isFound && !canFail, 'SelectOption not found. html:', htmlSelect, ', searchingFor: |' + optionValue + '| in options:', $options);
   }
 
   static tabSetup(root: HTMLElement = document.body): void {
@@ -778,7 +1036,7 @@ export class U {
       // console.clear(); console.log('triggered: ', $selected);
       $selected.trigger('click');
     }
-
+/*
     U.addCss('customTabs',
       '.UtabHeaderContainer{ padding: 0; margin: 0; display: flex;}\n' +
       '.UtabContainer{\n' +
@@ -807,7 +1065,7 @@ export class U {
       '.UtabContent{\n' +
       'flex-grow: 1;\n' +
       // 'height: 100%;\n' +
-      '\n}\n');
+      '\n}\n');*/
   }
 
   static tabClick(e: ClickEvent): void {
@@ -836,67 +1094,53 @@ export class U {
     $targethtml.slideDown();
   }
 
-  private static addCssAvoidDuplicates: Dictionary<string, HTMLStyleElement> = {};
-  static addCss(key: string, str: string, prepend: boolean = true): void {
-    const css: HTMLStyleElement = document.createElement('style');
-    css.innerHTML = str;
-    const old: HTMLStyleElement = U.addCssAvoidDuplicates[key];
-    if (old) { old.parentNode.removeChild(old); }
-    U.addCssAvoidDuplicates[key] = css;
-    if (prepend) {
-      document.head.prepend(css);
-    } else {
-      document.head.append(css);
-    }
-  }
-
-  static cloneAllAttributes(source: HTMLElement | SVGElement, destination: HTMLElement | SVGElement) {
-    U.pw(true, 'cloneAllAttributes: todo');
-    // todo
-  }
-
   static removeemptynodes(root: HTMLElement | SVGElement, includeNBSP: boolean = false, debug: boolean = false): HTMLElement | SVGElement {
     let n: number;
     for (n = 0; n < root.childNodes.length; n++) {
       const child: any = root.childNodes[n];
       U.pif(debug, 'removeEmptyNodes: ', child.nodeType);
       switch (child.nodeType) {
-        default:
-          break;
-        case 1:
-          U.removeemptynodes(child, includeNBSP);
-          break; // node: element
-        case 2:
-          break; // leaf: attribute
-        case 8:
-          break; // leaf: comment
-        case 3: // leaf: text node
-          let txt = child.nodeValue;
-          if (includeNBSP) {
-            txt = U.replaceAll(txt, '&nbsp;', '');
-          }
-          txt = txt.trim();
-          U.pif(debug, 'txt:', txt, 'remove?', (/^[\n\r ]*$/g.test(txt)));
-          // if (!/^[\n\r ]*$/g.test(txt)) { break; }
-          let i: number;
-          for (i = 0; i < txt.length; i++) {
-            const char = txt.charAt(i);
-            switch (char) {
-              default:
-                return;
-              case ' ':
-              case '\n':
-              case '\r':
-                break;
-            }
-          }
-          root.removeChild(child);
-          n--;
-          break;
+      default:
+        break;
+      case 1:
+        U.removeemptynodes(child, includeNBSP);
+        break; // node: element
+      case 2:
+        break; // leaf: attribute
+      case 8:
+        break; // leaf: comment
+      case 3: // leaf: text node
+        let txt = child.nodeValue;
+        let i: number;
+        // replacing first blanks (\n, \r, &nbsp;) with classic spaces.
+        for (i = 0; i < txt.length; i++) {
+          let exit: boolean = false && false;
+          switch (txt[i]) {
+          default: exit = true; break; // if contains non-blank is allowed to live but trimmed.
+          case '&nbsp': if (includeNBSP) { txt[i] = ' '; } else { exit = true; } break;
+          case ' ':
+          case '\n':
+          case '\r': txt[i] = ' '; break; }
+          if (exit) { break; }
+        }
+        // replacing last blanks (\n, \r, &nbsp;) with classic spaces.
+        for (i = txt.length; i >= 0; i--) {
+          let exit: boolean = false && false;
+          switch (txt[i]) {
+          default: exit = true; break; // if contains non-blank is allowed to live but trimmed.
+          case '&nbsp': if (includeNBSP) { txt[i] = ' '; } else { exit = true; } break;
+          case ' ':
+          case '\n':
+          case '\r': txt[i] = ' '; break; }
+          if (exit) { break; }
+        }
+        txt = txt.trim();
+        U.pif(debug, 'txt: |' + root.nodeValue + '| --> |' + txt + '| delete?', (/^[\n\r ]*$/g.test(txt)));
+        if (txt === '') { root.removeChild(child); n--; } else { root.nodeValue = txt; }
+        break;
       }
     }
-    return root;
-  }
+    return root; }
 
   static replaceAll(str: string, searchText: string, replacement: string, debug: boolean = false, warn: boolean = true): string {
     if (!str) { return str; }
@@ -916,16 +1160,23 @@ export class U {
     return str;
   }
 
-  static isValidHtml(htmlStr: string): boolean {
+  static isValidHtml(htmlStr: string, debug: boolean = false ): boolean {
     const div = document.createElement('div');
+    if (!htmlStr) { return false; }
     div.innerHTML = htmlStr;
-    return (div.innerHTML === htmlStr);
-  }
+    // if (div.innerHTML === htmlStr) { return true; }
+    const s2 = U.multiReplaceAll(div.innerHTML, [' ', ' ', '\n', '\r'], ['', '', '', '']);
+    const s1 = U.multiReplaceAll(htmlStr, [' ', ' ', '\n', '\r'], ['', '', '', '']);
+    const ret: boolean = s1 === s2;
+    if (ret || !debug) { return ret; }
+    const tmp: string[] = U.strFirstDiff(s1, s2, 20);
+    U.pif(debug, 'isValidHtml() ' + (tmp ? '|' + tmp[0] + '| vs |' + tmp[1] + '|' : 'tmp === null'));
+    return ret; }
 
   static getIndex(node: Element): number {
-    if (!node.parentNode) { return -1; }
-    return U.toArray(node.parentNode.childNodes).indexOf(node);
-  }
+    if (!node.parentElement) { return -1; }
+    // return U.toArray(node.parentElement.children).indexOf(node);
+    return Array.prototype.indexOf.call(node.parentElement.children, this); }
 
   static toArray(childNodes: NodeListOf<ChildNode>): ChildNode[] {
     if (Array['' + 'from']) { return Array['' + 'from'](childNodes); }
@@ -937,29 +1188,28 @@ export class U {
   static getClass(obj: object): string { return (obj as any).__proto__.constructor.name; }
 
   static isString(elem: any) { return elem + '' === elem; }
-  static permArr: any[][] = [];
-  static usedChars: any[] = [];
+
   static permuteV2(input: any[]): any[][] {
-    U.permArr = [];
-    U.usedChars = [];
-    return U.permute0V2(input);
-  }
+    U.PermuteArr = [];
+    U.PermuteUsedChars = [];
+    return U.permute0V2(input); }
+
   private static permute0V2(input: any[]): any[][] {
     let i;
     let ch;
     for (i = 0; i < input.length; i++) {
       ch = input.splice(i, 1)[0];
-      U.usedChars.push(ch);
+      U.PermuteUsedChars.push(ch);
       if (input.length === 0) {
-        U.permArr.push(U.usedChars.slice());
+        U.PermuteArr.push(U.PermuteUsedChars.slice());
       }
       U.permute0V2(input);
       input.splice(i, 0, ch);
-      U.usedChars.pop();
+      U.PermuteUsedChars.pop();
     }
-    return U.permArr; }
+    return U.PermuteArr; }
 
-  static permute(inputArr: any[]): any[][] {
+  static permute(inputArr: any[], debug: boolean = true): any[][] {
     const results: any[][] = [];
     const permuteInner = (arr: any[], memo: any[] = []) => {
       let cur;
@@ -971,22 +1221,49 @@ export class U {
         arr.splice(i, 0, cur[0]);
       }
       return results; };
-    return permuteInner(inputArr);
+    return permuteInner(inputArr); }
+
+  static resizableBorderMouseDblClick(e: MouseDownEvent): void {
+    const size: Size = U.sizeof(U.resizingContainer);
+    const minSize: Size = U.sizeof(U.resizingBorder);
+    const oldSize: Size = new Size(0, 0, +U.resizingContainer.dataset.oldsizew, +U.resizingContainer.dataset.oldsizeh);
+    const horiz: boolean = U.resizingBorder.classList.contains('left') || U.resizingBorder.classList.contains('right');
+    const vertic: boolean = U.resizingBorder.classList.contains('top') || U.resizingBorder.classList.contains('bottom');
+    if (horiz && vertic) return; // do nothing on corner, non voglio che venga resizato sia a minheight che a minwidth, solo uno dei 2.
+    minSize.w *= horiz ? 2 : 1;
+    minSize.h *= vertic ? 2 : 1;
+    minSize.x = size.x;
+    minSize.y = size.y;
+    console.log('old, size, min', oldSize, size, minSize, oldSize.w && size.equals(minSize));
+    if (oldSize.w && size.equals(minSize)) {
+      U.resizingContainer.style.width = U.resizingContainer.style.minWidth = U.resizingContainer.style.maxWidth = oldSize.w + 'px';
+      U.resizingContainer.style.height = U.resizingContainer.style.minHeight = U.resizingContainer.style.maxHeight = oldSize.h + 'px'; }
+    else {
+      U.resizingContainer.style.width = U.resizingContainer.style.minWidth = U.resizingContainer.style.maxWidth = minSize.w + 'px';
+      U.resizingContainer.style.height = U.resizingContainer.style.minHeight = U.resizingContainer.style.maxHeight = minSize.h + 'px';
+      U.resizingContainer.dataset.oldsizew = '' + size.w;
+      U.resizingContainer.dataset.oldsizeh = '' + size.h; }
   }
-  static resizingBorder: HTMLElement = null;
-  static resizingContainer: HTMLElement = null;
+
   static resizableBorderMouseDown(e: MouseDownEvent): void {
     U.resizingBorder = e.currentTarget;
     U.resizingContainer = U.resizingBorder;
+    U.resizingContainer.style.padding = '0';
+    U.resizingContainer.style.flexBasis = '0';
+    // U.resizingContent.style.width = '100%'; required too
     while (!U.resizingContainer.classList.contains('resizableBorderContainer')) {
       U.resizingContainer = U.resizingContainer.parentNode as HTMLElement; }
-  }
+    if (U.checkDblClick()) U.resizableBorderMouseDblClick(e); }
+
   static resizableBorderMouseUp(e: MouseDownEvent): void { U.resizingBorder = U.resizingContainer = null; }
   static resizableBorderUnset(e: ContextMenuEvent): void {
     e.preventDefault();
     const border: HTMLElement = e.currentTarget;
     let container: HTMLElement = border;
     while (container.classList.contains('resizableBorderContainer')) { container = container.parentNode as HTMLElement; }
+    container.style.flexBasis = '';
+    container.style.minHeight = container.style.minWidth =
+    container.style.maxHeight = container.style.maxWidth =
     container.style.height = container.style.width = ''; }
 
   static resizableBorderMouseMove(e: MouseDownEvent): void {
@@ -1009,77 +1286,35 @@ export class U {
     // o = p0 - c
     // p = c
     // c = p0-o
-    console.log(' lrtb: ', l, r, t, b);
-    console.log('ptcoinc: ', puntoDaFarCoinciderePT, ' cursor:', cursor, ' size:', size, 'adjust:', add);
-    U.resizingContainer.style.width = U.resizingContainer.style.maxWidth = U.resizingContainer.style.minWidth = (size.w + add.x) + 'px';
-    U.resizingContainer.style.height = U.resizingContainer.style.maxHeight = U.resizingContainer.style.minHeight = (size.h + add.y) + 'px';
-    console.log('result:' + U.resizingContainer.style.width);
-    U.resizingContainer.style.flexBasis = 'unset';
-  }
+    // console.log('lrtb: ', l, r, t, b);
+    // console.log('ptcoinc: ', puntoDaFarCoinciderePT, ' cursor:', cursor, ' size:', size, 'adjust:', add);
+    size.w += add.x;
+    size.h += add.y;
+    const borderSize: Size = U.sizeof(U.resizingBorder);
+    if (l || r) { size.w = Math.max(size.w, borderSize.w * 2); }
+    if (t || b) { size.h = Math.max(size.h, borderSize.h * 2); }
+    U.resizingContainer.style.width = U.resizingContainer.style.maxWidth = U.resizingContainer.style.minWidth = (size.w) + 'px';
+    U.resizingContainer.style.height = U.resizingContainer.style.maxHeight = U.resizingContainer.style.minHeight = (size.h) + 'px';
+    // console.log('result:' + U.resizingContainer.style.width);
+    U.resizingContainer.style.flexBasis = 'unset'; }
+
   static resizableBorderSetup(root: HTMLElement = document.body): void {
-    const arr = $(root).find('.resizableBorder');
+    // todo: addBack is great, aggiungilo tipo ovunque. find() esclude l'elemento radice anche se matcha la query, addback rimedia aggiungendo il
+    //  previous matched set che matcha la condizione.
+    const $arr = $(root).find('.resizableBorder').addBack('.resizableBorder');
     let i = -1;
     const nl = '\n';
-    while (++i < arr.length) {
-      U.makeResizableBorder(arr[i]); }
+    while (++i < $arr.length) {
+      U.makeResizableBorder($arr[i]); }
     U.eventiDaAggiungereAlBody(null);
-    $('.resizableBorder.side').off('mousedown.ResizableBorder').on('mousedown.ResizableBorder', U.resizableBorderMouseDown)
-      .off('contextmenu.ResizableBorder').on('contextmenu.ResizableBorder', U.resizableBorderUnset);
-    $('.resizableBorder.corner').off('mousedown.ResizableBorder').on('mousedown.ResizableBorder', U.resizableBorderMouseDown)
-      .off('contextmenu.ResizableBorder').on('contextmenu.ResizableBorder', U.resizableBorderUnset);
     $(document.body).off('mousemove.ResizableBorder').on('mousemove.ResizableBorder', U.resizableBorderMouseMove);
     $(document.body).off('mouseup.ResizableBorder').on('mouseup.ResizableBorder', U.resizableBorderMouseUp);
-    return;
-    /*
-    U.addCss('resizableBorderSetup', '' +
-      '/* example-specific * /\n' +
-      '.testresizablecontent {\n' +
-      '  background-color: blue;\n' +
-      '  height: 100px;\n' +
-      '  width: 100px;\n' +
-      '}\n' +
-      '.resizableBorder.left { border-left: 5px solid green; }\n' +
-      '.resizableBorder.right { border-right: 5px solid green; }\n' +
-      '.resizableBorder.top { border-top: 5px solid red; }\n' +
-      '.resizableBorder.bottom { border-bottom: 5px solid red; }\n' +
-      '\n' +
-      '/* real css * /\n' +
-      '.resizableBorderContainer {\n' +
-      '  background-color: black;\n' +
-      '  width: min-content;\n' +
-      '  height: min-content;\n' +
-      '  display: flex;\n' +
-      '  flex-wrap: wrap;\n' +
-      '}\n' +
-      '\n' +
-      '.resizableStrip {\n' +
-      '  min-width: 100%;\n' +
-      '  height: fit-content;\n' +
-      '  display: flex;\n' +
-      '}\n' +
-      '\n' +
-      '.resizableBorder {\n' +
-      '  display: inline;\n' +
-      '  box-sizing: border-box;\n' +
-      '}\n' +
-      '\n' +
-      '.resizableBorder.side.top, .resizableBorder.side.bottom {\n' +
-      '  flex-basis: 0;\n' +
-      '  flex-grow: 1;\n' +
-      '  cursor: n-resize;\n' +
-      '}\n' +
-      '\n' +
-      '.resizableBorder.side.left, .resizableBorder.side.right {\n' +
-      '  width: fit-content;\n' +
-      '  height: auto;\n' +
-      '  cursor: w-resize;\n' +
-      '}\n' +
-      '\n' +
-      '.resizableBorder.top.left { cursor: nw-resize; }\n' +
-      '.resizableBorder.top.right { cursor: ne-resize; }\n' +
-      '.resizableBorder.bottom.left { cursor: sw-resize; }\n' +
-      '.resizableBorder.bottom.right { cursor: se-resize; }', null);*/
-  }
+    $('.resizableBorder.corner').off('mousedown.ResizableBorder').on('mousedown.ResizableBorder', U.resizableBorderMouseDown)
+      .off('contextmenu.ResizableBorder').on('contextmenu.ResizableBorder', U.resizableBorderUnset);
+    $('.resizableBorder.side').off('mousedown.ResizableBorder').on('mousedown.ResizableBorder', U.resizableBorderMouseDown)
+      .off('contextmenu.ResizableBorder').on('contextmenu.ResizableBorder', U.resizableBorderUnset);
+    return; }
+
   static makeResizableBorder(html: HTMLElement, left: boolean = true, top: boolean = true, right: boolean = true, bottom = true): void {
     // if (!html.classList.contains('resizableBorderContainer')) { html.classList.add('resizableBorderContainer'); }
     let container: HTMLElement = null;
@@ -1150,7 +1385,7 @@ export class U {
     r.style.borderStyle = 'solid';
     t.style.borderStyle = 'solid';
     b.style.borderStyle = 'solid';*/
-    console.log('style.border:', style.border);
+    //console.log('style.border:', style.border);
     /*U.pe(t.style.borderTopStyle === 'none', '1');
     U.pe(isNaN(+t.style.borderWidth), '2');
     U.pe(+t.style.borderWidth === 0, '3');
@@ -1187,9 +1422,21 @@ export class U {
     container.appendChild(hstripT);
     container.appendChild(hstripM);
     container.appendChild(hstripB);
-    container.style.border = 'none';
+    container.style.border = 'none';/*
+    const size: Size = U.sizeof(container);
+    const hbordersize = 10;
+    const vbordersize = 10;
+    container.style.width = Math.max(hbordersize * 2 + size.w) + 'px';
+    container.style.height = Math.max(vbordersize * 2 + size.h) + 'px';*/
     content.style.border = 'none';
+    if (!content.style.width || content.style.width === 'auto'){
+      content.style.width = '100%';
+      content.style.height = '100%'; }
+    content.style.minWidth = '0';
+    content.style.minHeight = '0';
+
   }
+
   static copyStyle(from: HTMLElement | SVGGElement, to: HTMLElement | SVGGElement, computedStyle: CSSStyleDeclaration = null): boolean {
     // trying to figure out which style object we need to use depense on the browser support, so we try until we have one.
     if (!computedStyle) { computedStyle = from['' + 'currentStyle'] || document.defaultView.getComputedStyle(from, null); }
@@ -1197,6 +1444,7 @@ export class U {
     if (!computedStyle) { return false; }
     // checking that the value is not a undefined, object, function, empty or int index ( happens on some browser)
     const stylePropertyValid = (name: any, value: any) => {
+      // nb: mind that typeof [] === 'object';
       return typeof value !== 'undefined' && typeof value !== 'object' && typeof value !== 'function' && value.length > 0
         // && value !== parseInt(value, 10); };
         && +name !== parseInt(name, 10); };
@@ -1208,8 +1456,7 @@ export class U {
       if (!computedStyle.hasOwnProperty(property) || !stylePropertyValid(property, computedStyle[property])) { continue; }
       to.style[property] = computedStyle[property];
     }
-    return true;
-  }
+    return true; }
 
   static toDottedURI(uri: string): string {
     return U.replaceAll(U.replaceAll(uri.substring(uri.indexOf('://') + '://'.length), '\\', '/'), '/', '.');
@@ -1218,14 +1465,21 @@ export class U {
     return 'https://' + U.replaceAll(uri, '.', folderChar);
   }
 
-  static isNumber(o: any): boolean { return +o === o; }
-  static isNumberArray(o: any, min: number = Number.NEGATIVE_INFINITY, max: number = Number.POSITIVE_INFINITY,
+  static toNumber(o: any) {
+    if (o === null || o === undefined || (U.isString(o) && o.trim() === '')) return null;
+    o = +o;
+    if (isNaN(o)) return null;
+    return o; }
+
+  static isNumber(o: any): boolean { return +o === o && o !== NaN; }
+  static isNumberArray(o: any, minn: number = Number.NEGATIVE_INFINITY, max: number = Number.POSITIVE_INFINITY,
                        ifItIsEmptyArrReturn: boolean = true): boolean {
-    const validation = (val: number) => U.isNumber(val) && val >= min && val <= max;
+    const validation = (val: number) => U.isNumber(val) && val >= minn && val <= max;
     return U.isArrayOf(o, validation, ifItIsEmptyArrReturn); }
-  static isIntegerArray(o: any, min: number = Number.NEGATIVE_INFINITY, max: number = Number.POSITIVE_INFINITY,
-                       ifItIsEmptyArrReturn: boolean = true): boolean {
-    const validation = (val: number) => (U.isNumber(val) && Math.floor(val) === val && val >= min && val <= max);
+
+  static isIntegerArray(o: any, minn: number = Number.NEGATIVE_INFINITY, max: number = Number.POSITIVE_INFINITY,
+                        ifItIsEmptyArrReturn: boolean = true): boolean {
+    const validation = (val: number) => (U.isNumber(val) && Math.floor(val) === val && val >= minn && val <= max);
     return U.isArrayOf(o, validation, ifItIsEmptyArrReturn); }
 
   static isCharArray(values: any, ifItIsEmpryArrayReturn: boolean = true): boolean {
@@ -1263,17 +1517,22 @@ export class U {
     document.body.removeChild(U.clipboardinput);
     U.clearSelection(); }
 
-   static clearSelection() {}
+  static clearSelection() {}
 
   static refreshPage(): void { window.location.href += ''; }
 
 
   static isArray(v: any): boolean { return Array.isArray(v); }
 
-  static isEmptyObject(v: any): boolean { return $.isEmptyObject(v); }
-  static isObject(v: any, returnIfNull: boolean = true, returnIfUndefined: boolean = false): boolean {
+  static isEmptyObject(v: any, returnIfNull: boolean = true, returnIfUndefined: boolean = false): boolean {
     if (v === null) { return returnIfNull; }
     if (v === undefined) { return returnIfUndefined; }
+    return U.isObject(v, returnIfNull, returnIfUndefined) && $.isEmptyObject(v); }
+  static isObject(v: any, returnIfNull: boolean = true, returnIfUndefined: boolean = false, retIfArray: boolean = false): boolean {
+    if (v === null) { return returnIfNull; }
+    if (v === undefined) { return returnIfUndefined; }
+    if (Array.isArray(v)) { return retIfArray; }
+    // nb: mind that typeof [] === 'array'
     return typeof v === 'object'; }
 
   static isFunction(v: any): boolean { return (typeof v === 'function'); }
@@ -1284,509 +1543,1098 @@ export class U {
     // return (typeof v !== 'function') && (typeof v !== 'object') && (!U.isArray(v));
     return !U.isObject(v) && !Array.isArray(v) && !U.isFunction(v); }
 
-}
-
-/**/
-/*old file:*/
-/*console.log('du.js loaded');
-class du{//e se fosse JavascriptUtil? ju?
-    constructor(){
-        this.a = 0;
-        du.pe(true, 'Dam_Util (du) is a static class');}
-}
-du.prefix = 'du_';
-
-du.exception = function(){
-    console.log("Exception occurred: messages.length = "+arguments.length);
-    if(arguments.length > 0) console.log(arguments);
-    console.trace();};
-
-du.p = function(){
-    if(arguments.length > 0) console.log(arguments);
-    else console.log('');//act as newline
-    console.trace();};
-
-du.pif = function(b){if(b) { // noinspection Annotator
-    console.log(arguments);
-}};
-
-*/
-/*
-du.caseError = function(value, ammissibili){
-    du.pe(true, 'unexpected switch case:', value, '; should be one of:', ammissibili); };
-
-du.pe = function(b){
-    if(!b) return;
-    // noinspection Annotator
-    console.log(arguments);
-    var args = arguments;//Array.isArray(arguments) ? arguments.splice(1) : arguments;
-    du.exception.call(args);
-    var concat = '';
-    for(var i = 1; i<args.length; i++){ concat += '|' + args[i]; }
-    concat += '|';
-    alert(concat); };
-du.assert = function(b){
-    arguments[0] = !arguments[0];
-    return du.pe.call(arguments); };
-/*
-du.po(str, obj){
-    if(obj === undefined)  return p(str+": undefined");
-    if(obj === null)       return p(str+': null');
-    if(Array.isArray(str)) return pa(str, obj);
-    return p(str+": "+JSON.stringify(obj));}* /
-/*
-du.pa(str, arr){
-    if(arr===undefined) return p(str+=": undefined");
-    if(arr===null) return p(str+=': null');
-    if(!Array.isArray(str)) return po(str, arr);
-    if(arr.length===0) return p(str+": Array empty []");
-    str+=": ["+arr[0];
-    for(var i=1; i<arr.length; i++){ str+=", "+arr[i]; }
-    return p(str+="]");}* /
-du.error = function(){ du.pe.call(arguments); }; //arguments[0] = !arguments[0];
-
-
-du.obj_containValue = function(object, value){
-  for(var field in object){ if(object[field] === value) return true; }
-  return false;};
-
-du.obj_GetValueKeys = function(object, value){
-  var fields = [];
-  for(var field in object){ if(object[field] === value) fields.push(field); }
-  return fields;};
-
-/// comparator è una stringa contenente il comparatore ( "===" , "<=", ...)
-du.obj_GetValueKeys_CustomComparator = function(object, comparator, value){
-  var fields = [];
-  for(var field in object){ if(eval("object[field] "+comparator+" value") === true) fields.push(field); }
-  return fields;};
-
-*/ ///// just for editor line length detection
-/*
-du.int = function(string){return Number.parseInt(string);};
-du.float = function(string){return float.parse(string);};
-/// The Object constructor creates an object wrapper for the given value. If the value is null or undefined,
-/// it will create and return an empty object, otherwise, it will return an object of a type that corresponds to the given value.
-/// If the value is an object already, it will return the value.
-du.isObject2 = function(obj) { return obj === Object(obj); };
-
-du.isObject = function(val) {
-  if (val === null) { return false;}
-  return typeof val === 'object';};
-
-du.isFunction = function(val){
-  if (val === null) { return false;}
-  return (typeof val === 'function');};
-
-du.isPrimitive = function(val){
-  if (val === null || val === undefined) { return true;}
-  return (typeof val !== 'function') && (typeof val !== 'object') && (!Array.isArray(val));};
-
-du.isArray = function(val) { return Array.isArray(val); };
-
-du.toDegrees = function(angle){ var deg= angle * (180 / Math.PI); if(deg<0) deg+=360; return deg;};
-du.toRadians = function(angle){ return angle * (Math.PI / 180); };
-
-du.unselectable = function(target) {
-  var $target = $(target);
-  $target
-    .addClass( du.prefix+'unselectable' ) // All these attributes are inheritable
-    .attr( 'unselectable', 'on' ) // For IE9 - This property is not inherited, needs to be placed onto everything
-     // For moz and webkit, although Firefox 16 ignores this when -moz-user-select: none; is set,
-     // it's like these properties are mutually exclusive, seems to be a bug.
-    .attr( 'draggable', 'false' )
-     // Needed since Firefox 16 seems to ingore the 'draggable' attribute we just applied above when '-moz-user-select: none'
-     // is applied to the CSS
-    .on( 'dragstart', function() { return false; } );
-
-  $target // Apply non-inheritable properties to the child elements
-    .find( '*' )
-    .attr( 'draggable', 'false' )
-    .attr( 'unselectable', 'on' );
-};
-
-// non usa incapsulamento, quindi ritorna un elemento unico e funziona solo se string ha una radice.
-// altrimenti è impossibile restituire un singolo nodo e va incapsulato oppure va usato div.childNodes per restituire una collezione
-du.htmlToDomNode = function(string){
-  var div = document.createElement('div');
-  div.innerHTML = string.trim();
-  return div.firstChild;};
-
-du.CopyToClipboard = function(text){
-  if(du.clipboardinput === null || du.clipboardinput === undefined) {
-    du.clipboardinput = document.createElement("input");
-    du.clipboardinput.id = du.prefix+'CopyDataToClipboard';
-    du.clipboardinput.type = "text";
-    du.clipboardinput.style.display = 'block';
-    du.clipboardinput.style.position = 'absolute';
-    du.clipboardinput.style.top = '-100vh';}
-  document.body.appendChild(du.clipboardinput);
-  window.global.clipboardinput.value = text;
-  window.global.clipboardinput.select();
-  document.execCommand("copy");
-  document.body.removeChild(du.clipboardinput);
-  du.clearSelection();};
-
-du.focusAndSelect = function(input){
-  input.focus();
-  input.setSelectionRange(0, input.value.length);};
-
-du.clearSelection = function(){
-  if (window.getSelection) {window.getSelection().removeAllRanges();}
-  else {
-    if (document.selection) {
-      document.selection.empty();}
-  }};
-
-*/
-///// just for editor line length detection
-/*
-du.SwapContentInit = function(){
-  $(".Swap.Alternative").hide();//.off("focusout.swap").on("focusout.swap")
-  $(".Swap.Container").off("mouseenter."+du.prefix+"swap").on("mouseenter."+du.prefix+"swap", function(){du.swapContent(this, true);})
-    .off("mouseleave."+du.prefix+"swap").on("mouseleave."+du.prefix+"swap", function(){
-    var shell = this;
-    //var content = shell.childNodes[0];
-    var swap = shell.childNodes[1];
-    if( du.isParentOf(swap, document.activeElement)) return;
-    du.swapContent(this, false);}).each(function(index, shell) {
-    shell.children[1].display = "none";
-  });
-};
-du.swapContent = function(shell, swap){
-  var content = shell.children[0], $content = $(content);
-  var alt =  shell.children[1], $alt = $(alt);
-
-  //var containerS = du.sizeof(shell);
-  var contentS   = du.sizeof(content);
-  var altS       = du.sizeof(alt);
-  //console.log("C.w:"+containerS.height+", "+contentS.height+", "+altS.height);
-  // console.log("C.h:"+containerS.width+", "+contentS.width+", "+altS.width);
-
-  clearTimeout(du.swaptimer);
-  $content.stop(); $alt.stop();
-  //rimuovo i vari style (height, margin...) teoricamente temporanei impostati dalle animazioni jquery,
-  // ma che a volte rimangono anche a evento terminato/stoppato.
-  content.style.height = 'auto'; alt.style.height = 'auto';//content.removeAttribute("style"); alt.removeAttribute("style");
-
-  //if(swap){$content.show(); $alt.hide();} else {$content.hide(); $alt.show();}
-  //shell.style.borderWidth = '3px'; shell.style.borderStyle = 'solid'; shell.style.borderColor = 'red';
-  var animationTime = 400;
-  if(swap) {
-    shell.style.height = contentS.height+'px'; shell.style.width  = contentS.width+'px';
-    $content.slideUp(animationTime, function(){
-      du.swaptimer = setTimeout(function(){
-        $alt.slideDown(animationTime, function(){
-          content.style.height = 'auto';
-          alt.style.height = 'auto';
-          shell.style.height = shell.style.width = 'auto';});}, 0);
-    });}
-  else {
-    shell.style.height = altS.height+'px'; shell.style.width  = altS.width+'px';
-    $alt.slideUp(animationTime, function(){
-      du.swaptimer = setTimeout(function(){
-        $content.slideDown(animationTime, function(){
-          content.style.height = 'auto';
-          alt.style.height = 'auto';
-          shell.style.height = shell.style.width = 'auto';});}, 0);
-    });}
-};
-
-du.insertAfter = function(referenceNode, newNode) {
-  var parent = referenceNode.parentElement;
-  var next = referenceNode.nextSibling;
-
-  if(next === null) parent.appendChild(newNode);
-  else {
-    parent.insertBefore(newNode, next);
-    parent.appendChild(next);// automatically remove from previous position
-  }
-};
-
-du.clone_uniqueID = function(node, deep){
-  var o = node.cloneNode(false);//non posso usare la versione deep di default perchè devo
-   // iterare mentre clono per cambiare gli id children
-  //change id
-  var debug = false;
-  if(o.id !== undefined && o.id!==''){
-    var match = o.id.match(/(.+)(_CloneJS_)(\d+)$/);
-    if(match === null || match.length === 0){ o.id+="_CloneJS_0";}
-    else{
-      o.id = match[1] + '_CloneJS_' + (Number.parse(match[3])+1);
-      du.pif(debug, "match("+match[3]+")+1 = "+(Number.parse(match[3])+1)+" = "+o.id);
-    }}
-
-  // non puoi trasformare il cloneObj su string con outerHTML perchè perderesti gli event listener
-
-  for(var i=0; deep && i < node.childNodes.length; i++){
-    o.appendChild(du.clone_uniqueID(node.childNodes[i], deep));
-  }
-  return o;};
-du.cloneObj = function(){du.clone_uniqueID.call(arguments);};
-
-du.decodeEntities0 = (function() {//funzione ottimizzata trovata in rete, non creata da me. ritorna una funzione
-  // this prevents any overhead from creating the object each time
-  var element = document.createElement('div');
-  element.id = du.prefix+'decodeHtmlEntitiesTrick';
-  function decodeHTMLEntities(str){
-    if(str && typeof str === 'string') {
-      // strip script/html tags
-      str = str.replace(/<script[^>]*>([\S\s]*?)<\/script>/gmi, '');
-      str = str.replace(/<\/?\w(?:[^"'>]|"[^"]*"|'[^']*')*>/gmi, '');
-      element.innerHTML = str;
-      str = element.textContent;
-      element.textContent = '';}
-    return str;}
-  return decodeHTMLEntities;})();
-//wrapping per aiutare l'IDE a capire che è una funzione e non una variabile.
-du.decodeEntities = function(str){return du.decodeEntities0(str);};
-/*
-* Somma o concatena tutti i campi con lo stesso nome contenuti da entrambi gli oggetti input:   ret.x = ( obj1.x + obj2.x )
-* I campi contenuti da uno solo dei 2 input verranno copiati senza modifiche. ( unione insiemistica )
-* Se i campi non sono concatenabili perchè uno è array: gli elementi o l'elemento dell'altro membro con lo stesso nome
-* verranno aggiunti all'array
-* Se i campi non sono concatenabili perchè sono 2 oggetti: verranno ricorsivamente sommati.
-* Utilizzi impropri ma comunque gestiti:
-* Se i campi non sono concatenabili perchè sono 1 oggetto + un tipo elementare: il tipo elementare verrà considerato
-* come array con il solo indice [0].
-* Se i campi non sono concatenabili perchè sono 1 oggetto + un array: l'array verrà trattato come oggetto con campi "0, 1, 2..."
-* e sommato ricorsivamente.
-* WARNING: i boolean non sono gestiti affatto e verranno sommati di default come interi cambiando di tipo.
-* nel caso di boolean + string invece: true + true + "string"= 2string; true + "string" = truestring; "string"+true+true = stringtruetrue;
-* WARNING2: neanche le funzioni sono trattate.
-* * /
-du.somma_oggetti = function(obj1, obj2){
-  var r;
-  try{ r = du.somma_oggetti0(obj1, obj2);}
-  catch(ex){
-    du.pe(true, "Eccezione in somma oggetti('"+typeof(obj1)+"', '"+typeof(obj2)+"'); con argomenti:", obj1, obj2,
-    "forse hai sommato funzioni?");
-    r = null;}
-  return r;};
-du.somma_oggetti0 = function(obj1, obj2){
-  //to do: alcuni browser trattano typeof e typeOf diversamente e typeof([1,2,3]) = object ma typeOf([1,2,3]) = array;
-  var r = {};
-  var field;
-  for(field in obj1){
-    var val1 = obj1[field], val2 = obj2[field];
-    var type1 = typeof(val1);
-    var type2 = typeof(val2);
-    if(type2 === 'undefined' || type2 === 'null') {r[field] = val1; // noinspection UnnecessaryContinueJS
-      continue;}
-    else if(type2 === 'object'){
-      if(type1 === 'object'){ r[field] = du.somma_oggetti(val1, val2); }
-      else if(type1 === 'array'){
-        console.log("WARNING: utilizzo improprio di somma_oggetti: '"+type1+"' + '"+type2+"'; argomenti:", obj1, obj2);
-        r[field] = du.somma_oggetti(du.ArrayToObject(val1), val2); }
-      else {
-        console.log("WARNING: utilizzo improprio di somma_oggetti: '"+type1+"' + '"+type2+"'; argomenti:", obj1, obj2);
-        r[field] = du.somma_oggetti({0:val1}, val2); }
+  static getEndingNumber(s: string, ignoreNonNumbers: boolean = false, allowDecimal: boolean = false): number {
+    let i = s.length;
+    let numberEnd = -1;
+    while (--i > 0) {
+      if (!isNaN(+s[i])) { if (numberEnd === -1) { numberEnd = i; } continue; }
+      if (s[i] === '.' && !allowDecimal) { break; }
+      if (s[i] === '.') { allowDecimal = false; continue; }
+      if (!ignoreNonNumbers) { break; }
+      if (numberEnd !== -1) { ignoreNonNumbers = false; }
     }
-    else if(type2 === 'array'){
-      if(type1 === 'object'){
-        console.log("WARNING: utilizzo improprio di somma_oggetti: '"+type1+"' + '"+type2+"'; argomenti:", obj1, obj2);
-        r[field] = du.somma_oggetti(val1, ArrayToObject(val2));
+    s = numberEnd === -1 ? '1' : s.substring(i, numberEnd);
+    return +parseFloat(s); }
+
+  static increaseEndingNumber(s: string, allowLastNonNumberChars: boolean = false, allowDecimal: boolean = false, increaseWhile: (x: string) => boolean = null): string {
+    /*let i = s.length;
+    let numberEnd = -1;
+    while (--i > 0) {
+      if (!isNaN(+s[i])) { if (numberEnd === -1) { numberEnd = i; } continue; }
+      if (s[i] === '.' && !allowDecimal) { break; }
+      if (s[i] === '.') { allowDecimal = false; continue; }
+      if (!ignoreNonNumbers) { break; }
+      if (numberEnd !== -1) { ignoreNonNumbers = false; }
+    }
+    if (numberEnd === -1) { return s + '_1'; }
+    // i++;
+    numberEnd++;*/
+    let regexpstr = '([0-9]+' + (allowDecimal ? '|[0-9]+\\.[0-9]+' : '') + ')' + (allowLastNonNumberChars ? '[^0-9]*' : '') + '$';
+    const matches: RegExpExecArray = new RegExp(regexpstr, 'g').exec(s); // Global (return multi-match) Single line (. matches \n).
+    // S flag removed for browser support (firefox), should work anyway.
+    U.pe(matches.length > 2, 'parsing error: /' + regexpstr + '/gs.match(' + s + ')');
+    let i = s.length - matches[0].length;
+    const prefix = s.substring(0, i);
+    let num: number = 1 + (+matches[1]);
+    // U.pe(isNaN(num), 'wrong parsing:', s, s.substring(i, numberEnd), i, numberEnd);
+    // const prefix: string = s.substring(0, i);
+    // console.log('increaseendingNumber:  prefix: |' + prefix+'| num:'+num, '[i] = ['+i+']; s: |'+s+"|");
+    while (increaseWhile !== null && increaseWhile(prefix + num)) { num++; }
+    return prefix + num; }
+
+  static isValidName(name: string): boolean { return /^[a-zA-Z_$][0-9a-zA-Z_$]*$/.test(name); }
+
+  static getTSClassName(thing: any): string { return thing.constructor.name + ''; }
+
+  static detailButtonSetup($root = null): void {
+    if (!$root) $root = $(document.body);
+    $root.find('button.detail').off('click.detailbutton').on('click.detailbutton', (e: ClickEvent, forceHide: boolean) => {
+      const btn = e.currentTarget as HTMLButtonElement;
+      const $btn = $(btn);
+      const $detailPanel = $root.find(btn.getAttribute('target'));
+      const otherButtons: HTMLButtonElement[] = $(btn.parentElement).find('button.detail').toArray().filter(x => x != btn) as any;
+      // $styleown.find('div.detail:not(' + btn.getAttribute('target') + ')');
+
+      const b: boolean = btn.dataset.on === '1';
+      if (forceHide || b) {
+        btn.style.width = '';
+        btn.dataset.on = '0';
+        btn.style.borderBottom = '';
+        btn.style.borderBottomLeftRadius = '';
+        btn.style.borderBottomRightRadius = '';
+        $btn.find('.closed').show();
+        $btn.find('.opened').hide();
+        // $detailcontainers.show();
+        $detailPanel.hide();
+      } else {
+        const size: Size = U.sizeof(btn);
+        btn.style.width = size.w + 'px';
+        btn.dataset.on = '1';
+        btn.style.borderBottom = 'none'; // '3px solid #252525';
+        btn.style.borderBottomLeftRadius = '0';
+        btn.style.borderBottomRightRadius = '0';
+        $btn.find('.closed').hide();
+        $btn.find('.opened').show()[0].style.width = (size.w - 15 * 2) + 'px';
+        console.log('others:', otherButtons, 'me:', $btn);
+        $(otherButtons).data('on', '1').trigger('click', true);
+        $detailPanel.show();
       }
-      else if(type1 === 'array'){
-        r[field] = [];
-        for(var field2 in val1){//was: var field2 in obj1
-          r[field][field2] = du.somma_oggetti(val1[field2], val2[field2]);
-        }}
-      else {
-        console.log("WARNING: utilizzo improprio di somma_oggetti: '"+type1+"' + '"+type2+"'; argomenti:", obj1, obj2);
-        r[field] = du.somma_oggetti([val1], val2); }
+    });
+    $root.find('div.detail').hide();
+  }
+
+  // Prevent the backspace key from navigating back.
+  static preventBackSlashHistoryNavigation(event: KeyDownEvent): boolean {
+    if (!event || !event.key || event.key.toLowerCase() !== 'backspace') { return true; }
+    const types: string[] = ['text', 'password', 'file', 'search', 'email', 'number', 'date',
+      'color', 'datetime', 'datetime-local', 'month', 'range', 'search', 'tel', 'time', 'url', 'week'];
+    const srcElement: JQuery<any> = $(event['' + 'srcElement'] || event.target);
+    const disabled = srcElement.prop('readonly') || srcElement.prop('disabled');
+    if (!disabled) {
+      if (srcElement[0].isContentEditable || srcElement.is('textarea')) { return true; }
+      if (srcElement.is('input')) {
+        const type = srcElement.attr('type');
+        if (!type || types.indexOf(type.toLowerCase()) > -1) { return true; }
+      }
     }
-    //se type2 è elementare: boolean, number, string
-    else switch(type1){//now type2 can't be: object, array, undefined, null;
-        case 'undefined': case 'null': r[field] = obj2[field]; break;
-        case 'string': case 'number': case 'boolean': default:
-          r[field] = val1 + val2; break;
-        case 'object':
-          r[field] = du.somma_oggetti(val1, {0:val2}); break;
-        case 'array':
-          r[field] = du.somma_oggetti(val1, [val2]); break;}
+    event.preventDefault();
+    return false; }
+  // esercizio per antonella array deep copy
+  /// copy all the element inside the array, eventually deep cloning but not duplicating objects or leaf elements.
+  static ArrayCopy<T>(arr: Array<T>, deep: boolean): Array<T> {
+    const ret: Array<T> = [];
+    let i: number;
+    for (i = 0; i < arr.length; i++) {
+      if (deep && Array.isArray(arr[i])) {
+        const tmp: Array<T> = U.ArrayCopy<T>(arr[i] as unknown as Array<T>, deep);
+        ret.push(tmp as unknown as T); } else { ret.push(arr[i]); }
+    }
+    return ret; }
+
+  static ArrayMerge(arr1: any[], arr2: any[]): void {
+    if (!arr1 || !arr2) return;
+    Array.prototype.push.apply(arr1, arr2); }
+
+  static ArrayMergeUnique(arr1: any[], arr2: any[]): void {
+    if (!arr1 || !arr2) return;
+    let i: number;
+    for( i = 0; i < arr2.length; i++) { U.ArrayAdd(arr1, arr2[i]); } }
+
+  static ArrayAdd<T>(arr: Array<T>, elem: T, unique: boolean = true, throwIfContained: boolean = false): boolean {
+    U.pe(!arr || !Array.isArray(arr), 'arr null or not array:', arr);
+    if (!unique) { arr.push(elem); return true; }
+    if (arr.indexOf(elem) === -1) { arr.push(elem); return true; }
+    U.pe(throwIfContained, 'element already contained:', arr, elem);
+    return false; }
+
+  static fieldCount(obj: object): number {
+    let counter: number = 1 - 1;
+    for (const key in obj) { if (!(key in obj)) { continue; } counter++; }
+    return counter; }
+
+  static isPositiveZero(m: number): boolean {
+    if (Object['is' + '']) { return Object['is' + ''](m, +0); }
+    return (1 / m === Number.POSITIVE_INFINITY); }
+  static isNegativeZero(m: number): boolean {
+    if (Object['is' + '']) { return Object['is' + ''](m, -0); }
+    return (1 / m === Number.NEGATIVE_INFINITY); }
+
+  static TanToRadian(n: number): number { return U.DegreeToRad(U.TanToDegree(n)); }
+  static TanToDegree(n: number): number {
+    if (U.isPositiveZero(n)) { return 0; }
+    if (n === Number.POSITIVE_INFINITY) { return 90; }
+    if (U.isNegativeZero(n)) { return 180; }
+    if (n === Number.POSITIVE_INFINITY) { return 270; }
+    return U.RadToDegree(Math.atan(n)); }
+
+  static RadToDegree(radians: number): number { return radians * (180 / Math.PI); }
+  static DegreeToRad(degree: number): number { return degree * (Math.PI / 180); }
+
+  static replaceAllRegExp(value: string, regExp: RegExp, replacement: string): string { return value.replace(regExp, replacement); }
+
+  static fixHtmlSelected($root: JQuery<Element>): void {
+    const $selecteds: JQuery<HTMLSelectElement> = $root.find('select') as JQuery<HTMLSelectElement>;
+    let i: number;
+    for (i = 0 ; i < $selecteds.length; i++) {
+      const $option: JQuery<HTMLOptionElement> = $($selecteds[i]).find('option[selected]') as any as JQuery<HTMLOptionElement>;
+      U.selectHtml($selecteds[i], $option.length ? $option[0].value : null); }
   }
 
-  //controllo i campi esistenti in obj2 ma non esistenti in obj1 e li aggiungo senza ulteriori controlli.
-  for(field in obj2){
-    val1 = obj1[field];
-    if(val1 === undefined || val1 === null) r[field] = obj2[field];
+  static computeMeasurableAttributeRightPart(str: string, attr: Attr, logic: ModelPiece, measurableHtml: HTMLElement | SVGElement,
+                                             size: Size = null, absTargetSize: Size = null, relTargetSize: Size = null, allowVariables: boolean = true): any {
+    str = U.changeBackVarTemplateDelimitersInMeasurablesAttr(str);
+    if (!size) { size = U.sizeof(measurableHtml); }
+    let relativeRoot: HTMLElement | SVGElement = measurableHtml;
+    while (!relativeRoot.classList.contains('vertexShell')) { relativeRoot = relativeRoot.parentElement; }
+    if (!absTargetSize) { absTargetSize = U.sizeof(relativeRoot); }
+    if (!relTargetSize) {
+      const $relativeHtml = $(relativeRoot).find(measurableHtml.getAttribute('relativeSelectorOf' + attr.name));
+      U.pw($relativeHtml.length > 1, 'found more than one relative target (', $relativeHtml, ') assigned to: ', measurableHtml, ' root:', relativeRoot);
+      relTargetSize = $relativeHtml.length ? U.sizeof($relativeHtml[0]) : absTargetSize; }
+    const relativePos: Point = size.tl().subtract(relTargetSize.tl(), false);
+    const absolutePos: Point = size.tl().subtract(absTargetSize.tl(), false);
+    const str0debug = str;
+    str = U.replaceVarsString(logic, str);
+
+    // ERRORE parzialmente fixato: se il relative container è la vertexRoot che ha bordo e boxsizing = border-box
+    // allora this.top == absPositionY - ShellBorderY invece di this.top == absPositionY
+    // consiglio generico: non usare mai position: relative su cose con i bordi o con border-box
+    const rootStyle = window.getComputedStyle(relativeRoot);
+    const borderFix: Point = new Point(+rootStyle.borderTopWidth, +rootStyle.borderLeftWidth);
+    if (rootStyle.position === 'relative' && rootStyle.boxSizing === 'border-box'){ absolutePos.subtract(borderFix, false); }
+    // relativePos.subtract(borderFix, false); should not work, should check borders on relativetarget vs border on curr. or maybe is correct without any fix.
+    if (allowVariables) {
+      str = U.multiReplaceAll(str, ['positionX', 'positionX'], ['positionRelX', 'positionRelY']);
+      str = U.multiReplaceAll(str,
+        ['width', 'height', 'positionAbsX', 'positionAbsY', 'positionRelX', 'positionRelY'],
+        ['' + size.w, '' + size.h, '' + absolutePos.x, '' + absolutePos.y, '' + relativePos.x, '' + relativePos.y]);
+      str = U.multiReplaceAll(str,
+        ['absoluteTargetSizeX', 'absoluteTargetSizeY', 'absoluteTargetSizeW', 'absoluteTargetSizeH'],
+        ['' + absTargetSize.x, '' + absTargetSize.y, '' + absTargetSize.w, '' + absTargetSize.h]);
+      str = U.multiReplaceAll(str,
+        ['relativeTargetSizeX', 'relativeTargetSizeY', 'relativeTargetSizeW', 'relativeTargetSizeH'],
+        ['' + relTargetSize.x, '' + relTargetSize.y, '' + relTargetSize.w, '' + relTargetSize.h]);
+    }/*
+    if (true || attr.name === '_ruleY') {
+      console.log(attr.name + ': WallH: ('+(logic.childrens[0] as MAttribute).values[0] + '), top: ' + measurableHtml.style.top +
+        ' |' + str0debug + '| --> |' + str + '| abs:', absTargetSize, ' rel:', relTargetSize, ' size:', size, ' htmls.abs', relativeRoot,
+        ' rel.html:', $(relativeRoot).find(measurableHtml.getAttribute('relativeSelectorOf' + attr.name)), ' size.html:', measurableHtml,
+        'absPos:', absolutePos, 'relPos:', relativePos);
+    }*/
+    const evalContext = {a: measurableHtml.attributes};
+    let a = {};
+    let i: number;
+    for (i = 0; i < measurableHtml.attributes.length; i++) {
+      const attr: Attr = measurableHtml.attributes[i];
+      a[attr.name] = attr.value;
+    }
+    try {
+      // str =  U.evalInContext(evalContext, str);
+      str = eval(str);
+    } catch (e) { U.pw(true, 'error occurred while evaluating ', str, 'in measurable attribute ', attr, 'err:', e, ', are you' +
+      ' missing quotes?'); }
+    return str; }
+
+  static computeResizableAttribute(attr: Attr, logic: ModelPiece, measurableHtml: HTMLElement | SVGElement, size: Size = null,
+                                   absTargetSize: Size = null, relTargetSize: Size = null): {destination: string, operator: string, value: any} {
+    const val = attr.value;
+    let pos = 0;
+    let operator: string = null;
+    let i: number;
+    for (i = 1; i < val.length - 1; i++) {
+      switch (val[i]) {
+      case '>':
+        if (val[i - 1] !== '-') { continue; } // ignoro lo pseudo operatore "->" per selezionare un attributo in measurableExport
+        pos = i; operator = (val[i + 1] === '=' ? '>=' : '>'); break;
+      case '<': pos = i; operator = (val[i + 1] === '=' ? '<=' : '<'); break;
+      case '!': if (val[i + 1] !== '=') { continue; } pos = i; operator = '='; break;
+      case '=': pos = i; operator = '='; break;
+      default: continue; } }
+
+    if (!operator) { U.pw(true, 'found measurable _attribute without operator: ', attr); return null; }
+    if (!size) { size = U.sizeof(measurableHtml); }
+    const leftSide = val.substr(0, pos).trim();
+    const rightSide = val.substr(pos + operator.length).trim();
+    let value: any = null;
+    try { value = U.computeMeasurableAttributeRightPart(rightSide, attr, logic, measurableHtml, size, absTargetSize, relTargetSize);
+    } catch (e) { U.pw(true, 'failed to read expression of ' + attr.name + ': |' + attr.value
+      + '| --> |' + rightSide + '|. reason:' + e.toString()
+      + '; the allowed variables are: width, height, positionRelX, positionRelY, positionAbsX, positionAbsY, ' +
+      'relativeTargetSizeX, relativeTargetSizeY, relativeTargetSizeW, relativeTargetSizeH, ' +
+      'absoluteTargetSizeX, absoluteTargetSizeY, absoluteTargetSizeW, absoluteTargetSizeH, ' + '. and js functions.'); }
+    // console.log('attr:', attr, 'left:', leftSide, 'right:', rightSide, ' ---> |' + value + '|');
+    return {destination: leftSide, operator, value}; }
+
+
+  static processMeasuring(logic: IClassifier, m: MeasurableArrays, ui: ResizableUIParams | DraggableEventUIParams): void {
+    const size: Size = U.sizeof(m.html);
+    let relativeRoot: HTMLElement | SVGElement = m.html;
+    while (!relativeRoot.classList.contains('vertexShell')) { relativeRoot = relativeRoot.parentElement; }
+    const absTargetSize: Size = U.sizeof(relativeRoot);
+    console.log('measurableHtml parsed special attributes:', m);
+    let i: number;
+    for (i = 0; i < m.variables.length; i++) { U.processMeasurableVariable(m.variables[i], logic, m.html, size, absTargetSize); }
+
+    for (i = 0; i < m.imports.length; i++) { U.processMeasurableImport(m.imports[i], logic, m.html, null, absTargetSize); }
+
+    for (i = 0; i < m.rules.length; i++) {
+      const attr: Attr = m.rules[i];
+      const val = attr.value;
+      if (val.indexOf('=') === -1) {
+        U.pw(true, 'found a .resizable rule attribute without "=". ' + attr.name + ': |' + val + '| inside:', m.html); continue; }
+      U.processMeasurableRule(attr, logic, m.html, size, absTargetSize); }
+
+    for (i = 0; i < m.constraints.length; i++) {
+      const attr: Attr = m.constraints[i];
+      const val = attr.value;
+      if (val.indexOf('=') === -1) {
+        U.pw(true, 'found a .resizable constraint without "=". ' + attr.name + ': |' + val + '| inside:', m.html); continue; }
+      // NB: size must be null, constraint will modify size without updating the object, so it must be recalculated.
+      U.processMeasurableConstraint(attr, logic, m.html, null, absTargetSize);}
+
+    for (i = 0; i < m.dstyle.length; i++) { U.processMeasurableDstyle(m.dstyle[i], logic, m.html, null, absTargetSize); }
+
+    for (i = 0; i < m.exports.length; i++) {
+      const attr: Attr = m.exports[i];
+      const val = attr.value;
+      if (val.indexOf('=') === -1) {
+        U.pw(true, 'found a .resizable export attribute without "=". ' + attr.name + ': |' + val + '| inside:', m.html); continue; }
+      U.processMeasurableExport(attr, logic, m.html, size, absTargetSize); }
+
+    for (i = 0; i < m.chain.length; i++) { U.processMeasurableChain(m.chain[i], logic, m.html, null, absTargetSize, logic.getVertex(), ui); }
+
+    for (i = 0; i < m.chainFinal.length; i++) { U.processMeasurableChain(m.chainFinal[i], logic, m.html, null, absTargetSize, logic.getVertex(), ui); }
+
   }
-};
 
-*/
-///// just for editor line length detection
-/*
-du.arrayRemove = function(array, element){
-  var index = array.indexOf(element);
-  if (index > -1) { array.splice(index, 1); }
-};
+  static processMeasurableExport(attr: Attr, logic: ModelPiece, measurableHtml: HTMLElement | SVGElement,
+                                 size: Size = null, absTargetSize: Size = null): void {
+    const rule: {destination: string, value: any} = U.computeResizableAttribute(attr, logic, measurableHtml, size, absTargetSize);
+    if (!rule) { return; }
+    const attributePseudoSelector = '->';
+    rule.destination = U.changeBackVarTemplateDelimitersInMeasurablesAttr(rule.destination);
+    rule.destination = U.replaceVarsString(logic, rule.destination);
+    const pos = rule.destination.lastIndexOf(attributePseudoSelector);
+    let htmlSelector: string;
+    let attribName: string;
+    if (pos !== -1) {
+      htmlSelector = rule.destination.substring(0, pos);
+      attribName = rule.destination.substring(pos + attributePseudoSelector.length).trim();
+    } else {
+      htmlSelector = rule.destination;
+      attribName = null; }
+    const $targets = $(htmlSelector);
+    if (attribName) { $targets.attr(attribName, rule.value); } else { $targets.html(rule.value); }
+  }
 
+  static processMeasurableChain(attr0: Attr, logic: ModelPiece, measurableHtml: HTMLElement | SVGElement,
+                                size: Size = null, absTargetSize: Size = null, vertex: IVertex, ui: ResizableUIParams | DraggableEventUIParams): void {
 
-du.sizeofvar = null;
-du.$sizeofvar = null;
-du.sizeof = function(element){
-  var $element = $(element), i, tmp, size;
-  if(du.sizeofvar === null){ du.sizeofvar = document.createElement("div"); du.$sizeofvar=$(du.sizeofvar); $("body").append(du.sizeofvar); }
-  var orphan = element.parentNode === null;
-  //var visible = element.style.display!=='none';
-  //var visible = $element.is(":visible"); crea bug quando un elemento è teoricamente visibile ma orfano
-  var ancestors = du.ancestorArray(element);
-  var visibile = [];
+    const destination: string = U.computeMeasurableAttributeRightPart('\'' + attr0.value + '\'', attr0, logic, measurableHtml, size, absTargetSize, null, false);
+    const attributePseudoSelector = '->';
+    const pos = destination.indexOf(attributePseudoSelector);
+    let htmlSelector: string;
+    let attribName: string;
+    if (pos !== -1) {
+      htmlSelector = destination.substring(0, pos);
+      attribName = destination.substring(pos + attributePseudoSelector.length).trim();
+    } else {
+      htmlSelector = destination;
+      attribName = null; }
+    const $targets = $(htmlSelector);
+    console.log('measurableChain: ' + htmlSelector + ' -> ' + attribName + '| targets:', $targets);
+    U.pe($targets.length <= 0, 'measurableChain: ' + htmlSelector + ' -> ' + attribName + '| targets:', $targets);
+    let i: number;
+    for (i = 0; i < $targets.length; i++) {
+      const html: HTMLElement | SVGElement = $targets[i];
+      const attr: Attr = attribName ? html.attributes.getNamedItem(attribName) : null;
+      if (!attr) { vertex.measuringChanged(ui, null, html); continue; }
+      if (attribName.indexOf('_') !== 0) { continue; }
+      if (attribName.indexOf('_rule') === 0) { U.processMeasurableRule(attr, logic, html, null, null);
+      } else if (attribName.indexOf('_import') === 0) { U.processMeasurableImport(attr, logic, html, null, null);
+      } else if (attribName.indexOf('_export') === 0) { U.processMeasurableExport(attr, logic, html, null, null);
+      } else if (attribName.indexOf('_constraint') === 0) { U.processMeasurableConstraint(attr, logic, html, null, null);
+      } else if (attribName.indexOf('_dstyle') === 0) { U.processMeasurableDstyle(attr, logic, html, null, null);
+      } else { U.processMeasurableVariable(attr, logic, html, null, null); }
+      const val: Attr = $targets.length === 1 ? html.attributes.getNamedItem(attribName.substr(1)) : null;
+      if (!val) { continue; }
+      measurableHtml.setAttribute(attr0.name.substr(1), val.value);
+    }
+  }
 
-  if(orphan) du.$sizeofvar.append(element);
-  //show all and save visibility to restore it later
-  for(i=0; i<ancestors.length; i++){//document has undefined style
-    if(!(visibile[i] = (ancestors[i].style === undefined)? (true) : (ancestors[i].style.display !== 'none'))) $(ancestors[i]).show();}
+  static processMeasurableRule(attr: Attr, logic: ModelPiece, measurableHtml: HTMLElement | SVGElement,
+                               size: Size = null, absTargetSize: Size = null): void {
+    const rule: {destination: string, value: any} = U.computeResizableAttribute(attr, logic, measurableHtml, size, absTargetSize);
+    if (!rule) { return; }
+    // console.log('rule:', rule, 'attr:', attr);
+    const tmp: {parent: any, childkey: string} = U.replaceSingleVarGetParentAndChildKey(logic, rule.destination);
+    if (!tmp) {
+      U.pw(true, 'replaceVar of ' + rule.destination + '| failed. while parsing the resizable.rule |' + attr.name + ' in vertex of: ' + logic.name);
+      return; }
+    if (!tmp.parent && !(tmp.parent instanceof ModelPiece)) {
+      U.pw(true, 'found a rule template with his parent missing or not instance of ModelPiece?? :', tmp.parent, 'rule:', rule);
+      return; }
+    const destinationParent: ModelPiece = tmp.parent as ModelPiece;
+    switch (tmp.childkey) {
+    default:
+      U.pw(true, 'The rule ' + attr.name + ': |' + attr.value + '| is targeting a valid but not yet allowed field, currently only ".values" is allowed.');
+      break;
+    case 'values':
+      if (destinationParent instanceof MAttribute) {
+        destinationParent.setValue(rule.value, false, true);
+        break;
+      }
+      U.pw(true, 'The rule ' + attr.name + ': |' + attr.value + '| is trying to set "value" on an invalid modelPiece:', destinationParent);
+      break;
+    }
+  }
 
-  tmp = $element.offset();
-  size = {width:0, height:0, left:tmp.left, top:tmp.top};
-  tmp = element.getBoundingClientRect();
-  size.width  = tmp.width;
-  size.height = tmp.height;
-  //restore visibility
-  for(i=0; i<ancestors.length; i++){ if(!visibile[i]) $(ancestors[i]).hide();}
-  if(orphan){du.clearchilds(du.sizeofvar);}
+  static processMeasurableConstraint(attr: Attr, logic: ModelPiece, measurableHtml: HTMLElement | SVGElement,
+                                     size: Size = null, absTargetSize: Size = null): void {
+    return U.processMeasurableImport(attr, logic, measurableHtml, size, absTargetSize); }
 
-  size.x = size.left;
-  size.y = size.top;
-  size.w = size.width;
-  size.h = size.height;
-  return size;};
+  static processMeasurableImport(attr: Attr, logic: ModelPiece, measurableHtml: HTMLElement | SVGElement,
+                                 size: Size = null, absTargetSize: Size = null): void {
+    let relativeRoot: HTMLElement | SVGElement = measurableHtml;
+    while (!relativeRoot.classList.contains('vertexShell')) { relativeRoot = relativeRoot.parentElement; }
+    const $relativeHtml = $(relativeRoot).find(measurableHtml.getAttribute('relativeSelectorOf' + attr.name));
+    U.pw($relativeHtml.length > 1, 'found more than one relative target (', $relativeHtml, ') assigned to: ', measurableHtml, ' root:', relativeRoot);
 
-// ritorna un array con tutti i figli, nipoti... discendenti di @parent
-du.iterateDescendents = function(parent){ return parent.getElementsByTagName('*');};
+    const relativeSize: Size = $relativeHtml.length ? U.sizeof($relativeHtml[0]) : absTargetSize;
+    const rule: {destination: string, operator: string, value: any} =
+      U.computeResizableAttribute(attr, logic, measurableHtml, size, absTargetSize, relativeSize);
+    if (!rule) { return; }
+    const outputSize: Size = size.duplicate();
+    switch (rule.destination) {
+    default: U.pw(true, 'invalid import destination: |' + rule.destination + '| found in html:', measurableHtml); break;
+    case 'width': outputSize.w = rule.value; break;
+    case 'height': outputSize.h = rule.value; break;
+    case 'positionAbsX': outputSize.x = (absTargetSize.tl() + rule.value); break;
+    case 'positionAbsY': outputSize.y = (absTargetSize.tl() + rule.value); break;
+    case 'positionRelX': outputSize.x = (relativeSize.tl() + rule.value); break;
+    case 'positionRelY': outputSize.y = (relativeSize.tl() + rule.value); break; }
 
-*/
-///// just for editor line length detection
-/*
-du.extendPrototype = function(){
-  Element.prototype.remove = function() { this.parentElement.removeChild(this); };//rimuove un nodo
-  NodeList.prototype.remove = HTMLCollection.prototype.remove = function() {//rimuove tutta una NodeList
-    for(var i = this.length - 1; i >= 0; i--) {
-      if(this[i] && this[i].parentElement) {
-        this[i].parentElement.removeChild(this[i]); } } };
-  //Convert a string to HTML entities
-  String.prototype.toHtmlEntities = function() {
-    return this.replace(/./gm, function(s) { return "&#" + s.charCodeAt(0) + ";"; });
-  };
-  // Create string from HTML entities
-  String.fromHtmlEntities = function(string) {
-    return (string+"").replace(/&#\d+;/gm,function(s) {
-      return String.fromCharCode(s.match(/\d+/gm)[0]);
-    })
-  };
-};
+    const setx = (val: number) => { measurableHtml.setAttributeNS(null, 'x', '' + val); measurableHtml.style.left = val + 'px'; };
+    const sety = (val: number) => { measurableHtml.setAttributeNS(null, 'y', '' + val); measurableHtml.style.top = val + 'px'; };
+    const setw = (val: number) => { measurableHtml.setAttributeNS(null, 'width', '' + val); measurableHtml.style.width = val + 'px'; };
+    const seth = (val: number) => { measurableHtml.setAttributeNS(null, 'height', '' + val); measurableHtml.style.height = val + 'px'; };
 
+    const add = 1;
+    switch (rule.operator) {
+    default: U.pe(true, 'unrecognized operator (not your fault, 100% developer failure): ' + rule.operator, attr); break;
+    case '>=':
+      if (size.x < outputSize.x) { setx(outputSize.x); }
+      if (size.y < outputSize.y) { sety(outputSize.y); }
+      if (size.w < outputSize.w) { setw(outputSize.w); }
+      if (size.h < outputSize.h) { seth(outputSize.h); } break;
+    case '>':
+      if (size.x <= outputSize.x) { setx(outputSize.x + add); }
+      if (size.y <= outputSize.y) { sety(outputSize.y + add); }
+      if (size.w <= outputSize.w) { setw(outputSize.w + add); }
+      if (size.h <= outputSize.h) { seth(outputSize.h + add); } break;
+    case '<':
+      if (size.x >= outputSize.x) { setx(outputSize.x + add); }
+      if (size.y >= outputSize.y) { sety(outputSize.y + add); }
+      if (size.w >= outputSize.w) { setw(outputSize.w + add); }
+      if (size.h >= outputSize.h) { seth(outputSize.h + add); } break;
+    case '<=':
+      if (size.x > outputSize.x) { setx(outputSize.x); }
+      if (size.y > outputSize.y) { sety(outputSize.y); }
+      if (size.w > outputSize.w) { setw(outputSize.w); }
+      if (size.h > outputSize.h) { seth(outputSize.h); } break;
+    case '=':
+      setx(outputSize.x);
+      sety(outputSize.y);
+      setw(outputSize.w);
+      seth(outputSize.h); break;
+    }
+  }
 
-//du.getLocalClickCoord = function(evt){ return {x: evt.originalEvent.layerX, y: evt.originalEvent.layerY}; };
+  static processMeasurableVariable(attr: Attr, logic: ModelPiece, measurableHtml: HTMLElement | SVGElement,
+                                   size: Size = null, absTargetSize: Size = null, relTargetSize: Size = null, allowVariables: boolean = false): void {
+    attr.ownerElement.setAttribute(attr.name.substr(1),
+      U.computeMeasurableAttributeRightPart(attr.value, attr, logic, measurableHtml, size, absTargetSize, relTargetSize,false));
+    return; }
 
-du.textToHtml = function(text){
-  var tmp = document.createElement('div');
-  tmp.innerHTML = text;
-  return tmp.firstChild;};
+  static strFirstDiff(s1: string, s2: string, len: number): string[] {
+    let i: number;
+    if (!s1 && !s2) { return [s1, s2]; }
+    if (s1 && !s2) { return [s1.substr(0, len), s2]; }
+    if (!s1 && s2) { return [s1, s2.substr(0, len)]; }
+    const min: number = Math.min(s1.length, s2.length);
+    for (i = 0; i < min; i++) { if (s1[i] !== s2[i]) { return [s1.substr(i, len), s2.substr(i, len)]; } }
+    return null; }
 
-du.isValidHtml = function(text){
-  var doc = document.createElement('div');
-  doc.innerHTML = text;
-  console.log('isValidHtml? ',( doc.innerHTML === text ),':', doc.innerHTML);
-  console.log('===',text);
-  return ( doc.innerHTML === text ); };
-
-
-du.tabSetup = function(root){
-  if(root === null || root === undefined) root = document;
-  //var $containers = $(root).find(".tabButton_container");
-  var $buttons = $(root).find(".tabButton");
-  $buttons.off('click.tabchange').on('click.tabchange', du.tabClick);
-  //function(){du.tabClick.call(this, this.dataset.tabselector, this.dataset.containerselector);});
-  for(var i=0; i<$buttons.length; i++){ du.tabClick.call($buttons[i], null, $buttons[i].dataset.tabselected); }
-};
-
-*/
-///// just for editor line length detection
-/*
-du.tabClick = function(evt, overrideValue){//tabcontentselector, tabcontainerselector){
-  overrideValue = (overrideValue === undefined ? undefined :
-  (overrideValue === 'true' || overrideValue === 't' || overrideValue === '1' || overrideValue === true));
-  var parent = this;
-  while(!parent.classList.contains('tabContainer')) {parent = parent.parentNode;}
-  var multitab = (parent.dataset.allowmultitab === 'true' || parent.dataset.allowmultitab === 't'
-  || parent.dataset.allowmultitab === '1');
-  var $targets = $(this.dataset.tabselector);
-  //console.log('tabClick(',this,', multitab:',multitab,', overrideValue:', overrideValue, ', targets:', $targets);
-
-  var selected = !multitab || !(this.dataset.tabselected === 'true' || this.dataset.tabselected === '1'
-  || this.dataset.tabselected === 't');
-  if(overrideValue !== undefined) selected = overrideValue;
-  this.dataset.tabselected = selected ? 'true' : 'false';
-  if(selected) $targets.show(); else $targets.hide();
-
-  if(multitab || overrideValue !== undefined) return;
-  var $childrens = $(parent).find('.tabButton');
-  for(var i = 0; i < $childrens.length; i++){
-    if($childrens[i] === this) continue;
-    du.tabClick.call($childrens[i], evt, false);
+  static processMeasurableDstyle(attr: Attr, logic: ModelPiece, html: HTMLElement | SVGElement, size: Size = null, absTargetSize: Size = null): void {
+    U.processMeasurableVariable(attr, logic, html, size, absTargetSize, null, false);
+    const fake: HTMLElement | SVGElement = document.createElement('div');
+    fake.setAttribute('style', html.getAttribute('dstyle'));
+    console.log('preStyle.Real:', html.getAttribute('style'));
+    console.log('preStyle.Fake:', fake.getAttribute('style'));
+    U.mergeStyles(fake, html);
+    html.setAttribute('style', fake.getAttribute('style'));
+    console.log('finalStyle:', html.getAttribute('style'));
+    // const fake: HTMLElement = document.createElement('div'); fake.setAttribute('style', elem.getAttribute('dstyle'));
+    // let key: string; console.log('processDstyle() fake:', fake, 'attr:', attr, 'html:', elem);
+    // for (key in fake.style) { console.log('fake[' + key + '] = ' + fake[key]);
+    // if (fake[key] !== null && fake[key] !== undefined && fake[key] !== '') { elem.style[key] = fake[key]; } }
 
   }
 
-};
+  private static mergeStyles(html: HTMLElement | SVGElement, fake: HTMLElement | SVGElement): void {
+    let i: number;
+    const styles1 = html.getAttribute('style').split(';');
+    const styles2 = fake.getAttribute('style').split(';');
+    let stylesKv1: Dictionary<string, string> = {};
+    const stylesKv2: Dictionary<string, string> = {};
+    let key: string;
+    let val: string;
+    let pos: number;
+    for (i = 0; i < styles1.length; i++) {
+      pos = styles1[i].indexOf(':');
+      key = styles1[i].substr(0, pos).trim();
+      val = styles1[i].substr(pos + 1).trim();
+      if (key == '' || val == '') continue;
+      stylesKv1[key] = val; }
+    for (i = 0; i < styles2.length; i++) {
+      pos = styles2[i].indexOf(':');
+      key = styles2[i].substr(0, pos).trim();
+      val = styles2[i].substr(pos + 1).trim();
+      if (key == '' || val == '') continue;
+      stylesKv2[key] = val; }
+    stylesKv1 = U.join(stylesKv1, stylesKv2, true, false);
+    let style: string = '';
+    for (key in stylesKv1) { style += key + ':' + stylesKv1[key] + '; '; }
+    html.setAttribute('style', style); }
 
-*/
-///// just for editor line length detection
-/*
-du.doNothing = function(){};
-
-du.cloneObj = function (object, deep){
-  try{return JSON.parse(JSON.stringify(object));}
-  catch(ex){
-    du.pe(true, object, ex);
+  public static merge(a: object, b: object, overwriteNull: boolean = true, clone: boolean = true): object { return U.join(a, b, overwriteNull, clone); }
+  public static join(a: object, b: object, overwriteNull: boolean = true, clone: boolean = true): object {
+    if (clone) { a = U.cloneObj(a); }
+    let key: string;
+    for (key in b) {
+      if (!b.hasOwnProperty(key)) { continue; }
+      if (b[key] !== undefined && a[key] === null && overwriteNull || a[key] === undefined) { a[key] = b[key]; }
+    }
+    return a;
   }
-  return undefined;
-};
 
-du.removechilds = function(node){
-  while(node.firstChild) node.removeChild(node.firstChild);
-};
-*/
+  public static getChildIndex_old(html: Node, allNodes: boolean = true): number {
+    if (allNodes) { return Array.prototype.indexOf.call(html.parentNode.childNodes, html); }
+    return Array.prototype.indexOf.call(html.parentNode.children, html); }
 
-export class Size {
+  public static getChildIndex(array: any, child: any): number {
+    return Array.prototype.indexOf.call(array, child); }
+
+  public static getIndexesPath_old(parent: Element, child: Element) {
+    let ret: number[] = [];
+    while (child && child !== parent) {
+      ret.push(U.getChildIndex(parent.childNodes, child));
+      child = child.parentElement; }
+    // ret = ret.splice(ret.length - 2, 1);
+    return ret.reverse(); }
+
+  public static getIndexesPath_NoParentKey<T>(child: T, parent: any): string[] {
+    U.pe(true, 'getindexespath without parent key: todo');
+    return null;
+    // todo: top-down ricorsivo a tentativi. implementa loop detection. senza childkey (può variare es: parent.a[3].b.c[1] = child)
+    //  return string array con nomi di campi e indici di array.
+  }
+  public static getIndexesPath<T>(child: T, parentKey: string, childKey: string = null /* null = parent is raw array*/, parentLimit: T = null) {
+    let ret: number[] = [];
+    while (child) {
+      const parent: any = child[parentKey];
+      if (child === parentLimit) { break; }
+      if (!parent || parent === child) { break; }
+      const parentArrChilds: T[] = childKey ? parent[childKey] : parent;
+      ret.push(U.getChildIndex(parentArrChilds, child));
+      child = child[parentKey];
+    }
+    return ret.reverse(); }
+
+  static followIndexesPath(root: any, indexedPath: (number | string)[], childKey: string = null,
+                           outArr: {indexFollowed: (number | string)[], debugArr: {index: string | number, elem: any}[]} = {indexFollowed: [],
+                             debugArr: [{index: 'Start', elem: root}]}, debug: boolean = false): any {
+    let j: number;
+    let ret: any = root;
+    let oldret: any = ret;
+    if (outArr) outArr.debugArr.push({index: 'start', elem: root, childKey: childKey} as any);
+    U.pe(childKey && childKey !== '' + childKey, 'U.followIndexesPath() childkey must be a string or a null:', childKey, 'root:', root);
+    for (j = 0; j < indexedPath.length; j++) {
+      let key: number | string = indexedPath[j];
+      let childArr = childKey ? ret[childKey] : ret;
+      U.pif(debug, 'path ' + j + ') = elem.' + childKey + ' = ', childArr);
+      if (!childArr) { return oldret; }
+      ret = childArr[key];
+      if (key >= childArr.length) { key = 'Key out of boundary: ' + key + '/' + childArr.length + '.'; }
+      U.pif(debug, 'path ' + j + ') = elem.' + childKey + '[ ' + key + '] = ', ret);
+      if (outArr) outArr.debugArr.push({index: key, elem: ret});
+      if (!ret) { return oldret; }
+      if (outArr) outArr.indexFollowed.push(key);
+      oldret = ret;
+    }
+    return ret; }
+
+  static followIndexesPathOld(templateRoot: Element, indexedPath: number[], allNodes: boolean = true,
+                              outArr: {indexFollowed: number[]} = {indexFollowed: []}, debug: boolean = false): Element {
+    let j: number;
+    let ret: Element = templateRoot;
+    let oldret: Element = ret;
+    const debugarr: {index: number, html: Node}[] = [{index: 'Start' as any, html: ret}];
+    for (j = 0; j < indexedPath.length; j++) {
+      const index = indexedPath[j];
+      ret = (allNodes ? ret.childNodes[index] : ret.children[index]) as any;
+      if (!ret) {
+        console.log('folllowPath: clicked on some dinamically generated content, returning the closest static parent.', debugarr);
+        U.pw(debug, 'clicked on some dinamically generated content, returning the closest static parent.', debugarr);
+        return oldret; }
+      oldret = ret;
+      outArr.indexFollowed.push(index);
+      debugarr.push({index: index, html: ret});
+    }
+    U.pif(debug, 'followpath debug arr:', debugarr);
+    return ret; }
+
+  static removeDuplicates(arr0: any[], clone: boolean = false): any[] {
+    if (!arr0) return [];
+    const arr: any[] = clone ? U.cloneObj<any[]>(arr0) as any[] : arr0;
+    const found: any[] = [];
+    let i: number;
+    for (i = 0; i < arr.length; i++) {
+      if (arr[i] in found) { U.arrayRemoveAll(arr, arr[i]); i--; continue; }
+      found.push(arr[i]); }
+    return arr; }
+
+  static findTemplateList(str: string): string[] {
+    return undefined;
+  }
+
+  static makeSet(notice_willStripSpaces: any): DOMTokenList {
+    const useless = document.createElement('');
+    // NB: classList behave like a set but will strip spaces
+    return useless.classList; }
+
+  private static startSeparatorKeys = {};
+  private static startSeparatorKeyMax = -1;
+  public static getStartSeparatorKey(): string { return ++U.startSeparatorKeyMax + ''; }
+  public static startSeparator(key: string, separator: string = ', '): string {
+    if (key in U.startSeparatorKeys) return separator;
+    U.startSeparatorKeys[key] = true;
+    return ''; }
+
+  static arrayContains(arr: any[], searchElem: any): boolean { return arr && arr.indexOf(searchElem) === -1; }
+
+  static toBoolString(bool: boolean): string { return bool ? "true" : "false"; }
+  static fromBoolString(str: string): boolean { return str === "true" || str === 't' || +str === 1; }
+
+  static parseSvgPath(str: string): {assoc: {letter: string, pt: Point}[], pts: Point[]} {
+    let i: number;
+    let letter: string = null;
+    let num1: string = null;
+    let num2: string = null; // useless initializing phase to avoid IDE warnings
+    let foundFloat: boolean = null;
+    let pt: Point = null;
+    let current: {letter: string, pt: Point} = null;
+    const assoc: {letter: string, pt: Point}[] = [];
+    const pts: Point[] = [];
+    const ret = {assoc: assoc, pts: pts};
+    const debug: boolean = false;
+    str = str.toUpperCase();
+
+    const startNextEntry = () => {
+      num1 = '';
+      num2 = '';
+      pt = new Point(0, 0);
+      pt.x = null;
+      pt.y = null;
+      foundFloat = false; };
+    const endCurrentEntry = () => {
+      pt.y = +num2;
+      U.pe(isNaN(pt.y), 'parsed non-number as value of: |' + letter + '| in svg.path attribute: |' + str + '|', ret);
+
+      current = {letter: letter, pt: pt};
+      U.pe(pt.x === null || pt.y === null, num1, num2, pt, i, str);
+      pts.push(pt);
+      assoc.push(current);
+      U.pif(debug, 'endEntry:', current, ' position: |' + str.substr(0, i) + '|' + str.substr(i)+"|");
+      startNextEntry();
+    };
+    startNextEntry();
+    for (i = 0; i < str.length; i++) {
+      const c: string = str[i];
+      switch (c) {
+      case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': case '.': case '-': case '+':
+        if (c === '.') { U.pe(foundFloat, ' found 2 floating points in a single parsed number in svg.path attribute: |' + str + '|'); foundFloat = true; }
+        U.pe((c === '+' || c === '-') && (pt.x === null && num1 !== '' || pt.y === null && num2 !== ''), 'found a ' + c + ' sign inside a number:', ret, i, str);
+        if (pt.x === null) { num1 += c; break; }
+        if (pt.y === null) { num2 += c; break; }
+        U.pe(true, 'found 3 numbers while parsing svg.path attribute: |' + str + '|', ret); break;
+      case ' ':
+        if (pt.x === null) {
+          pt.x = +num1;
+          foundFloat = false;
+          U.pe(isNaN(+pt.x), 'parsed non-number as value of: |' + letter + '| in svg.path attribute: |' + str + '|', ret); break; }
+        if (pt.y === null) {
+          pt.y = +num2;
+          U.pe(isNaN(+pt.y), 'parsed non-number as value of: |' + letter + '| in svg.path attribute: |' + str + '|', ret); break; }
+        break;
+      default:
+        if (letter) { endCurrentEntry(); }
+        letter = c;
+        break;
+      }
+    }
+    endCurrentEntry();
+    return ret;
+  }
+/*
+  static unescapeHtmlEntities(s: string): string { return HE.decode(s); }
+  static escapeHtmlEntities(s: string): string { return HE.encode(s); }*/
+}
+
+export enum AttribETypes {
+//  FakeElementAddFeature = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//FakeElement',
+// era il 'pulsante per aggiungere feature nel mm.',
+  // reference = 'reference??',
+  void = '???void',
+  EChar = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EChar',
+  EString = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString',
+  EDate = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDate',
+  EFloat = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EFloat',
+  EDouble = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDouble',
+  EBoolean = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean',
+  EByte = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EByte',
+  EShort = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EShort',
+  EInt = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt',
+  ELong = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//ELong',
+  /*
+  ECharObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//ECharObject',
+  EStringObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EStringObject',
+  EDateObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDateObject',
+  EFloatObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EFloatObject',
+  EDoubleObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDoubleObject',
+  EBooleanObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBooleanObj',
+  EByteObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EByteObject',
+  EShortObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EShortObject',
+  EIntObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EIntegerObject',
+  ELongObj = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//ELongObject', */
+  // EELIST = 'ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EEList', // List<E> = List<?>
+}
+
+// export type Json = object;
+export class Json {
+  constructor(j: object) {/* U.pe('' + j === j, 'parameter cannot be a string'); */}
+
+  static getAnnotations(thiss: Json): Json[] {
+    const ret = thiss[ECorePackage.eAnnotations];
+    if (!ret || $.isEmptyObject(ret)) { return []; }
+    if (Array.isArray(ret)) { return ret; } else { return [ret]; } }
+
+  static getDetails(thiss: Json): Json[] {
+    const ret = thiss[ECoreAnnotation.details];
+    if (!ret || $.isEmptyObject(ret)) { return []; }
+    if (Array.isArray(ret)) { return ret; } else { return [ret]; } }
+
+  static getChildrens(thiss: Json, throwError: boolean = false, functions: boolean = false): Json[] {
+    if (!thiss && !throwError) { return []; }
+    const mod = thiss[ECoreRoot.ecoreEPackage];
+    const pkg = thiss[ECorePackage.eClassifiers];
+    const cla = thiss[functions ? ECoreClass.eOperations : ECoreClass.eStructuralFeatures];
+    const fun = thiss[ECoreOperation.eParameters];
+    const lit = thiss[ECoreEnum.eLiterals];
+
+    const ret: any = mod || pkg || cla || fun || lit;
+    /*if ( ret === undefined || ret === null ) {
+      if (thiss['@name'] !== undefined) { ret = thiss; } // if it's the root with only 1 child arrayless
+    }*/
+    // U.pe(true, debug, 'getchildrens(', thiss, ')');
+    U.pe( throwError && !ret, 'getChildrens() Failed: ', thiss, ret);
+    // console.log('ret = ', ret, ' === ', {}, ' ? ', ($.isEmptyObject(ret) ? [] : [ret]));
+    if (!ret || $.isEmptyObject(ret)) { return []; }
+    if (Array.isArray(ret)) { return ret; } else { return [ret]; }
+  }
+
+  static read<T>(json: Json, field: string, valueIfNotFound: any = 'read<T>CanThrowError'): T {
+    let ret: any = json ? json[field] : null;
+    if (ret !== null && field.indexOf(Status.status.XMLinlineMarker) !== -1) {
+      U.pe(U.isObject(ret, false, false, true), 'inline value |' + field + '| must be primitive.', ret);
+      ret = U.multiReplaceAll('' + ret, ['&amp;', '&#38;', '&quot;'], ['&', '\'', '"']);
+    }
+    if ((ret === null || ret === undefined)) {
+      U.pe(valueIfNotFound === 'read<T>CanThrowError', 'Json.read<',  '> failed: field[' + field + '], json: ', json);
+      return valueIfNotFound; }
+    return ret as T ; }
+
+  static write(json: Json, field: string, val: any): string {
+    if (val !== null && field.indexOf(Status.status.XMLinlineMarker) !== -1) {
+      U.pe(val !== '' + val, 'inline value |' + field + '| must be a string.', val);
+      val = U.multiReplaceAll(val, ['&', '\'', '"'], ['&amp;', '&#38;', '&quot;']);
+    }
+    else U.pe(val !== '' + val || !U.isObject(val, true), 'primitive values should be inserted only inline in the xml:', field, val);
+    json[field] = val;
+    return val; }
+}
+
+
+export class DetectZoom {
+  static device(): number { return detectzoooom.device(); }
+  static zoom(): number {U.pe(true, 'better not use this, looks like always === 1'); return detectzoooom.zoom(); }
+  private test(): any {
+    let a: InputPopup;
+    return a = null; }
+}
+
+export abstract class ISize {
   x: number;
   y: number;
   w: number;
   h: number;
+  constructor(x: number = 0, y: number = 0, w: number = 0, h: number = 0) {
+    if (isNaN(+x)) { x = 0; }
+    if (isNaN(+y)) { y = 0; }
+    if (isNaN(+w)) { w = 0; }
+    if (isNaN(+h)) { h = 0; }
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h; }
+  abstract makePoint(x: number, y: number): IPoint;
+  abstract clone(otherJson: ISize): ISize;
+  abstract duplicate(): ISize;
+  tl(): IPoint { return this.makePoint(   this.x,             this.y         ); }
+  tr(): IPoint { return this.makePoint(this.x + this.w,    this.y         ); }
+  bl(): IPoint { return this.makePoint(   this.x,          this.y + this.h); }
+  br(): IPoint { return this.makePoint(this.x + this.w, this.y + this.h); }
+  equals(size: ISize): boolean { return this.x === size.x && this.y === size.y && this.w === size.w && this.h === size.h; }
+  /// field-wise Math.min()
+  min(minSize: ISize, clone: boolean): ISize {
+    const ret: ISize = clone ? this.duplicate() : this;
+    if (!isNaN(minSize.x) && ret.x < minSize.x) { ret.x = minSize.x; }
+    if (!isNaN(minSize.y) && ret.y < minSize.y) { ret.y = minSize.y; }
+    if (!isNaN(minSize.w) && ret.w < minSize.w) { ret.w = minSize.w; }
+    if (!isNaN(minSize.h) && ret.h < minSize.h) { ret.h = minSize.h; }
+    return ret; }
+  max(maxSize: ISize, clone: boolean): ISize {
+    const ret: ISize = clone ? this.duplicate() : this;
+    if (!isNaN(maxSize.x) && ret.x > maxSize.x) { ret.x = maxSize.x; }
+    if (!isNaN(maxSize.y) && ret.y > maxSize.y) { ret.y = maxSize.y; }
+    if (!isNaN(maxSize.w) && ret.w > maxSize.w) { ret.w = maxSize.w; }
+    if (!isNaN(maxSize.h) && ret.h > maxSize.h) { ret.h = maxSize.h; }
+    return ret; }
+}
+export class Size extends ISize {
+  static fromPoints(firstPt: Point, secondPt: Point): Size {
+    const minX = Math.min(firstPt.x, secondPt.x);
+    const maxX = Math.max(firstPt.x, secondPt.x);
+    const minY = Math.min(firstPt.y, secondPt.y);
+    const maxY = Math.max(firstPt.y, secondPt.y);
+    return new Size(minX, minY, maxX - minX, maxY - minY); }
   dontMixWithGraphSize: any;
-  constructor(x: number, y: number, w: number, h: number) {
-    if (x === null || x === undefined) { this.x = 0; } else { this.x = x; }
-    if (y === null || y === undefined) { this.y = 0; } else { this.y = y; }
-    if (w === null || w === undefined) { this.w = 0; } else { this.w = w; }
-    if (h === null || h === undefined) { this.h = 0; } else { this.h = h; }
-  }
-  tl(): Point { return new Point(this.x + 0,      this.y + 0); }
-  tr(): Point { return new Point(this.x + this.w, this.y + 0); }
-  bl(): Point { return new Point(this.x + 0,      this.y + this.h); }
-  br(): Point { return new Point(this.x + this.w, this.y + this.h); }
+  clone(json: Size): Size { return new Size(json.x, json.y, json.w, json.h); }
+  duplicate(): Size { return new Size().clone(this); }
+  makePoint(x: number, y: number): Point { return new Point(x, y); }
+  tl(): Point { return super.tl() as Point; }
+  tr(): Point { return super.tr() as Point; }
+  bl(): Point { return super.bl() as Point; }
+  br(): Point { return super.br() as Point; }
+  equals(size: Size): boolean { return super.equals(size); }
+  min(minSize: Size, clone: boolean): Size { return super.min(minSize, clone) as Size; }
+  max(minSize: Size, clone: boolean): Size { return super.max(minSize, clone) as Size; }
+}
+export class GraphSize extends ISize {
+  static fromPoints(firstPt: GraphPoint, secondPt: GraphPoint): GraphSize {
+    const minX = Math.min(firstPt.x, secondPt.x);
+    const maxX = Math.max(firstPt.x, secondPt.x);
+    const minY = Math.min(firstPt.y, secondPt.y);
+    const maxY = Math.max(firstPt.y, secondPt.y);
+    return new GraphSize(minX, minY, maxX - minX, maxY - minY); }
+  static closestIntersection(vertexGSize: GraphSize, prevPt: GraphPoint, pt0: GraphPoint, gridAlign: GraphPoint = null): GraphPoint {
+    let pt = pt0.clone();
+    const m = GraphPoint.getM(prevPt, pt);
+    const q = GraphPoint.getQ(prevPt, pt);
+    U.pe( Math.abs((pt.y - m * pt.x) - (prevPt.y - m * prevPt.x)) > .001,
+      'wrong math in Q:', (pt.y - m * pt.x), ' vs ', (prevPt.y - m * prevPt.x));
+    /*const isL = prevPt.x < pt.x;
+    const isT = prevPt.y < pt.y;
+    const isR = !isL;
+    const isB = !isT; */
+    if (m === Number.POSITIVE_INFINITY && q === Number.NEGATIVE_INFINITY) { // bottom middle
+      return new GraphPoint(vertexGSize.x + vertexGSize.w / 2, vertexGSize.y + vertexGSize.h); }
+    // console.log('pt:', pt, 'm:', m, 'q:', q);
+    let L: GraphPoint = new GraphPoint(0, 0);
+    let T: GraphPoint = new GraphPoint(0, 0);
+    let R: GraphPoint = new GraphPoint(0, 0);
+    let B: GraphPoint = new GraphPoint(0, 0);
+    L.x = vertexGSize.x;
+    L.y = m * L.x + q;
+    R.x = vertexGSize.x + vertexGSize.w;
+    R.y = m * R.x + q;
+    T.y = vertexGSize.y;
+    T.x = (T.y - q) / m;
+    B.y = vertexGSize.y + vertexGSize.h;
+    B.x = (B.y - q) / m;
+    // prendo solo il compreso pt ~ prevPt (escludo così il "pierce" sulla faccia opposta), prendo il più vicino al centro.
+    // console.log('4 possibili punti di intersezione (LTBR):', L, T, B, R);
+    /* this.owner.mark(this.owner.toHtmlCoord(T), true, 'blue');
+    this.owner.mark(this.owner.toHtmlCoord(B), false, 'violet');
+    this.owner.mark(this.owner.toHtmlCoord(L), false, 'red');
+    this.owner.mark(this.owner.toHtmlCoord(R), false, 'orange');*/
+    if ( (B.x >= pt.x && B.x <= prevPt.x) || (B.x >= prevPt.x && B.x <= pt.x) ) { } else { B = null; }
+    if ( (T.x >= pt.x && T.x <= prevPt.x) || (T.x >= prevPt.x && T.x <= pt.x) ) { } else { T = null; }
+    if ( (L.y >= pt.y && L.y <= prevPt.y) || (L.y >= prevPt.y && L.y <= pt.y) ) { } else { L = null; }
+    if ( (R.y >= pt.y && R.y <= prevPt.y) || (R.y >= prevPt.y && R.y <= pt.y) ) { } else { R = null; }
+    // console.log('superstiti step1: (LTBR):', L, T, B, R);
+    const vicinanzaT = !T ? Number.POSITIVE_INFINITY : ((T.x - pt.x) * (T.x - pt.x)) + ((T.y - pt.y) * (T.y - pt.y));
+    const vicinanzaB = !B ? Number.POSITIVE_INFINITY : ((B.x - pt.x) * (B.x - pt.x)) + ((B.y - pt.y) * (B.y - pt.y));
+    const vicinanzaL = !L ? Number.POSITIVE_INFINITY : ((L.x - pt.x) * (L.x - pt.x)) + ((L.y - pt.y) * (L.y - pt.y));
+    const vicinanzaR = !R ? Number.POSITIVE_INFINITY : ((R.x - pt.x) * (R.x - pt.x)) + ((R.y - pt.y) * (R.y - pt.y));
+    const closest = Math.min(vicinanzaT, vicinanzaB, vicinanzaL, vicinanzaR);
+    // console.log( 'closest:', closest);
+    // succede quando pt e prevPt sono entrambi all'interno del rettangolo del vertice.
+    // L'edge non è visibile e il valore ritornato è irrilevante.
+    if (closest === Number.POSITIVE_INFINITY) {
+      /* top center */
+      pt = vertexGSize.tl();
+      pt.x += vertexGSize.w / 2; } else
+    if (closest === Number.POSITIVE_INFINITY) {
+      /* bottom center */
+      pt = vertexGSize.br();
+      pt.x -= vertexGSize.w / 2; } else
+    if (closest === vicinanzaT) { pt = T; } else
+    if (closest === vicinanzaB) { pt = B; } else
+    if (closest === vicinanzaR) { pt = R; } else
+    if (closest === vicinanzaL) { pt = L; }
+
+    if (!gridAlign) { return pt; }
+    if ((pt === T || pt === B || isNaN(closest)) && gridAlign.x) {
+      const floorX: number = Math.floor(pt.x / gridAlign.x) * gridAlign.x;
+      const ceilX: number = Math.ceil(pt.x / gridAlign.x) * gridAlign.x;
+      let closestX;
+      let farthestX;
+      if (Math.abs(floorX - pt.x) < Math.abs(ceilX - pt.x)) {
+        closestX = floorX; farthestX = ceilX;
+      } else { closestX = ceilX; farthestX = floorX; }
+
+      // todo: possibile causa del bug che non allinea punti fake a punti reali. nel calcolo realPT questo non viene fatto.
+      // if closest grid intersection is inside the vertex.
+      if (closestX >= vertexGSize.x && closestX <= vertexGSize.x + vertexGSize.w) { pt.x = closestX; } else
+      // if 2° closer grid intersection is inside the vertex.
+      if (closestX >= vertexGSize.x && closestX <= vertexGSize.x + vertexGSize.w) { pt.x = farthestX;
+        // if no intersection are inside the vertex (ignore grid)
+      } else { pt = pt; }
+    } else if ((pt === L || pt === R) && gridAlign.y) {
+      const floorY: number = Math.floor(pt.y / gridAlign.y) * gridAlign.y;
+      const ceilY: number = Math.ceil(pt.y / gridAlign.y) * gridAlign.y;
+      let closestY;
+      let farthestY;
+      if (Math.abs(floorY - pt.y) < Math.abs(ceilY - pt.y)) {
+        closestY = floorY; farthestY = ceilY;
+      } else { closestY = ceilY; farthestY = floorY; }
+
+      // if closest grid intersection is inside the vertex.
+      if (closestY >= vertexGSize.y && closestY <= vertexGSize.y + vertexGSize.h) { pt.y = closestY; } else
+      // if 2° closer grid intersection is inside the vertex.
+      if (closestY >= vertexGSize.y && closestY <= vertexGSize.y + vertexGSize.h) { pt.y = farthestY;
+        // if no intersection are inside the vertex (ignore grid)
+      } else { pt = pt; }
+    }
+    return pt; }
+  dontMixWithSize: any;
+  clone(json: GraphSize): GraphSize { return new GraphSize(json.x, json.y, json.w, json.h); }
+  duplicate(): GraphSize { return new GraphSize().clone(this); }
+  makePoint(x: number, y: number): Point { return new GraphPoint(x, y); }
+  tl(): GraphPoint { return super.tl() as GraphPoint; }
+  tr(): GraphPoint { return super.tr() as GraphPoint; }
+  bl(): GraphPoint { return super.bl() as GraphPoint; }
+  br(): GraphPoint { return super.br() as GraphPoint; }
+  equals(size: GraphSize): boolean { return super.equals(size); }
+  min(minSize: GraphSize, clone: boolean): GraphSize { return super.min(minSize, clone) as GraphSize; }
+  max(minSize: GraphSize, clone: boolean): GraphSize { return super.max(minSize, clone) as GraphSize; }
 }
 
+export abstract class IPoint {
+  x: number;
+  y: number;
 
-export let FastXmi = require('fast-xml-parser');
-const he = require('he');
-(window as any).he = U.he = he;
+  static getM(firstPt: IPoint, secondPt: IPoint): number { return (firstPt.y - secondPt.y) / (firstPt.x - secondPt.x); }
+  static getQ(firstPt: IPoint, secondPt: IPoint): number { return firstPt.y - IPoint.getM(firstPt, secondPt) * firstPt.x; }
+  constructor(x: number | string, y: number | string) {
+    if (isNaN(+x)) { x = 0; }
+    if (isNaN(+y)) { y = 0; }
+    this.x = +x;
+    this.y = +y; }
 
-export class FastXmiOptions {
-  attributeNamePrefix = '@';
-  attrNodeName = 'attr'; // default is 'false'
-  textNodeName = '#text';
-  ignoreAttributes = true;
-  ignoreNameSpace = false;
-  allowBooleanAttributes = false;
-  parseNodeValue = true;
-  parseAttributeValue = false;
-  trimValues = false;
-  cdataTagName = '__cdata'; // default is 'false'
-  cdataPositionChar = '\\c';
-  localeRange = ''; // To support non english character in tag/attribute values.
-  parseTrueNumberOnly = false;
-  attrValueProcessor = (a => U.he.decode(a, {isAttributeValue: true})); // default is a=>a
-  tagValueProcessor = (a => U.he.decode(a)); // default is a=>a
+  toString(): string { return '(' + this.x + ', ' + this.y + ')'; }
+  abstract clone(): IPoint;
+
+  subtract(p2: IPoint, newInstance: boolean): IPoint {
+    U.pe(!p2, 'subtract argument must be a valid point: ', p2);
+    let p1: IPoint;
+    if (!newInstance) { p1 = this; } else { p1 = this.clone(); }
+    p1.x -= p2.x;
+    p1.y -= p2.y;
+    return p1; }
+
+  add(p2: IPoint, newInstance: boolean): IPoint {
+    U.pe(!p2, 'add argument must be a valid point: ', p2);
+    let p1: IPoint;
+    if (!newInstance) { p1 = this; } else { p1 = this.clone(); }
+    p1.x += p2.x;
+    p1.y += p2.y;
+    return p1; }
+
+  addAll(p: IPoint[], newInstance: boolean): IPoint {
+    let i;
+    let p0: IPoint;
+    if (!newInstance) { p0 = this; } else { p0 = this.clone(); }
+    for (i = 0; i < p.length; i++) { p0.add(p[i], true); }
+    return p0; }
+
+  subtractAll(p: IPoint[], newInstance: boolean): IPoint {
+    let i;
+    let p0: IPoint;
+    if (!newInstance) { p0 = this; } else { p0 = this.clone(); }
+    for (i = 0; i < p.length; i++) { p0.subtract(p[i], true); }
+    return p0; }
+
+  multiply(scalar: number, newInstance: boolean): IPoint {
+    U.pe( isNaN(+scalar), 'scalar argument must be a valid number: ', scalar);
+    let p1: IPoint;
+    if (!newInstance) { p1 = this; } else { p1 = this.clone(); }
+    p1.x *= scalar;
+    p1.y *= scalar;
+    return p1; }
+
+  divide(scalar: number, newInstance: boolean): IPoint {
+    U.pe( isNaN(+scalar), 'scalar argument must be a valid number: ', scalar);
+    let p1: IPoint;
+    if (!newInstance) { p1 = this; } else { p1 = this.clone(); }
+    p1.x /= scalar;
+    p1.y /= scalar;
+    return p1; }
+
+  isInTheMiddleOf(firstPt: IPoint, secondPt: IPoint, tolleranza: number): boolean {
+    const rectangle: Size = Size.fromPoints(firstPt as Point, secondPt as Point);
+    const tolleranzaX = tolleranza; // actually should be cos * arctan(m);
+    const tolleranzaY = tolleranza; // actually should be sin * arctan(m);
+    if (this.x < rectangle.x - tolleranzaX || this.x > rectangle.x + rectangle.w + tolleranzaX) { return false; }
+    if (this.y < rectangle.y - tolleranzaX || this.y > rectangle.y + rectangle.h + tolleranzaY) { return false; }
+    const m = IPoint.getM(firstPt, secondPt);
+    const q = IPoint.getQ(firstPt, secondPt);
+    const lineDistance = this.distanceFromLine(firstPt, secondPt);
+    // console.log('distance:', lineDistance, ', this:', this, ', p1:', firstPt, ', p2:', secondPt);
+    return lineDistance <= tolleranza; }
+
+  distanceFromLine(p1: IPoint, p2: IPoint): number {
+    const top: number =
+      + (p2.y - p1.y) * this.x
+      - (p2.x - p1.x) * this.y
+      + p2.x * p1.y
+      - p1.x * p2.y;
+    const bot =
+      (p2.y - p1.y) * (p2.y - p1.y) +
+      (p2.x - p1.x) * (p2.x - p1.x);
+    return Math.abs(top) / Math.sqrt(bot);  }
+
+  equals(pt: IPoint, tolleranzaX: number = 0, tolleranzaY: number = 0): boolean {
+    if (pt === null) { return false; }
+    return Math.abs(this.x - pt.x) <= tolleranzaX && Math.abs(this.y - pt.y) <= tolleranzaY; }
+
+  moveOnNearestBorder(startVertexSize: ISize, clone: boolean, debug: boolean = true): IPoint {
+    const pt: IPoint = clone ? this.clone() : this;
+    const tl: IPoint = startVertexSize.tl();
+    const tr: IPoint = startVertexSize.tr();
+    const bl: IPoint = startVertexSize.bl();
+    const br: IPoint = startVertexSize.br();
+    const L: number = pt.distanceFromLine(tl, bl);
+    const R: number = pt.distanceFromLine(tr, br);
+    const T: number = pt.distanceFromLine(tl, tr);
+    const B: number = pt.distanceFromLine(bl, br);
+    const min: number = Math.min(L, R, T, B);
+    if (min === L) { pt.x = tl.x; }
+    if (min === R) { pt.x = tr.x; }
+    if (min === T) { pt.y = tr.y; }
+    if (min === B) { pt.y = br.y; }
+    if (debug && pt instanceof GraphPoint) { Status.status.getActiveModel().graph.markg(pt, false, 'purple'); }
+    return pt;
+  }
+
+  getM(pt2: IPoint): number { return IPoint.getM(this, pt2); }
+
+  degreeWith(pt2: IPoint, toRadians: boolean): number {
+    const directionVector: IPoint = this.subtract(pt2, true);
+    const ret: number = Math.atan2(directionVector.y, directionVector.x);
+    return toRadians ? ret : U.RadToDegree(ret); }
+
+}
+export class GraphPoint extends IPoint{
+  dontmixwithPoint: any;
+  static fromEvent(e: ClickEvent | MouseMoveEvent | MouseUpEvent | MouseDownEvent | MouseEnterEvent | MouseLeaveEvent | MouseEvent)
+    : GraphPoint {
+    if (!e) { return null; }
+    const p: Point = new Point(e.pageX, e.pageY);
+    const g: IGraph = Status.status.getActiveModel().graph;
+    return g.toGraphCoord(p); }
+
+  clone(): GraphPoint { return new GraphPoint(this.x, this.y); }
+  subtract(p2: GraphPoint, newInstance: boolean): GraphPoint { return super.subtract(p2, newInstance) as GraphPoint; }
+  add(p2: GraphPoint, newInstance: boolean): GraphPoint { return super.add(p2, newInstance) as GraphPoint; }
+  multiply(scalar: number, newInstance: boolean): GraphPoint { return super.multiply(scalar, newInstance) as GraphPoint; }
+  divide(scalar: number, newInstance: boolean): GraphPoint { return super.divide(scalar, newInstance) as GraphPoint; }
+  isInTheMiddleOf(firstPt: GraphPoint, secondPt: GraphPoint, tolleranza: number): boolean { return super.isInTheMiddleOf(firstPt, secondPt, tolleranza); }
+  distanceFromLine(p1: GraphPoint, p2: GraphPoint): number { return super.distanceFromLine(p1, p2); }
+  equals(pt: GraphPoint, tolleranzaX: number = 0, tolleranzaY: number = 0): boolean { return super.equals(pt, tolleranzaX, tolleranzaY); }
+  moveOnNearestBorder(startVertexSize: GraphSize, clone: boolean, debug: boolean = true): GraphPoint {
+    return super.moveOnNearestBorder(startVertexSize, clone, debug) as GraphPoint; }
+  getM(pt2: GraphPoint): number { return super.getM(pt2); }
+  degreeWith(pt2: GraphPoint, toRadians: boolean): number { return super.degreeWith(pt2, toRadians); }
+}
+export class Point extends IPoint{
+  dontmixwithPoint: any;
+  static fromEvent(e: ClickEvent | MouseMoveEvent | MouseUpEvent | MouseDownEvent | MouseEnterEvent | MouseLeaveEvent | MouseEvent)
+    : Point {
+    if (!e) { return null; }
+    const p: Point = new Point(e.pageX, e.pageY);
+    return p; }
+
+  clone(): Point { return new Point(this.x, this.y); }
+  subtract(p2: Point, newInstance: boolean): Point { return super.subtract(p2, newInstance) as Point; }
+  add(p2: Point, newInstance: boolean): Point { return super.add(p2, newInstance) as Point; }
+  multiply(scalar: number, newInstance: boolean): Point { return super.multiply(scalar, newInstance) as Point; }
+  divide(scalar: number, newInstance: boolean): Point { return super.divide(scalar, newInstance) as Point; }
+  isInTheMiddleOf(firstPt: Point, secondPt: Point, tolleranza: number): boolean { return super.isInTheMiddleOf(firstPt, secondPt, tolleranza); }
+  distanceFromLine(p1: Point, p2: Point): number { return super.distanceFromLine(p1, p2); }
+  equals(pt: Point, tolleranzaX: number = 0, tolleranzaY: number = 0): boolean { return super.equals(pt, tolleranzaX, tolleranzaY); }
+  moveOnNearestBorder(startVertexSize: GraphSize, clone: boolean, debug: boolean = true): Point {
+    return super.moveOnNearestBorder(startVertexSize, clone, debug) as Point; }
+  getM(pt2: Point): number { return super.getM(pt2); }
+  degreeWith(pt2: Point, toRadians: boolean): number { return super.degreeWith(pt2, toRadians); }
+}
+
+export class FileReadTypeEnum {
+  public static image: FileReadTypeEnum = "image/*" as any;
+  public static audio: FileReadTypeEnum = "audio/*" as any;
+  public static video: FileReadTypeEnum = "video/*" as any;
+  /// a too much huge list https://www.iana.org/assignments/media-types/media-types.xhtml
+  public static AndManyOthersButThereAreTooMuch: string = "And many others... https://www.iana.org/assignments/media-types/media-types.xhtml";
+  public static OrJustPutFileExtension: string = "OrJustPutFileExtension";
 }

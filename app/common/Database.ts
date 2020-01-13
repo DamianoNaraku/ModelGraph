@@ -1,5 +1,5 @@
-import {Data} from '@angular/router';
-import {U} from './Joiner';
+import {Status, U} from './Joiner';
+import {Data}                            from '@angular/router';
 
 export enum DatabaseMode { browserMemory, Sql, File}
 export class Database {
@@ -41,4 +41,22 @@ export class Database {
         case DatabaseMode.File: U.pe(true, 'readKV: cannot be executed with savemode = File'); break;
       }
     }
+/*
+  public static callForkRoutine(style: ModelPieceStyleEntry, callback: (forkedStyle: ModelPieceStyleEntry) => any): void {
+
+  }
+
+  static updateStyle(style: ModelPieceStyleEntry) {
+  }
+
+  static deleteStyle(style: ModelPieceStyleEntry, callback: (result: string) => void) {
+    // do request
+    callback('1'); // temporaneo
+  }
+
+  static createStyle(clone: ModelPieceStyleEntry) {
+
+    // do request
+    // consistenza con db.
+  }*/
 }

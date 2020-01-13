@@ -1,9 +1,10 @@
 import {
+  Status,
   IVertex,
   IEdge,
   IField,
   IPackage,
-  IClass,
+  M2Class,
   IAttribute,
   AttribETypes,
   IFeature,
@@ -11,290 +12,394 @@ import {
   U,
   ModelPiece,
   ISidebar,
-  IGraph, IReference, MetaModel, eCorePackage, Status, MClass, Options, TopBar
-} from '../common/Joiner';
-import {eCoreClass, eCoreRoot, InputPopup} from '../common/util';
-import ChangeEvent = JQuery.ChangeEvent;
+  MetaMetaModel,
+  LocalStorage,
+  IGraph,
+  IReference,
+  MetaModel,
+  MClass,
+  TopBar,
+  ModelNone,
+  IClass,
+  Model,
+  M3Package,
+  M3Class,
+  ViewPoint,
+  EEnum,
+  IClassifier,
+  GraphSize,
+  Dictionary,
+  SaveListEntry, //, Options
+}             from '../common/Joiner';
+import {Meta} from '@angular/platform-browser';
 
-export class IModel extends ModelPiece {
-  static emptyModel = '{}'; // todo
-  // packages: IPackage[] = null;
+export abstract class IModel extends ModelPiece {
+  parent: ModelNone;
+  childrens: IPackage[];
+  metaParent: IModel;
+  instances: IModel[];
+
   graph: IGraph = null;
   sidebar: ISidebar = null;
-  classRoot: MClass = null; // for model
-  namespace_var: string = null;
-
+  storage: LocalStorage = null;
+  namespaceVar: string = null;
+  uriVar: string = null;
+  viewpoints: ViewPoint[] = [];
+  // viewpoint: ViewPoint;
+  /*
   constructor(json: Json, metaParent: MetaModel, skipParse: boolean = false) {
     super(null, metaParent);
-    this.setJson(json);
-    if (!skipParse) { this.modify(this.json, true); }
-  }
+    // todo: mi sa che chiama parse a ripetizione: Modelpiece.parse, IFeature.parse, IAttribute.parse, M2Attribute.parse...
+    if (!skipParse) { this.parse(json, true); }
+  }*/
+  static isValidURI(str: string): boolean { return str.indexOf(' ') !== -1 && true; }
+  static removeInvalidNameChars(name: string): string { return U.multiReplaceAll(name, [' '], ['']); }
+  // abstract conformsTo(meta: IModel): boolean;
+  abstract generateModel(): Json;
+  abstract conformability(metaparent: IModel, outObj?: any/*.refPermutation, .attrPermutation*/, debug?: boolean): number;
 
-  private static nameTaken(value: string) {
-    return false;
-  }
-  getClassRoot(): MClass {
-    if (this.classRoot) { return this.classRoot; }
-    U.pe(true, 'failed to get class root');
-    const classes: MClass[] = this.getAllClasses() as MClass[];
-    let i = -1;
-    while (++i < classes.length) { if (classes[i]['' + 'isRoot <-- old IClass var, now deleted']) { return classes[i]; }}
-  }
-  getClassByNameSpace(fullnamespace: string, caseSensitive: boolean = false, canThrow: boolean = false): IClass {
-    const classes: IClass[] = this.getAllClasses();
-    let i: number;
-    if (caseSensitive) { fullnamespace = fullnamespace.toLowerCase(); }
-    let justNameMatchFallback: IClass = null;
-    let namestr: string = fullnamespace.substr(fullnamespace.lastIndexOf(':') + 1);
-    if (!caseSensitive) { namestr = namestr.toLowerCase(); }
-    for (i = 0; i < classes.length; i++) {
-      const mmclass: IClass = classes[i];
-      if ( (caseSensitive ? mmclass.name : mmclass.name.toLowerCase()) === namestr) { justNameMatchFallback = mmclass; }
-      let mmclassNS = mmclass.getNamespaced();
-      if (!mmclassNS) { continue; }
-      if (caseSensitive) { mmclassNS = mmclassNS.toLowerCase(); }
-      if (mmclassNS === fullnamespace) { return mmclass; } }
-    U.pe(!justNameMatchFallback, 'class |' + fullnamespace + '| not found. classArr:', classes);
-    return justNameMatchFallback; }
+  constructor(metaVersion?: IModel) {
+    super(null, metaVersion);
+    this.storage = new LocalStorage(this); }
 
-  getDefaultStyle(): HTMLElement | SVGElement { U.pe(true, 'called GetDefaultStyle on IModel'); return undefined; }
-  fixReferences(): void {
-    const arr: IReference[] = this.getAllReferences();
-    let i = -1;
-    while (++i < arr.length) { arr[i].link(); }
-  }
-  modify(json: Json, destructive: boolean) {
-    this.setJson(json);
-    /// own attributes.
-    /// childrens
-    if (destructive) { this.childrens = []; }
-    const childrens = Json.getChildrens(json);
-    let i;
-    for (i = 0; i < childrens.length; i++) {
-      const child = childrens[i];
-      const metaParent: IPackage = null;
-      // metaParent = U.findMetaParentP(this, child);
-      if (destructive) { this.childrens.push(new IPackage(this, child, metaParent)); continue; }
-      U.pe(true, 'Non-destructive model modify: to do');
+  uri(str: string = null): string {
+    if (str) { if (IModel.isValidURI(str)) { return this.uriVar = str; } else { return null; } }
+    if (this.uriVar) { return this.uriVar; }
+    return this.uriVar = 'http://default/uri/to/change'; }
+
+  namespace(value: string = null): string {
+    let pos: number;
+    if (value) {
+      this.namespaceVar = value;
+      pos = this.namespaceVar.lastIndexOf(':');
+      this.namespaceVar = pos === -1 ? this.namespaceVar : this.namespaceVar.substring(0, pos);
     }
-  }
-
-  mark(bool: boolean): boolean {return bool; }
-  validate(): boolean {
-    // todo:
-    return true;
-  }
-  conformsTo(m: IModel): boolean {
-    return undefined;
-  }
-
-  draw(): void {
-  }
-
-  namespace(): string {
-    const ns: string = this.namespace_var;
-    if (!ns) { this.setNamespace('default.namespace.to.change'); return this.namespace(); }
-    const pos: number = ns.lastIndexOf(':');
+    const ns: string = this.namespaceVar;
+    if (!ns) { return this.namespace('default.namespace.to.change'); }
+    pos = ns.lastIndexOf(':');
     return pos === -1 ? ns : ns.substring(0, pos); }
 
-  generateModel(): Json {
-    const packageArr = [];
-    let i;
-    for (i = 0; i < this.childrens.length; i++) {
-      const pkg = this.childrens[i];
-      packageArr.push(pkg.generateModel());
-    }
-    const model = new Json(null);
-    model[eCoreRoot.ecoreEPackage] = packageArr;
-    return model; }
-  getAllPackages(): IPackage[] { return this.childrens as IPackage[]; }
   getAllClasses(): IClass[] {
     const arr: IClass[] = [];
-    const packages: IPackage[] = this.getAllPackages();
+    const packages: IPackage[] = this.childrens;
     let i;
-    for (i = 0; i < packages.length; i++) {
-      packages[i].childrens.forEach( (elem) => {arr.push(elem as IClass); } );
-    }
+    for (i = 0; i < packages.length; i++) { packages[i].classes.forEach( (elem: IClass) => {arr.push(elem); } ); }
     return arr; }
+
+  getAllEnums(): EEnum[] {
+    const arr: EEnum[] = [];
+    const packages: IPackage[] = this.childrens;
+    let i;
+    for (i = 0; i < packages.length; i++) { packages[i].enums.forEach( (elem: EEnum) => {arr.push(elem); } ); }
+    return arr; }
+
+  fullname(): string { return this.name; }
+
+  getVertex(): IVertex { U.pe(true, 'IModel.getVertex();'); return undefined; }
 
   getAllReferences(): IReference[] {
     const arr: IReference[] = [];
     const classes: IClass[] = this.getAllClasses();
     let i;
     for (i = 0; i < classes.length; i++) {
-      classes[i].references.forEach( (elem) => {arr.push(elem as IReference); } );
+      classes[i].references.forEach( (elem: IReference) => {arr.push(elem); } );
     }
     return arr; }
 
   getPackage(fullname: string, throwErr: boolean = true): IPackage {
     if (fullname.indexOf('.') !== -1) { U.pe(throwErr, 'not a package name:', fullname); return null; }
     let i;
-    for ( i = 0; i < this.childrens.length; i++) { if (this.childrens[i].name === fullname) { return this.childrens[i] as IPackage; } }
+    for ( i = 0; i < this.childrens.length; i++) { if (this.childrens[i].name === fullname) { return this.childrens[i]; } }
     if (fullname.indexOf('.') !== -1) { U.pe(throwErr, 'valid a package name, but package does not exist:', fullname); return null; }
     return null; }
+
   getClass(fullname: string, throwErr: boolean = true, debug: boolean = true): IClass {
     const tks: string[] = fullname.split('.');
     if (tks.length !== 2) { U.pe(throwErr, 'not a full class name:', fullname); return null; }
     const classes: IClass[] = this.getAllClasses();
     let i = -1;
     while (++i < classes.length) {
-      U.pif(debug, 'fllname: |' + fullname + '| =?= |' + classes[i].fullname + '| = ' + classes[i].fullname === fullname);
-      if (classes[i].fullname === fullname) { return classes[i] as unknown as IClass; }
+      const currentFname = classes[i].fullname();
+      U.pif(debug, 'fllname: |' + fullname + '| =?= |' + currentFname + '| = ' + currentFname === fullname);
+      if (currentFname === fullname) { return classes[i]; }
     }
     const name: string = fullname.substr(fullname.indexOf('.') + 1);
     i = -1;
     while (++i < classes.length) {
       U.pif(debug, 'name: |' + name + '| =?= |' + classes[i].name + '| = ' + classes[i].name === name);
-      if (classes[i].name === name) { return classes[i] as unknown as IClass; }
+      if (classes[i].name === name) { return classes[i]; }
     }
     U.pe(throwErr, 'valid name but unable to find it. fullname:', fullname, 'classes:', classes);
     return null;
     // let i;
-    // for ( i = 0; i < pkg.childrens.length; i++) { if (pkg.childrens[i].name === fullname) { return pkg.childrens[i] as IClass; } }
+    // for ( i = 0; i < pkg.childrens.length; i++) { if (pkg.childrens[i].name === fullname) { return pkg.childrens[i] as M2Class; } }
   }
 
-  addEmptyP() {
-    U.pe(true, 'todo addEmptyP()');
-  }
 
-  addEmptyClass(parentPackage: IPackage, metaVersion: IClass) {
-    const c = new IClass(parentPackage, null, metaVersion);
-    console.log('addEmptyClass(); package:', parentPackage, '; metaVersion: ', metaVersion, 'classe:', c);
-    parentPackage.childrens.push(c);
-    c.generateVertex(null).draw();
-    IClass.updateAllMMClassSelectors();
-  }
+  // fieldChanged(e: JQuery.ChangeEvent) { U.pe(true, 'should never happen', e); }
 
-  fieldChanged(e: JQuery.ChangeEvent) { U.pe(true, 'shoud never happen', e); }
+  abstract duplicate(nameAppend?: string): IModel;
 
-  addClass(parentPackage: IPackage, metaVersion: IClass) {
-    const childJson: Json = U.cloneObj<Json>(metaVersion.getJson());
-    // Json.write(childJson, '@type', metaVersion.fullname);
-    const c = new IClass(parentPackage, childJson, metaVersion);
-    // U.pe(!!c.customStyle, '1', c, c.customStyle);
-    Json.write(childJson, eCoreClass.name, metaVersion.name.toLowerCase() + '_obj');
-    c.setName(metaVersion.name.toLowerCase() + '_obj');
-    parentPackage.childrens.push(c);
-    // U.pe(!!c.customStyle, '2', c, c.customStyle);
-    c.generateVertex(null).draw();
-    // U.pe(!!c.customStyle, '3', c, c.customStyle);
-    // U.pe(true, '4', c, c.customStyle);
-    IClass.updateAllMClassSelectors();
-  }
-  duplicate(): ModelPiece {
-    U.pe(true, 'IModel duplicate to do.');
-    return undefined; }
-    delete(): void { U.pe(true, 'IModel duplicate to do.'); }
-
-  refreshGUI(): void {
-    if (!Status.status.loadedLogic) { return; }
-    // const packages: IPackage[] = this.getAllPackages();
-    // for (const key in packages) { if (!packages[key]) { continue; } packages[key].refreshGUI(); }
-    const classes: IClass[] = this.getAllClasses();
-    for (const key in classes) { if (!classes[key]) { continue; } classes[key].refreshGUI(); }
-  }
-  processTemplate(htmlRaw: HTMLElement | SVGElement): HTMLElement | SVGElement {
-    U.pe(true, 'Model.processTemplate() should never be called');
+  getEmptyModel(): string {
+    if (this instanceof MetaMetaModel) return MetaMetaModel.emptyMetaMetaModel;
+    if (this instanceof MetaModel) return MetaModel.emptyModel;
+    if (this instanceof Model) return Model.emptyModel;
     return null; }
 
-  setName(value: string, refreshGUI: boolean = false) {
-    const oldname: string = this.name;
-    super.setName(value);
-    this.fullname = this.midname = this.name;
-    const oldSave = localStorage.getItem((this.isMM() ? 'M' : '') + 'M_' + oldname);
-    localStorage.removeItem((this.isMM() ? 'M' : '') + 'M_' + oldname);
-    localStorage.setItem((this.isMM() ? 'M' : '') + 'M_' + oldname, oldSave);
-    TopBar.topbar.updateRecents();
-    this.graph.propertyBar.refreshGUI();
-  }
-  save(isAutosave: boolean, saveAs: boolean = null): void {
-    let ecoreJSONStr: string = this.generateModelString();
-    console.log('save ' + (this.isMM() ? 'M' : '') + 'Model[' + this.name + '] = ', ecoreJSONStr);
-    if (saveAs === null ) { saveAs = false; }
-    localStorage.setItem('LastOpenedM' + (this.isMM() ? 'M' : ''), ecoreJSONStr);
-    let popup: InputPopup;
-    const finishSave = () => {
-      ecoreJSONStr = this.generateModelString();
-      const prefix: string = (this.isMM() ? 'MM_' : 'M_');
-      localStorage.setItem( prefix + this.name, ecoreJSONStr);
-      let tmp: string = localStorage.getItem(prefix + 'SaveList');
-      let saveList: Json[];
-      if (!tmp || tmp === '' || tmp === 'null' || tmp === 'undefined') { saveList = []; } else { saveList = JSON.parse(tmp); }
-      U.arrayRemoveAll(saveList, this.name);
-      saveList.push(this.name);
-      localStorage.setItem(prefix + 'SaveList', JSON.stringify(saveList));
-      if (popup) { popup.destroy(); }
-      console.log( prefix + this.name + ' saved:', ecoreJSONStr); };
-    const oninput = (e: ChangeEvent) => {
-      console.log('onchange');
-      const input: HTMLInputElement = e.currentTarget as HTMLInputElement;
-      input.setAttribute('isValid', IModel.nameTaken(input.value) ? 'false' : 'true'); };
-    const onchange = (e: any) => {
-      console.log('oninput');
-      const input: HTMLInputElement = e.currentTarget as HTMLInputElement;
-      console.log('save.setname: |' + input.value + '|');
-      this.setName(input.value);
-      popup.destroy();
-      finishSave(); };
+  delete(): void {
+    this.storage.remove(this.name, SaveListEntry.model);
+    // set empty (meta)model as most recent anonymous savefile and next to be opened.
+    LocalStorage.deleteLastOpened(this instanceof MetaModel ? 2 : 1);
+    /*this.storage.add(null, null, SaveListEntry.model);
+    this.storage.add(null, null, SaveListEntry.view);
+    this.storage.add(null, null, SaveListEntry.vertexPos);*/
+    U.refreshPage(); }
 
-    console.log('isAutosave:', isAutosave, 'saveAs:', saveAs, 'this.name:', this.name);
-    if (isAutosave) {
-      if (this.name && this.name !== '') {
-        finishSave();
-      }
-    } else
-    if (saveAs || !this.name || this.name === '') {
-      popup = new InputPopup('Choose a name for the ' + (this.isMM() ? 'meta' : '') + 'model.',
-        '', '', [['input', oninput], ['change', onchange]],
-        (this.isMM() ? 'Meta-m' : 'M') + 'odel name', this.name); }
-
-  }
-  isMM(): boolean { return Status.status.mm === this; }
-  isM(): boolean { return !this.isMM(); }
-
-  getDefaultPackage(): IPackage {
-    if (this.childrens.length !== 0) { return this.childrens[0] as IPackage; }
-    if (this.isMM()) {
-      this.childrens.push( new IPackage(this, null, null));
-    } else {
-      this.childrens.push( new IPackage(this, null, (this.metaParent as IModel).getDefaultPackage()));
-    }
-    return this.childrens[0] as IPackage;
-  }
-
-
-  linkToMetaParent(meta: MetaModel) {
-    const outObj: any = {};
-    const comformability: number = this.comformability(meta, outObj);
-    if (comformability !== 1) {
-      U.pw(true, 'IModel: ' + this.name + ' not fully conform to ' + meta.name + '. Compatibility = ' + comformability * 100 + '%' );
-      return; }
-    this.metaParent = meta;
+  refreshGUI_Alone(debug: boolean = true): void {
     let i: number;
-    const pkgPermutation: number[] = outObj.pkgPermutation;
-    i = -1;
-    while (++i < pkgPermutation.length) { (this.childrens[i] as IPackage).linkToMetaParent(meta.childrens[pkgPermutation[i]] as IPackage); }
-  }
+    for (i = 0; i < this.childrens.length; i++ ) { this.childrens[i].refreshGUI_Alone(debug); } }
 
-  comformability(meta: MetaModel, outObj: any = null/*.classPermutation*/): number {
-    // todo: abilita package multipli e copia da IPackage e IClass.comformability();
-    if (outObj) {outObj.pkgPermutation = [0]; }
-    return 1;
-  }
+  isNameTaken(name: string): boolean { return !!this.storage.get(name, SaveListEntry.model); }
 
-  setNamespace(value: string): void {
-    this.namespace_var = value;
-    const pos: number = this.namespace_var.lastIndexOf(':');
-    this.namespace_var = pos === -1 ? this.namespace_var : this.namespace_var.substring(0, pos);
-    console.log('setnamespace: |' + value + '| -> |' + this.namespace_var + '|');
-  }
+  setName(value: string, refreshGUI: boolean = false): string {
+    const oldname: string = this.name;
+    if (this.isNameTaken(value)) { U.pw(true, 'tried to saveToDB a model with a name already in use'); return oldname; }
+    super.setName(value);
+    this.storage.rename(oldname, this.name, SaveListEntry.model);
+    this.graph.propertyBar.refreshGUI();
+    return this.name; }
 
-  uri(): string {
-    if (this.uri_var) { return this.uri_var; }
-    return this.uri_var = 'http://default/uri/to/change';
+  save(isAutosave: boolean, saveAs: boolean = false): void {
+    this.storage.saveModel(isAutosave, saveAs); }
+
+  abstract getDefaultPackage(): IPackage;
+  abstract isM3(): boolean;
+  abstract isM2(): boolean;
+  abstract isM1(): boolean;
+
+  isMMM(): boolean { return this.isM3(); }
+  isMM(): boolean { return this.isM2(); }
+  isM(): boolean { return this.isM1(); }
+
+  abstract getPrefix(): string;
+  abstract getPrefixNum(): string;
+
+  addClass(parent: IPackage = null, meta: IClass = null): IClass {
+    if (!parent) { parent = this.getDefaultPackage(); }
+    return parent.addEmptyClass(meta); }
+
+  friendlyClassName(toLower: boolean = true): string {
+    if (this instanceof MetaMetaModel) { return 'Meta-metamodel'.toLowerCase(); }
+    if (this instanceof MetaModel) { return 'Metamodel'.toLowerCase(); }
+    if (this instanceof Model) { return 'Model'.toLowerCase(); }
+    U.pe(true, 'unexpected'); return 'error'; }
+
+    getLastView(): ViewPoint {
+      let i: number;
+      for (i = this.viewpoints.length; --i >= 0; ) {
+        const vp: ViewPoint = this.viewpoints[i];
+        if (vp.isApplied) return vp; }
+      return null;
+    }
+
+  public static getByName(name: string): IModel {
+    if (Status.status.mmm.fullname() === name) return Status.status.mmm;
+    if (Status.status.mm.fullname() === name) return Status.status.mm;
+    if (Status.status.m.fullname() === name) return Status.status.m;
+    return null; }
+
+  readVertexPositionSaveArr(dic: Dictionary<string, GraphSize>): void {
+    for (let key in dic) {
+      const value: GraphSize = new GraphSize().clone(dic[key]);
+      const mp = ModelPiece.getByKeyStr(key);
+      if (!mp) { U.pw(true, 'invalid vertex save, failed to get targetmodelpiece: ', key, dic, this); continue; }
+      mp.getVertex().setSize(value);
+    }
   }
-  setUri(str: string): void {
-    this.uri_var = str;
-  }
+  generateVertexPositionSaveArr(): Dictionary<string, GraphSize> {
+    let i: number;
+    let j: number;
+    let ret: Dictionary<string, GraphSize> = {};
+    let arr: IClassifier[][] = [this.getAllEnums(), this.getAllClasses()];
+    for (j = 0; j < arr.length; j++)
+      for (i = 0; i < arr[j].length; i++) { ret[arr[j][i].getKeyStr()] = arr[j][i].getVertex().getSize(); }
+    return ret; }
+
+  generateViewPointSaveArr(): Json[] {
+    /*let i: number;
+    let tmp: any = [];
+    for (i = 0; i < this.viewpoints.length; i++) { tmp.push(this.viewpoints[i].toJSON()); }
+    return tmp;*/
+    return this.viewpoints; }
 }
 
+
+export class ECoreRoot {
+  static ecoreEPackage: string;
+  public static initializeAllECoreEnums(): void {
+    ECoreRoot.ecoreEPackage = 'ecore:EPackage';
+
+    ECorePackage.eAnnotations = ECoreClass.eAnnotations = ECoreEnum.eAnnotations = EcoreLiteral.eAnnotations =
+      ECoreReference.eAnnotations = ECoreAttribute.eAnnotations = ECoreOperation.eAnnotations = ECoreParameter.eAnnotations = 'eAnnotations';
+
+    ECoreAnnotation.source = Status.status.XMLinlineMarker + 'source';
+    ECoreAnnotation.references = Status.status.XMLinlineMarker + 'references'; // "#/" for target = package.
+    ECoreAnnotation.details = 'details'; // arr
+    ECoreDetail.key = Status.status.XMLinlineMarker + 'key'; // can have spaces
+    ECoreDetail.value = Status.status.XMLinlineMarker + 'value';
+
+    ECorePackage.eClassifiers = 'eClassifiers';
+    ECorePackage.xmlnsxmi = Status.status.XMLinlineMarker + 'xmlns:xmi'; // typical value: http://www.omg.org/XMI
+    ECorePackage.xmlnsxsi = Status.status.XMLinlineMarker + 'xmlns:xsi'; // typical value: http://www.w3.org/2001/XMLSchema-instance
+    ECorePackage.xmiversion = Status.status.XMLinlineMarker + 'xmi:version'; // typical value: "2.0"
+    ECorePackage.xmlnsecore = Status.status.XMLinlineMarker + 'xmlns:ecore';
+    ECorePackage.nsURI = Status.status.XMLinlineMarker + 'nsURI'; // typical value: "http://org/eclipse/example/bowling"
+    ECorePackage.nsPrefix = Status.status.XMLinlineMarker + 'nsPrefix'; // typical value: org.eclipse.example.bowling
+    ECorePackage.namee = Status.status.XMLinlineMarker + 'name';
+
+    ECoreClass.eStructuralFeatures = 'eStructuralFeatures';
+    ECoreClass.eOperations = 'eOperations';
+    ECoreClass.xsitype = Status.status.XMLinlineMarker + 'xsi:type'; // "ecore:EClass"
+    ECoreClass.namee = ECorePackage.namee;
+    ECoreClass.eSuperTypes = Status.status.XMLinlineMarker + 'eSuperTypes'; // space separated: "#name1 #name2"...
+    ECoreClass.instanceTypeName = Status.status.XMLinlineMarker + 'instanceTypeName';  // raw str
+    ECoreClass.instanceTypeName = Status.status.XMLinlineMarker + 'instanceTypeName';
+    ECoreClass.abstract = Status.status.XMLinlineMarker + 'abstract'; // bool
+    ECoreClass.interface = Status.status.XMLinlineMarker + 'interface'; // bool
+
+    ECoreEnum.instanceTypeName = ECoreClass.instanceTypeName;
+    ECoreEnum.serializable = 'serializable'; // "false", "true"
+    ECoreEnum.xsitype = ECoreClass.xsitype; // "ecore:EEnum"
+    ECoreEnum.eLiterals = 'eLiterals';
+    ECoreEnum.namee = ECorePackage.namee;
+
+    EcoreLiteral.literal = 'literal';
+    EcoreLiteral.namee = ECorePackage.namee;
+    EcoreLiteral.value = 'value'; // any integer (-inf, +inf), not null. limiti = a type int 32 bit?
+
+    ECoreReference.xsitype = Status.status.XMLinlineMarker + 'xsi:type'; // "ecore:EReference"
+    ECoreReference.eType = Status.status.XMLinlineMarker + 'eType'; // "#//Player"
+    ECoreReference.containment = Status.status.XMLinlineMarker + 'containment'; // "true"
+    ECoreReference.upperbound = Status.status.XMLinlineMarker + 'upperBound'; // "@1"
+    ECoreReference.lowerbound = Status.status.XMLinlineMarker + 'lowerBound'; // does even exists?
+    ECoreReference.namee = Status.status.XMLinlineMarker + 'name';
+
+    ECoreAttribute.xsitype = Status.status.XMLinlineMarker + 'xsi:type'; // "ecore:EAttribute",
+    ECoreAttribute.eType = Status.status.XMLinlineMarker + 'eType'; // "ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
+    ECoreAttribute.namee = Status.status.XMLinlineMarker + 'name';
+
+
+    ECoreOperation.eParameters = 'eParameters';
+    ECoreOperation.namee = Status.status.XMLinlineMarker + 'name'; // "EExceptionNameCustom",
+    ECoreOperation.ordered = Status.status.XMLinlineMarker + 'ordered'; // "false",
+    ECoreOperation.unique = Status.status.XMLinlineMarker + 'unique'; // "false",
+    ECoreOperation.lowerBound = Status.status.XMLinlineMarker + 'lowerBound'; // "5", ma che senso ha su una funzione?? è il return?
+    ECoreOperation.upperBound = Status.status.XMLinlineMarker + 'upperBound';
+    ECoreOperation.eType = Status.status.XMLinlineMarker + 'eType'; // "#//Classname",
+    ECoreOperation.eexceptions = Status.status.XMLinlineMarker + 'eExceptions';
+    // "#//ClassnameException1 #//ClassNameException2 (also custom classes) ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt
+
+    ECoreParameter.namee = Status.status.XMLinlineMarker + 'name';
+    ECoreParameter.ordered = Status.status.XMLinlineMarker + 'ordered'; // "false";
+    ECoreParameter.unique = Status.status.XMLinlineMarker + 'unique'; // "false"
+    ECoreParameter.lowerBound = Status.status.XMLinlineMarker + 'lowerBound'; // "1"
+    ECoreParameter.upperBound = Status.status.XMLinlineMarker + 'upperBound'; // "2"
+    ECoreParameter.eType = Status.status.XMLinlineMarker + 'eType'; // "ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDoubl
+
+    XMIModel.type = Status.status.XMLinlineMarker + 'type';
+    XMIModel.namee = Status.status.XMLinlineMarker + 'name'; }
+}
+
+export class ECoreAnnotation {
+  static source: string;
+  static references: string;
+  static details: string;}
+
+export class ECoreDetail {
+  static key: string;
+  static value: string; }
+
+export class ECorePackage {
+  static eAnnotations: string;
+  static eClassifiers: string;
+  static xmlnsxmi: string;
+  static xmlnsxsi: string;
+  static xmiversion: string;
+  static xmlnsecore: string;
+  static nsURI: string;
+  static nsPrefix: string;
+  static namee: string;
+}
+
+export class ECoreClass {
+  static eAnnotations: string;
+  static eStructuralFeatures: string;
+  static xsitype: string;
+  static namee: string;
+  static eOperations: string;
+  static instanceTypeName: string;
+  static eSuperTypes: string;
+  static abstract: string;
+  static interface: string;
+
+  // static defaultValue = Status.status.XMLinlineMarker + 'defaultValue';  // visualizzato in ecore ma mai salvato dentro il file. inutilizzato
+  // nelle classi, assume il valore di "[name] = [NumericValue]" senza le [] negli enum.
+}
+
+export class ECoreEnum {
+  static eAnnotations: string;
+  static xsitype: string;
+  static namee: string;
+  static instanceTypeName: string;
+  static serializable: string;
+  static eLiterals: string;
+}
+
+export class EcoreLiteral {
+  static eAnnotations: string;
+  static namee: string;
+  static value: string;
+  static literal: string;
+}
+
+
+export class ECoreReference {
+  static eAnnotations: string;
+  static xsitype: string;
+  static eType: string;
+  static containment: string;
+  static upperbound: string;
+  static lowerbound: string;
+  static namee: string; }
+
+export class ECoreAttribute {
+  static eAnnotations: string;
+  static xsitype: string;
+  static eType: string;
+  static namee: string;
+}
+
+export class ECoreOperation {
+  static eAnnotations: string;
+  static eType: string;
+  static eexceptions: string;
+  static upperBound: string;
+  static lowerBound: string;
+  static unique: string;
+  static ordered: string;
+  static namee: string;
+  static eParameters: string; }
+
+export class ECoreParameter {
+  static eAnnotations: string;
+  static namee: string;
+  static ordered: string;
+  static unique: string;
+  static lowerBound: string;
+  static upperBound: string;
+  static eType: string;
+  }
+
+export class XMIModel {
+  static type: string;
+  static namee: string; }

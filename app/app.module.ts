@@ -3,16 +3,15 @@ import { MatTabGroup, MatTabsModule } from '@angular/material';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {NgModule, NO_ERRORS_SCHEMA} from '@angular/core';
 import { AppComponent } from './app.component';
-import { MminputComponent } from './mminput/mminput.component';
-import { MmsidebarComponent } from './mmsidebar/mmsidebar.component';
-import { MsidebarComponent } from './msidebar/msidebar.component';
-import { IsidebarComponent} from './isidebar/isidebar.component';
-import {TopBar, TopBarComponent} from './top-bar/top-bar.component';
-import { GraphTabHtmlComponent } from './graph-tab-html/graph-tab-html.component';
-import { MmGraphHtmlComponent } from './mm-graph-html/mm-graph-html.component';
+import { MminputComponent } from './guiElements/mminput/mminput.component';
+import { MmsidebarComponent } from './guiElements/mmsidebar/mmsidebar.component';
+import { MsidebarComponent } from './guiElements/msidebar/msidebar.component';
+import { IsidebarComponent} from './guiElements/isidebar/isidebar.component';
+import { TopBar, TopBarComponent } from './guiElements/top-bar/top-bar.component';
+import { GraphTabHtmlComponent } from './guiElements/graph-tab-html/graph-tab-html.component';
+import { MmGraphHtmlComponent } from './guiElements/mm-graph-html/mm-graph-html.component';
 import {
   IGraph,
-  $,
   IModel,
   MetaModel,
   Model,
@@ -22,17 +21,39 @@ import {
   U,
   DetectZoom,
   Dictionary,
+  M2Class,
+  GraphPoint,
+  //Options,
+  MyConsole,
+  MetaMetaModel,
+  ShortAttribETypes,
+  ECoreRoot,
+  M3Class,
+  MClass,
   IClass,
-  GraphPoint, Options, MyConsole
+  Typedd,
+  EOperation,
+  MPackage,
+  M2Reference,
+  M2Package,
+  M2Attribute,
+  IPackage,
+  M3Package,
+  M3Attribute,
+  EParameter,
+  IAttribute,
+  MReference,
+  IReference,
+  M3Reference,
+  MAttribute,
+  prjson2xml, prxml2json, Type, LocalStorage, ViewPoint, SaveListEntry, EType, IClassifier, GraphSize
 } from './common/Joiner';
-import {EType, MetaMetaModel} from './Model/MetaMetaModel';
-import { PropertyBarrComponent } from './property-barr/property-barr.component';
-import { MGraphHtmlComponent } from './m-graph-html/m-graph-html.component';
-import { DamContextMenuComponent } from './dam-context-menu/dam-context-menu.component';
-import { StyleEditorComponent } from './style-editor/style-editor.component';
-import {ShortAttribETypes} from './common/util';
-import { ConsoleComponent } from './console/console.component';
-import {EcoreLayer} from './Model/ecorelayer';
+import { PropertyBarrComponent }   from './guiElements/property-barr/property-barr.component';
+import { MGraphHtmlComponent }     from './guiElements/m-graph-html/m-graph-html.component';
+import { DamContextMenuComponent } from './guiElements/dam-context-menu/dam-context-menu.component';
+import { StyleEditorComponent }    from './guiElements/style-editor/style-editor.component';
+import { ConsoleComponent }        from './guiElements/console/console.component';
+import KeyDownEvent = JQuery.KeyDownEvent;
 // @ts-ignore
 // @ts-ignore
 // @ts-ignore
@@ -75,6 +96,7 @@ import {EcoreLayer} from './Model/ecorelayer';
 export class AppModule { }
 export class Status {
   static status: Status = null;
+  static userid: string;
   mmm: MetaMetaModel;
   mm: MetaModel = null;
   m: Model = null;
@@ -83,7 +105,16 @@ export class Status {
   debug = false;
   loadedLogic = false;
   loadedGUI = false;
-  XMLinlineMarker: string = '@';
+  XMLinlineMarker: string = '' + '@';
+  // todo: consenti di customizzare il marker, (in m3options?)
+
+  refreshModeAll: boolean = true || true;
+  refreshModelAndInstances: boolean = false && false;
+  refreshModelAndParent: boolean = false && false;
+  refreshInstancesToo: boolean = false && false;
+  refreshModel: boolean = false && false;
+  refreshMetaParentToo: boolean = false && false;
+  refreshParentToo: boolean = false && false;
   // modelMatTab: MatTabGroup = null;
   /*showMMGrid = true;
   showMGrid = true;
@@ -103,6 +134,19 @@ export class Status {
 
   isM(): boolean {return this.getActiveModel() === this.m; }
   isMM(): boolean {return this.getActiveModel() === this.mm; }
+
+  enableAutosave(timer: number): void {
+    $(window).off('beforeunload.unload_autosave').on('beforeunload.unload_autosave', () => { this.autosave(); });
+    localStorage.setItem('autosave', 'true');
+    setInterval(() => { this.autosave(); }, timer);
+  }
+  autosave(): void {
+    this.mm.save(true, null);
+    this.m.save(true, null);
+
+
+    console.log('autosave completed.');
+  }
 }
 
 
@@ -117,8 +161,12 @@ function main0(tentativi: number = 0) {
     console.log('main0 wait(100)');
     return;
   }// else { mainForceTabChange(0); }
+
+  // U.loadScript('./app/common/jquery-ui-1.12.1/jquery-ui.js');
+  // U.loadScript('./app/common/jquery-ui-1.12.1/jquery-ui.structure.js');
+  U.loadScript('https://code.jquery.com/ui/1.12.1/jquery-ui.min.js');
   main();
-  console.log('main(), $ loaded:', $ !== undefined, 'status: ', status);
+  // console.log('main(), $ loaded:', $ !== undefined, 'status: ', Status.status);
 }
 /*function mainForceTabChange(tentativi: number = 0) {
   let retry = false;
@@ -139,19 +187,59 @@ const M2InputXml: string = '<?xml version="1.0" encoding="UTF-8"?>\n' +
   '<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n' +
   '    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="pkg" nsURI="http://www.pkg.uri.com" nsPrefix="pkg.prefix">\n' +
   '  <eClassifiers xsi:type="ecore:EClass" name="player">\n' +
-  '    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EChar"/>\n' +
+  '   <eStructuralFeatures xsi:type="ecore:EAttribute" name="name"' +
+  '       eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EChar"/>\n' +
   '  </eClassifiers>\n' +
   '  <eClassifiers xsi:type="ecore:EClass" name="league">\n' +
   '    <eStructuralFeatures xsi:type="ecore:EReference" name="playerlist" eType="#//player"/>\n' +
   '  </eClassifiers>\n' +
   '</ecore:EPackage>\n';
-function main() {
-  U.tabSetup();
-  U.resizableBorderSetup();
-  window['' + 'help'] = ['setBackup (backup <= save)', 'backupSave (save <= backup)', 'destroy (the backup)', 'discardSave (stop autosave)'];
+
+function globalevents(): void {
+  // Prevent the backspace key from navigating back.
+  const $document = $(document);
+  $document.unbind('keydown').bind('keydown', U.preventBackSlashHistoryNavigation);
+  $document.on('keydown', (e: KeyDownEvent): void  => {
+    console.log('documentKeyDown: ', e.key, e.keyCode);
+    if (e.key === 'Escape') { Status.status.getActiveModel().graph.edgeChangingAbort(e); }
+  });
+  window['' + 'U'] = U;
+  window['' + 'IModel'] = IModel;
+  window['' + 'Status'] = Status;
+  window['' + 'M3Model'] = MetaMetaModel;
+  window['' + 'M2Model'] = MetaModel;
+  window['' + 'MModel'] = Model;
+  window['' + 'IPackage'] = IPackage;
+  window['' + 'M3Package'] = M3Package;
+  window['' + 'M2Package'] = M2Package;
+  window['' + 'MPackage'] = MPackage;
+  window['' + 'IClass'] = IClass;
+  window['' + 'M3Class'] = M3Class;
+  window['' + 'M2Class'] = M2Class;
+  window['' + 'MClass'] = MClass;
+  window['' + 'Typedd'] = Typedd;
+  window['' + 'EOperation'] = EOperation;
+  window['' + 'EParameter'] = EParameter;
+  window['' + 'IReference'] = IReference;
+  window['' + 'M3Reference'] = M3Reference;
+  window['' + 'M2Reference'] = M2Reference;
+  window['' + 'MReference'] = MReference;
+  window['' + 'IAttribute'] = IAttribute;
+  window['' + 'M3Attribute'] = M3Attribute;
+  window['' + 'M2Attribute'] = M2Attribute;
+  window['' + 'MAttribute'] = MAttribute;
+  window['' + 'help'] = [
+    'setBackup (backup <= saveToDB)',
+    'backupSave (saveToDB <= backup)',
+    'destroy (the backup)',
+    'discardSave (stop autosave)'];
   window['' + 'destroy'] = () => {
-    localStorage.setItem('LastOpenedMM', null);
-    localStorage.setItem('LastOpenedM', null);
+    localStorage.setItem('m1_' + SaveListEntry.model.lastopened, null);
+    localStorage.setItem('m2_' + SaveListEntry.model.lastopened, null);
+    localStorage.setItem('m1_' + SaveListEntry.view.lastopened, null);
+    localStorage.setItem('m2_' + SaveListEntry.view.lastopened, null);
+    localStorage.setItem('m1_' + SaveListEntry.vertexPos.lastopened, null);
+    localStorage.setItem('m2_' + SaveListEntry.vertexPos.lastopened, null);
     localStorage.setItem('backupMM', null);
     localStorage.setItem('backupGUI', null);
     localStorage.setItem('backupM', null);
@@ -173,18 +261,40 @@ function main() {
   window['' + 'setBackupGUI'] = () => { localStorage.setItem('backupGUI', localStorage.getItem('modelGraphSave_GUI_Damiano')); };
   window['' + 'setBackupMM'] = () => { localStorage.setItem('backupMM', localStorage.getItem('LastOpenedMM')); };
   window['' + 'setBackupM'] = () => { localStorage.setItem('backupM', localStorage.getItem('LastOpenedM')); };
+}
 
+function main() {
+  (window as any).U = U;
+  (window as any).status = Status.status;
+  U.tabSetup();
+  $('app-mm-graph-html .propertyBarContainer .UtabHeader').on('click', (e) =>  {
+    if (e.currentTarget.innerText === 'Style') { Status.status.mm.graph.propertyBar.styleEditor.onShow(); } else
+    if (e.currentTarget.innerText === 'Structured') { Status.status.mm.graph.propertyBar.onShow(); } else
+    if (e.currentTarget.innerText === 'Raw')  { Status.status.mm.graph.propertyBar.onShow(true); }
+    else { U.pe(true, 'unrecognized right-side tab:', e.currentTarget); }
+  });
+  $('app-m-graph-html .propertyBarContainer .UtabHeader').on('click', (e) =>  {
+    if (e.currentTarget.innerText === 'Style') { Status.status.m.graph.propertyBar.styleEditor.onShow(); } else
+    if (e.currentTarget.innerText === 'Structured') { Status.status.m.graph.propertyBar.onShow(); } else
+    if (e.currentTarget.innerText === 'Raw')  { Status.status.m.graph.propertyBar.onShow(true); }
+    else { U.pe(true, 'unrecognized right-side tab:', e.currentTarget); }
+  });
+  U.resizableBorderSetup();
+  ECoreRoot.initializeAllECoreEnums();
+  globalevents();
   const mmconsole: MyConsole = new MyConsole($('.mmconsole')[0]);
   const mconsole: MyConsole = new MyConsole($('.mconsole')[0]);
 
   let tmp: any;
-  let useless;
+  let useless: any;
+  let i: number;
   U.pw((tmp = +DetectZoom.device()) !== 1, 'Current zoom level is different from 100%.',
     'The graph part of this website may be graphically misplaced due to a bug with Svg\'s <foreignObject> content.',
     'current zoom:' + (+tmp * 100) + '%',
     'The bug happens in: Chrome.',
     'The bug does NOT happen in: Firefox.',
     'Behaviour is unknown for other browsers.');
+  Status.status.typeAliasDictionary[ShortAttribETypes.void] = 'void';
   Status.status.typeAliasDictionary[ShortAttribETypes.EChar] = 'char';
   Status.status.typeAliasDictionary[ShortAttribETypes.EString] = 'string';
   Status.status.typeAliasDictionary[ShortAttribETypes.EDate] = 'date';
@@ -209,140 +319,113 @@ function main() {
   EType.staticInit();
   DamContextMenuComponent.staticInit();
 
-  tmp = localStorage.getItem('LastOpenedMM');
-  if (tmp && tmp !== '' && tmp !== 'null' && tmp !== 'undefined') { MetaModelinputStr = tmp;
-  } else { MetaModelinputStr = ($('input#MM_INPUT')[0] as HTMLInputElement).value; }
+  const savem2 = LocalStorage.getLastOpened(2);
+  const savem1 = LocalStorage.getLastOpened(1);
+  /*let MetaMetaModelStr = MetaMetaModel.emptyMetaMetaModel;
+  let MetaModelinputStr = MetaModel.emptyModel;
+  let ModelinputStr = Model.emptyModel;*/
+  const validate = (thing: string, defaultvalue: string): string => { return tmp && tmp !== '' && tmp !== 'null' && tmp !== 'undefined' ? thing : defaultvalue};
+  savem2.model = validate(savem2.model, MetaModel.emptyModel);
+  savem1.model = validate(savem1.model, Model.emptyModel);
 
-  tmp = localStorage.getItem('LastOpenedM');
-  if (tmp && tmp !== '' && tmp !== 'null' && tmp !== 'undefined') { ModelInputStr = tmp; }
+  console.log('loading MM:', savem2);
+  console.log('loading M:', savem1);
 
-  console.log('loading MMM:', MetaMetaModelStr);
-  console.log('loading MM:', MetaModelinputStr);
-  console.log('loading M:', ModelInputStr);
-  // inputStr = atob(inputStr);
-  Status.status.mmm = new MetaMetaModel(JSON.parse(MetaMetaModelStr));
+  Status.status.mmm = new MetaMetaModel(null);
   useless = new TopBar();
-  Status.status.mm = new MetaModel(JSON.parse(MetaModelinputStr), Status.status.mm);
-  Status.status.mm.fixReferences();
-  Status.status.m = new Model(JSON.parse(ModelInputStr), Status.status.mm);
-  console.log('model:', Status.status.m);
-  // Status.status.m.linkToMetaParent(Status.status.mm);
-  Status.status.m.fixReferences();
+  try {
+    Status.status.mm = new MetaModel(JSON.parse(savem2.model), Status.status.mmm);
+  } catch(e) {
+    U.pw(true, 'Failed to load the metamodel.');
+    console.log(e);
+    Status.status.mm = new MetaModel(JSON.parse(MetaModel.emptyModel), Status.status.mmm);
+  }
+  // console.log('m3:', Status.status.mmm, 'm2:', Status.status.mm, 'm1:', Status.status.m); return;
+  Type.linkAll();
+  M2Class.updateSuperClasses();
+  try {
+    Status.status.m = new Model(JSON.parse(savem1.model), Status.status.mm);
+  } catch(e) {
+    U.pw(true, 'Failed to load the model. Does it conform to the metamodel?');
+    console.log(e);
+    Status.status.m = new Model(JSON.parse(Model.emptyModel), Status.status.mm);
+  }
+  console.log('m3:', Status.status.mmm, 'm2:', Status.status.mm, 'm1:', Status.status.m);
+  // Status.status.m.LinkToMetaParent(Status.status.mm);
+  // Status.status.m.fixReferences(); already linked at parse time.
   Status.status.loadedLogic = true;
   useless = new ISidebar(Status.status.mmm, document.getElementById('metamodel_sidebar'));
   useless = new ISidebar(Status.status.mm, document.getElementById('model_sidebar'));
-  useless = new IGraph(Status.status.mm, document.getElementById('metamodel_editor'));
-  useless = new IGraph(Status.status.m, document.getElementById('model_editor'));
+  useless = new IGraph(Status.status.mm, document.getElementById('metamodel_editor') as unknown as SVGSVGElement);
+  useless = new IGraph(Status.status.m, document.getElementById('model_editor') as unknown as SVGSVGElement);
   Status.status.loadedGUI = true;
-  Status.status.mm.graph.propertyBar.show(Status.status.mm);
-  Status.status.m.graph.propertyBar.show(Status.status.m);
-  console.clear();
-  IClass.updateAllMMClassSelectors();
-  EType.fixPrimitiveTypeSelectors();
-  // IClass.updateAllMClassSelectors();
+  Status.status.mm.graph.propertyBar.show(Status.status.mm, null, false);
+  Status.status.m.graph.propertyBar.show(Status.status.m, null, false);
+  Type.updateTypeSelectors(null, true, true, true);
+
+  if (!savem2.vertexpos || !savem2.view){
+    const tmpp: {view: string, vertexPos: string} = Status.status.mm.storage.getViewPoints();
+    savem2.view = savem2.view || tmpp.view;
+    savem2.vertexpos = savem2.vertexpos || tmpp.vertexPos; }
+
+  if (!savem1.vertexpos || !savem1.view){
+    const tmpp: {view: string, vertexPos: string} = Status.status.m.storage.getViewPoints();
+    savem1.view = savem1.view || tmpp.view;
+    savem1.vertexpos = savem1.vertexpos || tmpp.vertexPos; }
+
+  savem2.view = validate(savem2.view, '[]');
+  savem2.vertexpos = validate(savem2.vertexpos, '{}');
+  savem1.view = validate(savem1.view, '[]');
+  savem1.vertexpos = validate(savem1.vertexpos, '{}');
+  let marr: IModel[] = [Status.status.mm, Status.status.m];
+  let vpmatjson: Json[][] = [JSON.parse(savem2.view || '[]'), JSON.parse(savem1.view || '[]')] as Json[][];
+  const vertexposMat: Dictionary<string, GraphPoint>[] = [JSON.parse(savem2.vertexpos), JSON.parse(savem1.vertexpos)] as Dictionary<string, GraphPoint>[];
+  // console.log(vpmatjson, Status.status.mm.graph.viewPointShell);
+
+  let j: number;
+  for (j = 0; j < vertexposMat.length; j++) {
+    const vdic: Dictionary<string, GraphPoint> = vertexposMat[j];
+    const m: IModel = marr[j];
+    for (let key in vdic) {
+      console.log('key:', key, 'varr:', vdic);
+      const mp: IClassifier = ModelPiece.getByKeyStr(key) as IClassifier;
+      const size: GraphSize = new GraphSize().clone(vdic[key]);
+      U.pw(!mp || !(mp instanceof IClassifier), 'invalid vertexposition save, failed to get classifier:', key, vdic);
+      mp.getVertex().setSize(size);
+    }
+  }
+
+  for (j = 0; j < vpmatjson.length; j++) {
+    const vparr: ViewPoint[] = vpmatjson[j] as ViewPoint[];
+    const m: IModel = marr[j];
+    let v: ViewPoint;
+    for (i = 0; i < vparr.length; i++) {
+      const jsonvp: ViewPoint = vparr[i];
+      // console.clear();
+      // console.log('looping this:', jsonvp, ', vpmatjson:', vpmatjson);
+      v = new ViewPoint(m);
+      v.clone(jsonvp);
+      v.updateTarget(m);
+      m.graph.viewPointShell.add(v, false); // [persistent isApplied] STEP 1: qui setto checked sulla gui in base al v.isApplied salvato.
+      v.isApplied = false; // STEP 2: qui affermo che non è stato ancora applicato
+    }
+    if (vparr.length === 0) {
+      v = new ViewPoint(m); // m.getPrefix() + '_VP autogenerated');
+      v.isApplied = true;
+      m.graph.viewPointShell.add(v, false); // [persistent isApplied] STEP 1: qui setto checked sulla gui in base al v.isApplied salvato.
+      v.isApplied = false; }
+    m.graph.viewPointShell.refreshApplied(); // STEP 3: qui vedo che non è stato applicato, ma è stato ordinato dalla gui di applicarlo -> lo applico.
+  }
+
+  setTimeout( () => { Status.status.mm.graph.ShowGrid(); Status.status.m.graph.ShowGrid(); }, 1);
   // Imposto un autosave raramente (minuti) giusto nel caso di crash improvvisi o disconnessioni
   // per evitare di perdere oltre X minuti di lavoro.
   // In condizioni normali non è necessario perchè il salvataggio è effettuato al cambio di pagina asincronamente
   // e con consegna dei dati garantita dal browser anche a pagina chiusa (navigator.beacon)
-  Options.enableAutosave(2 * 60 * 1000);
+  return;
+  Status.status.enableAutosave(2 * 60 * 1000);
+  //Options.enableAutosave(2 * 60 * 1000);
   // Options.Load(Status.status);
 
 }
 main0();
-const inputStrJsonMMM: string = '{\n' +
-  '  "ecore:EPackage": {\n' +
-  '    "@xmlns:xmi": "http://www.omg.org/XMI",\n' +
-  '    "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",\n' +
-  '    "@xmlns:ecore": "http://www.eclipse.org/emf/2002/Ecore",\n' +
-  '    "@xmi:version": "2.0",\n' +
-  '    "@name": "eCore MMM",\n' +
-  '    "@nsURI": "http://???",\n' +
-  '    "@nsPrefix": "org.???",\n' +
-  '    "eClassifiers": [\n' +
-  '      {\n' +
-  '        "@xsi:type": "ecore:EClass",\n' +
-  '        "@name": "Class",\n' +
-  '        "eStructuralFeatures": {\n' +
-//  '          "@xsi:type": "ecore:FakeElement",\n' +
-//  '          "@name": "Add Feature.",\n' +
-//  '          "@eType": "ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//FakeElement"\n' +
-  '        }\n' +
-  '      },\n' +
-  '      {\n' +
-  '        "@xsi:type": "ecore:EClass",\n' +
-  '        "@name": "Package",\n' +
-  '        "eStructuralFeatures": {\n' +
-//  '          "@xsi:type": "ecore:FakeElement",\n' +
-//  '          "@name": "Add Feature.",\n' +
-//  '          "@eType": "ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//FakeElement"\n' +
-  '        }\n' +
-  '      }\n' +
-  '    ]\n' +
-  '  }\n' +
-  '}';
-const inputStrJsonMM: string = '{\n' +
-  '  "ecore:EPackage": {\n' +
-  '    "@xmlns:xmi": "http://www.omg.org/XMI",\n' +
-  '    "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",\n' +
-  '    "@xmlns:ecore": "http://www.eclipse.org/emf/2002/Ecore",\n' +
-  '    "@xmi:version": "2.0",\n' +
-  '    "@name": "bowling",\n' +
-  '    "@nsURI": "http://org/eclipse/example/bowling",\n' +
-  '    "@nsPrefix": "org.eclipse.example.bowling",\n' +
-  '    "eClassifiers": [\n' +
-  '      {\n' +
-  '        "@xsi:type": "ecore:EClass",\n' +
-  '        "@name": "Player",\n' +
-  '        "eStructuralFeatures": {\n' +
-  '          "@xsi:type": "ecore:EAttribute",\n' +
-  '          "@name": "name",\n' +
-  '          "@eType": "ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"\n' +
-  '        }\n' +
-  '      },\n' +
-  '      {\n' +
-  '        "@xsi:type": "ecore:EClass",\n' +
-  '        "@name": "League",\n' +
-  '        "eStructuralFeatures": [\n' +
-  '          {\n' +
-  '            "@xsi:type": "ecore:EAttribute",\n' +
-  '            "@name": "name",\n' +
-  '            "@eType": "ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"\n' +
-  '          },\n' +
-  '          {\n' +
-  '            "@xsi:type": "ecore:EReference",\n' +
-  '            "@name": "players",\n' +
-  '            "@upperBound": "@1",\n' +
-  '            "@eType": "#//Player",\n' +
-  '            "@containment": "true"\n' +
-  '          }\n' +
-  '        ]\n' +
-  '      }\n' +
-  '    ]\n' +
-  '  }\n' +
-  '}';
-const inputStrJsonM_OLD = '{\n' +
-  '  "ecore:EPackage": {\n' +
-  '    "@xmlns:xmi": "http://www.omg.org/XMI",\n' +
-  '    "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",\n' +
-  '    "@xmlns:ecore": "http://www.eclipse.org/emf/2002/Ecore",\n' +
-  '    "@xmi:version": "2.0",\n' +
-  '    "@name": "defaultPackage",\n' +
-  '    "@nsURI": "http://???",\n' +
-  '    "@nsPrefix": "org.???",\n' +
-  '    "eClassifiers": []\n' +
-  '  }\n' +
-  '}';
-const inputStrJsonM = '{\n' +
-  '  "org.eclipse.example.bowling:League": {\n' +
-  '    "@xmlns:xmi": "http://www.omg.org/XMI",\n' +
-  '    "@xmlns:org.eclipse.example.bowling": "https://org/eclipse/example/bowling",\n' +
-  '    "@xmi:version": "2.0",\n' +
-  '    "Players": [\n' +
-  '      { "@name": "tizio" },\n' +
-  '      { "@name": "asd" }\n' +
-  '    ]\n' +
-  '  }\n' +
-  '}';
-const MetaMetaModelStr = inputStrJsonMMM;
-let MetaModelinputStr = inputStrJsonMM;
-let ModelInputStr = inputStrJsonM;

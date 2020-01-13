@@ -1,0 +1,11 @@
+.UtabHeaderContainer{
+  background-color: var(--mainBackgroundColor);
+}
+.UtabHeader{
+  margin: 0;
+  margin-top: 10px;
+}
+.UtabHeader[selected="true"]{
+  border-bottom-left-radius: 22px;
+  border-bottom-right-radius: 22px;
+}

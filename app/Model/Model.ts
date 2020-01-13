@@ -2,7 +2,7 @@ import {
   IModel,
   Json,
   IPackage,
-  IClass,
+  M2Class,
   IFeature,
   IAttribute,
   IReference,
@@ -10,48 +10,41 @@ import {
   U,
   IVertex,
   IEdge,
-  EdgeStyle,
-  ModelPiece, Status, MClass, eCoreClass
+  EdgeStyle, MPackage,
+  ModelPiece, Status, MClass, ECoreClass, ModelNone, M3Class, M3Reference, M2Package, MReference
 } from '../common/Joiner';
-import {MPackage} from '../mPackage/MPackage.component';
 
 export class Model extends IModel {
-  static emptyModel = '{}'; // todo
-  protected json: Json = null;
-  metaParent: MetaModel = null;
-  instances: ModelPiece[] = [];
-  parent: ModelPiece = null;
-  childrens: MPackage[] = [];
-  edgeStyleCommon: EdgeStyle = null;
-  edgeStyleHighlight: EdgeStyle = null;
-  edgeStyleSelected: EdgeStyle = null;
-  // styleRaw: HTMLElement | SVGElement = null;
-  // style: HTMLElement | SVGElement = null;
-  // htmlRaw: HTMLElement | SVGForeignObjectElement = null;
-  html: HTMLElement | SVGElement = null;
-  styleOfInstances: HTMLElement | SVGElement = null;
-  customStyle: HTMLElement | SVGElement;
+  public static emptyModel = '{}';
+  metaParent: MetaModel;
+  // instances: ModelNone[];
+  childrens: MPackage[];
+  classRoot: MClass = null;
+
   constructor(json: Json, metaModel: MetaModel) {
-    super(json, metaModel, true);
-    this.modify(json, true); }
-  fixReferences(): void {/*useless here? or useful in loops?*/}
-  modify(json: Json, destructive: boolean, metamodel: MetaModel = null) {
+    super(metaModel);
+    this.parse(json, true); }
+
+  // fixReferences(): void {/*useless here? or useful in loops?*/}
+
+  getClassRoot(): MClass {
+    if (this.classRoot) { return this.classRoot; }
+    if (this.getAllClasses().length) U.pw(true, 'failed to get m1 class root.', this);
+    return null; }
+
+  parse(json: Json, destructive: boolean, metamodel: MetaModel = null): void {
     if (!metamodel) {metamodel = Status.status.mm; }
-    this.metaParent = metamodel;
     U.pe(!metamodel, 'parsing a model requires a metamodel linked');
+    U.pe(json === '' + json, 'ModelPiece.parse() parameter must be a parsed ECORE/json');
     if (destructive) { this.childrens = []; }
     let key: string;
-    let mpackage: MPackage;
-    if (this.childrens.length === 0) { this.childrens.push(new MPackage(this, null)); }
-    mpackage = this.childrens[0];
     for (key in json) {
       if (!json.hasOwnProperty(key)) { continue; }
       const namespacedclass: string = key;
-      const mmclass: IClass = this.metaParent.getClassByNameSpace(namespacedclass, false, true);
+      const mmclass: M2Class = this.metaParent.getClassByNameSpace(namespacedclass, false, true);
       const value: Json = json[key];
-      const c: MClass = new MClass(mpackage, value, mmclass);
-      console.log('mclass:', c);
-      if (destructive) { mpackage.childrens.push(c); }
+      if (!this.childrens.length) new MPackage(this, null, metamodel.getDefaultPackage());
+      new MClass(this.childrens[0], value, mmclass);
     }
 
     /*
@@ -69,30 +62,42 @@ export class Model extends IModel {
     */
   }
   // parse(deep: boolean) { super.parse(deep); }
-  mark(bool: boolean): boolean {return super.mark(bool); }
-  validate(): boolean { return super.validate(); }
-  conformsTo(m: IModel): boolean { return super.conformsTo(m); }
-  draw(): void { return super.draw(); }
+
+  getAllClasses(): MClass[] { return super.getAllClasses() as MClass[]; }
+  getAllReferences(): MReference[] { return super.getAllReferences() as MReference[]; }
+  getClass(fullname: string, throwErr: boolean = true, debug: boolean = true): MClass {
+    return super.getClass(fullname, throwErr, debug) as MClass; }
 
   generateModel(): Json {
     const json: Json =  {};
     const classRoot: MClass = this.getClassRoot();
-    json[classRoot.getNamespaced()] = classRoot.generateModel(true);
+    if (!classRoot) return Model.emptyModel;
+    json[classRoot.metaParent.getNamespaced()] = classRoot.generateModel(true);
     return json; }
 
-  addClass(parentPackage: MPackage, metaVersion: IClass): void {
-    // const childJson: Json = U.cloneObj<Json>(metaVersion.getJson());
-    // Json.write(childJson, '@type', metaVersion.fullname);
-    const c = new MClass(parentPackage, null, metaVersion);
-    // U.pe(!!c.customStyle, '1', c, c.customStyle);
-    // Json.write(childJson, eCoreClass.name, metaVersion.name.toLowerCase() + '_obj');
-    // c.setName(metaVersion.name.toLowerCase() + '_obj');
-    parentPackage.childrens.push(c);
-    // U.pe(!!c.customStyle, '2', c, c.customStyle);
-    c.generateVertex(null).draw();
-    // U.pe(!!c.customStyle, '3', c, c.customStyle);
-    // U.pe(true, '4', c, c.customStyle);
-    // IClass.updateAllMClassSelectors();
+  // namespace(set: string = null): string { return this.metaParent.namespace(set); }
+
+  getDefaultPackage(): MPackage {
+    if (this.childrens.length !== 0) { return this.childrens[0]; }
+    U.ArrayAdd(this.childrens, new MPackage(null, null, this.metaParent.getDefaultPackage()) );
+    return this.childrens[0]; }
+
+
+  conformability(metaparent: MetaModel, outObj?: any, debug?: boolean): number {
+    U.pw(true, 'm1.conformability(): to do.');
+    return 1;
   }
 
+
+  getPrefix(): string { return 'm'; }
+  getPrefixNum(): string { return 'm1'; }
+  isM1(): boolean { return true; }
+  isM2(): boolean { return false; }
+  isM3(): boolean { return false; }
+
+  duplicate(nameAppend: string = '_Copy'): Model {
+    const m = new Model(null, null);
+    m.copy(this);
+    m.refreshGUI();
+    return m; }
 }
