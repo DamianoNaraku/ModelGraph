@@ -157,6 +157,7 @@ export class IVertex {
     this.edgesStart = [];
     this.edgesEnd = [];
     this.classe = logical;
+    this.classe.vertex = this;
     this.setGraph(logical.getModelRoot().graph);
     if (!size) {
       size = IVertex.defaultSize;

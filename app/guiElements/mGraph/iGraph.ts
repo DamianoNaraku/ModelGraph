@@ -293,15 +293,12 @@ export class IGraph {
     let i: number;
     let j: number;
     const earr: EEnum[] = this.model.getAllEnums();
-    for (i = 0; i < earr.length; i++) {
-      this.vertex.push(earr[i].generateVertex());
-    }
+    for (i = 0; i < earr.length; i++) { earr[i].generateVertex(); }
     const classArr: IClass[] = this.model.getAllClasses();
     const classEdges: IClass[] = [];
     for (i = 0; i < classArr.length; i++) {
-      if (classArr[i].shouldBeDisplayedAsEdge()) {
-        classEdges.push(classArr[i]);
-      } else { this.vertex.push(classArr[i].generateVertex()); }
+      if (classArr[i].shouldBeDisplayedAsEdge()) { classEdges.push(classArr[i]); continue; }
+      classArr[i].generateVertex();
     }
     // vertex disegnati, ora disegno gli edges.
     // Class-extends-edges

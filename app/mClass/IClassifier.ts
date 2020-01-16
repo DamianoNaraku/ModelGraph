@@ -53,6 +53,7 @@ export abstract class IClassifier extends ModelPiece{
     return U.toHtml<HTMLElement>('<div class="sidebarNode class"><p class="sidebarNodeName">$##name$</p></div>'); }
 
   generateVertex(): IVertex {
+    if (this.vertex) return;
     const lastView: ViewRule = this.getLastViewWith('vertexSize');
     const size: GraphSize =  lastView ? lastView.vertexSize : null;
     const v: IVertex = this.vertex = new IVertex(this, size);

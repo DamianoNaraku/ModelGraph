@@ -103,9 +103,9 @@ export class ISidebar {
     const modelOfGraph: IModel /*m2*/ = Status.status.getActiveModel();
     const graph: IGraph = modelOfGraph.graph; /*m2*/
     U.pe(!graph, 'invalid graph of model:', modelOfGraph);
-    console.log('pre Add empty class');
-    if ( metaParent instanceof IClass /*m3*/) { modelOfGraph.getDefaultPackage().addEmptyClass(metaParent); }
-    else if ( metaParent instanceof EEnum /*m3*/) { modelOfGraph.getDefaultPackage().addEmptyEnum(); }
+    const pkg: IPackage = modelOfGraph.getDefaultPackage();
+    if ( metaParent instanceof IClass /*m3*/) { pkg.addEmptyClass(metaParent); }
+    else if ( metaParent instanceof EEnum /*m3*/) { pkg.addEmptyEnum(); }
     else { U.pe(true, 'unxpected class type of metaparent:', metaParent); }
     console.log('addSidebarNodeClick done'); }
 
