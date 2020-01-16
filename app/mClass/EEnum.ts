@@ -1,45 +1,4 @@
-import {
-  IVertex,
-  IEdge,
-  IField,
-  IPackage,
-  IAttribute,
-  AttribETypes,
-  IFeature,
-  Json,
-  U,
-  ModelPiece,
-  ISidebar,
-  IGraph,
-  IReference,
-  Status,
-  DetectZoom,
-  Model,
-  ECoreAttribute,
-  ECoreClass,
-  ECorePackage,
-  ECoreReference,
-  ECoreRoot,
-  Point,
-  GraphPoint,
-  IModel,
-  Size,
-  StringSimilarity,
-  MAttribute,
-  MReference,
-  MClass,
-  M2Class,
-  EdgeStyle,
-  M2Reference,
-  M2Attribute,
-  M3Package,
-  M3Reference,
-  M3Attribute,
-  M3Feature,
-  EdgeModes,
-  EdgePointStyle, EOperation, EParameter, Typedd, Type, Dictionary, IClassifier, ECoreEnum, EcoreLiteral, ELiteral, GraphSize
-} from '../common/Joiner';
-import ChangeEvent = JQuery.ChangeEvent;
+import {Dictionary, ECoreEnum, ELiteral, EType, IClassifier, IPackage, Json, ModelPiece, ShortAttribETypes, Type, U} from '../common/Joiner';
 
 export class EEnum extends IClassifier {
   childrens: ELiteral[];
@@ -57,7 +16,7 @@ export class EEnum extends IClassifier {
 
   addLiteral(): ELiteral {
     const attr: ELiteral = new ELiteral(this, null);
-    if (attr.value === Number.NEGATIVE_INFINITY) this.autofixEnumValues();
+    if (attr.ordinal === Number.NEGATIVE_INFINITY) this.autofixEnumValues();
     this.refreshGUI();
     return attr; }
 
@@ -127,12 +86,12 @@ export class EEnum extends IClassifier {
     let firsthole: number = 0;
     for (i = 0; i < this.childrens.length; i++) {
       const lit: ELiteral = this.childrens[i];
-      if (lit.value !== Number.NEGATIVE_INFINITY) {
-        valuesfound[lit.value] = true;
-        if (lit.value === firsthole) { while (valuesfound[++firsthole]) { ; } } // update first hole.
+      if (lit.ordinal !== Number.NEGATIVE_INFINITY) {
+        valuesfound[lit.ordinal] = true;
+        if (lit.ordinal === firsthole) { while (valuesfound[++firsthole]) { ; } } // update first hole.
         continue; }
-      lit.value = firsthole;
-      if (!lit.name) lit.name = this.name + '_' + lit.value;
+      lit.ordinal = firsthole;
+      if (!lit.name) lit.name = this.name + '_' + lit.ordinal;
     }
   }
 
@@ -141,15 +100,30 @@ export class EEnum extends IClassifier {
     for (i = 0; i < this.childrens.length; i++) { if (s === this.childrens[i].literal) { return true; } }
     return false; }
 
+  delete(): void {
+    const oldparent = this.parent;
+    super.delete();
+    if (oldparent) U.arrayRemoveAll(oldparent.enums, this);
+    // todo: che fare con gli attributes che hanno questo enum come tipo? per ora cambio in stringa.
+    let i: number = 0;
+    for (i = 0; i < Type.all.length; i++) {
+      if (Type.all[i].enumType !== this) continue;
+      Type.all[i].changeType(null, EType.get(ShortAttribETypes.EString), null, null); }
+    Type.updateTypeSelectors(null, false, false, true); }
+
+  getDefaultValueStr(): string { return this.childrens[0].name; }
+
   getAllowedValuesStr(): string[] {
     const arr: string[] = [];
     let i: number;
     for (i = 0; i < this.childrens.length; i++) { arr.push(this.childrens[i].name); }
     return arr; }
+
   getAllowedValuesInt(): number[] {
     const arr: number[] = [];
     let i: number;
-    for (i = 0; i < this.childrens.length; i++) { arr.push(this.childrens[i].value); }
+    for (i = 0; i < this.childrens.length; i++) { arr.push(this.childrens[i].ordinal); }
     return arr; }
+
 }
 

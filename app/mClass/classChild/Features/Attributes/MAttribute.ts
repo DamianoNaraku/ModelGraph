@@ -23,10 +23,10 @@ export class MAttribute extends IAttribute {
   values: any[];
   valuesStr: string;
 
-  static typeChange(arr: any[], newType: EType, oldType: EType): void {
+  static typeChange(arr: any[], newType: EType): void {
     let i = -1;
     while (++i < arr.length) {
-      if (Array.isArray(arr[i])) { MAttribute.typeChange(arr[i], newType, oldType); continue; }
+      if (Array.isArray(arr[i])) { MAttribute.typeChange(arr[i], newType); continue; }
       let newVal: any;
       switch (newType.short) {
         default: U.pe(true, 'unexpected type: ' + newType.short); break;
@@ -38,16 +38,17 @@ export class MAttribute extends IAttribute {
         case ShortAttribETypes.EBoolean: newVal = !!arr[i]; break;
         case ShortAttribETypes.EChar:
           newVal = (arr[i] + '')[0];
-          if (newVal === undefined) { newVal = newType.defaultValue; }
+          if (newVal === undefined || newVal === null) { newVal = newType.defaultValue; }
           break;
         case ShortAttribETypes.EString: newVal = (arr[i] === null || arr[i] === undefined ? null : '' + arr[i]); break;
         case ShortAttribETypes.EInt: case ShortAttribETypes.EByte: case ShortAttribETypes.EShort: case ShortAttribETypes.ELong:
           let tentativo: number = parseInt('' + arr[i], 10);
           tentativo = !isNaN(+tentativo) ? (+tentativo) : newType.defaultValue;
           tentativo = Math.min(newType.maxValue, Math.max(newType.minValue, tentativo));
+          newVal = tentativo;
           break;
       }
-
+      U.pe(newVal === null || newVal === undefined, 'failed to fix value:', arr, newType);
       arr[i] = newVal;
     }
   }
@@ -71,6 +72,7 @@ export class MAttribute extends IAttribute {
       U.pw(true, 'marked attribute (' + this.metaParent.name + ') with type ', this.getType(), 'values:', this.values, 'this:', this);
       this.mark(true, 'errorValue');
     } else { this.mark(false, 'errorValue'); }
+    this.refreshGUI();
 /*
     this.views = [];
     let i: number;
@@ -129,11 +131,15 @@ export class MAttribute extends IAttribute {
     const enumtype: EEnum = this.getType().enumType;
     if (enumtype) {
       const admittedValues: string[] = enumtype.getAllowedValuesStr();
-      for (i = 0; i < this.values.length; i++) { if (!U.arrayContains(admittedValues, this.values[i])) return false; }
+      for (i = 0; i < this.values.length; i++) {
+        if (!U.arrayContains(admittedValues, this.values[i])) { return false; }
+      }
       return true; }
     U.pe(!primitive, 'found type in Mattribute that is neither primitive nor enumerative', this);
+    // console.log('U.isIntegerArray(values:', this.values, ', minvalue:', primitive.minValue, ' maxval:', primitive.maxValue);
     switch (primitive.long) {
-      default: U.pe(true, 'unexpected mattrib type:', this.getType()); return false;
+    default: U.pe(true, 'unexpected mattrib type:', this.getType()); return false;
+      // case AttribETypes.void: ...
       case AttribETypes.EDate: U.pe(true, 'eDAte: todo'); break;
       case AttribETypes.EBoolean: return true;
       case AttribETypes.EChar: return U.isString(this.values) || U.isCharArray(this.values);
@@ -156,7 +162,10 @@ export class MAttribute extends IAttribute {
     switch (html.tagName.toLowerCase()) {
       default: U.pe(true, 'unexpected tag:', html.tagName, ' of:', html, 'in event:', e); break;
       case 'textarea':
-      case 'input': this.setValueStr((html as HTMLInputElement).value); break;
+      case 'input':
+        this.setValueStr((html as HTMLInputElement).value);
+        (html as HTMLInputElement).value = this.getValueStr();
+        break;
       case 'select': U.pe(true, 'Unexpected non-disabled select field in a Vertex.MAttribute.'); break;
     }
     super.fieldChanged(e, true);
@@ -171,30 +180,60 @@ export class MAttribute extends IAttribute {
       U.pw(true, 'This attribute have upperbound > 1 and the input is not a valid JSON string: ' + valStr);
       return; } finally {}
   }
-  setValue(values: any[] = null, refreshGUI: boolean = true, debug: boolean = false) {
+  setValue(values: any[] = null, debug: boolean = false, autofix: boolean = true): void {
     const values0 = values;
-    if (U.isEmptyObject(values, true, true) || values === [{}]) {
-      values = this.getType().defaultValue(); }
+    if (U.isEmptyObject(values, true, true)
+     || (Array.isArray(values) && (values.length === 0 || (values.length === 1 && U.isEmptyObject(values[0]))))) {
+      values = this.getType().defaultValue(); } // redundancy, i'm double fixing it. should check if autofix fixes nulls.
     if (!Array.isArray(values)) { values = [values]; }
+    // U.pe(values0 === null && values.length === 1 && values[0] === [0], 'wtf?', values0, values, this);
+    if (debug) console.trace();
     U.pif(debug, this.metaParent.fullname() +  '.setvalue: |', values0, '| --> ', values, 'defaultv:', this.getType().defaultValue(), 'type:', this.getType());
     this.values = values;
-    U.pe('' + values === '' + undefined, 'undef:', values, this); 
-    // this.replaceVarsSetup();
-    if (refreshGUI) { this.refreshGUI(); } else { this.graph().propertyBar.refreshGUI(); } }
+    U.pe('' + values === '' + undefined || '' + values === '' + null, 'undef:', values, this);
+    U.pif(debug, 'end value:', values);
+    if (autofix) { this.valuesAutofix(debug); }
+    U.pif(debug, 'end value post autofix:', this.values);
+  }
 
+  valuesAutofix(debug: boolean = false): void {
+    const type: Type = this.getType();
+    const conversionType = type.enumType || type.primitiveType;
+    let i: number;
+    if (type.enumType) {
+      // conversionType = null; // EType.get(ShortAttribETypes.EString);
+      const defaultValue: string = type.enumType.getDefaultValueStr();
+      if (!defaultValue) { this.values = []; return; }
+      const admittedValues: string[] = type.enumType.getAllowedValuesStr();
+      let j: number;
+      for (j = 0; j < this.values.length; j++) {
+        this.values[j]+= '';
+        if (U.arrayContains(admittedValues,  this.values[j])) { continue; }
+        this.values[j] = admittedValues[0];
+      }
+    }
+    if (type.primitiveType) { MAttribute.typeChange(this.values, type.primitiveType); }
+  }
   getValueStr(debug: boolean = false): string {
-    let ret: any;
-    if (this.metaParent.upperbound === 1) {
-      ret = this.values.length ? this.values[0] : '';
-    } else { ret = this.values; }
-    let retStr: string = Array.isArray(ret) ? JSON.stringify(ret) : '' + ret;
-    if (retStr === '' + undefined) { this.setValue(null); retStr = this.valuesStr = '' + this.values[0]; }
+    let ret: any[] | any;
+    ret =  this.values;
+    U.pif(debug, 'getvaluestr: stage1', ret);
+    if (ret === undefined) ret = null;
+    let retStr = null;
+    if (ret !== null) {
+      if (!(Array.isArray(ret))) { ret = [ret]; }
+      U.pif(debug, 'stage 1.1:', ret, retStr);
+      if (this.metaParent.upperbound === 1) { ret = ret.length ? ret[0] : null; }
+      U.pif(debug, 'stage 1.2:', ret, retStr);
+      retStr = Array.isArray(ret) ? JSON.stringify(ret) : (ret === null || ret === undefined ? null : '' + ret); }
+    U.pif(debug, 'stage2', ret, retStr);
+    if (retStr === null) {
+      this.setValue(null);
+      U.pe(!this.values.length || this.values[0] === null, 'failed to set default val.', this.getType().defaultValue(), this.values );
+      retStr = (this.values.length ? '' + this.values[0] : null); }
+
     U.pif(debug, 'this.values:', this.values, ', val[0]:', this.values[0], 'retStr:', retStr);
-    ///
-    const field: IField = this.getField();
-    const html: HTMLElement | SVGElement = field ? field.getHtml() : null;
-    if (!html) { return retStr; }
-    ($(html).find('input')[0] as HTMLInputElement).value = retStr; // todo: delete
+    this.valuesStr = retStr;
     return retStr; }
 
   replaceVarsSetup(debug: boolean = false): void {

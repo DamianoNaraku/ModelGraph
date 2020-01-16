@@ -84,7 +84,7 @@ export abstract class Typedd extends ModelPiece {
     this.refreshGUI();
     this.refreshInstancesGUI(); }*/
 
-  getType(): Type { return this.type; }
+  getType(): Type { return this.type || this.metaParent.type; }
 
   getInfo(toLower: boolean = false): any {
     const info: any = super.getInfo(toLower);
@@ -124,13 +124,14 @@ export abstract class Typedd extends ModelPiece {
   refreshGUI_Alone(debug: boolean = true): void { this.getField().refreshGUI(true); }
 
   delete(): void {
+    const oldparent = this.parent;
     super.delete();
-    if (this.parent) {
-      if (this.parent instanceof IClass) {
-        U.arrayRemoveAll(this.parent.attributes, this as any);
-        U.arrayRemoveAll(this.parent.references, this as any);
-        U.arrayRemoveAll(this.parent.getOperations(), this as any);
-      } else if (this.parent instanceof EOperation) {
+    if (oldparent) {
+      if (oldparent instanceof IClass) {
+        U.arrayRemoveAll(oldparent.attributes, this as any);
+        U.arrayRemoveAll(oldparent.references, this as any);
+        U.arrayRemoveAll(oldparent.getOperations(), this as any);
+      } else if (oldparent instanceof EOperation) {
       } else { U.pe(true, 'unrecognized parent class:' + U.getTSClassName(this) + ':', this); }
     }
   }

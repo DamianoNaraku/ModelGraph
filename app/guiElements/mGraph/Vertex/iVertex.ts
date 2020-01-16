@@ -272,13 +272,54 @@ export class IVertex {
     U.fixHtmlSelected($(htmlRaw));
     this.autosize(false, false);
     Type.updateTypeSelectors($(this.getHtml()));
+    let onrefresh: string = this.htmlForeign.getAttribute('onrefreshgui');
+    const $htmlraw = $(htmlRaw);
+    let i: number;
+    const parenttmp = htmlRaw.parentNode;
+    const next = htmlRaw.nextSibling;
+    if (parenttmp) parenttmp.removeChild(htmlRaw);
+    // duplicate id removal. TODO: non funziona, forse rileva ancora gli id del vecchio html generato e risultano già inseriti on refresh.
+    /*const idarr = $htmlraw.find('[id]').addBack('[id]');
+    for (i = 0; i < idarr.length; i++) {
+      if (!document.getElementById(idarr[i].id)) { continue; }
+      idarr[i].innerHTML = '';
+      U.clearAttributes(idarr[i]);
+      idarr[i].style.display = 'none';
+    }*/
+    const scripts: JQuery<HTMLScriptElement> =  $htmlraw.find('script') as any;
+
+    for(i = 0; i < scripts.length; i++) {
+      // clone the script, empty it while keeping (to keep same indexedPath structure as the template), execute id
+      // todo: problema: tutti i successivi elementi con id statici verranno rimossi e avranno struttura template != struttura ongraph
+      //  e falliranno a mostrare il clicked fragment nello styleeditor.
+      // non va bene: se cambio lo stile quello script appeso al body rimane e devo aggiornare la pagina.
+      // since newlines are replaced with spaces, scripts inline // comments are not allowed. use /*comments*/
+      // const oldid = scripts[i].id;
+      // delete scripts[i].id;
+
+      //console.log('script:', scripts[i], 'length:', scripts[i].innerHTML.length, scripts[i].innerText.length);
+      if (!scripts[i].innerHTML.length) { continue; } // "deleted" empty element
+      const cloned = scripts[i];
+      /*const cloned: HTMLScriptElement = U.cloneHtml(scripts[i]); bug: probably getbyid is working on detached elements too.
+      it is altering the ViewRule.
+      cloned.id = oldid;
+      scripts[i].innerHTML = '';
+      document.body.appendChild(cloned);*/
+      console.log('eval:', cloned.innerHTML);
+      try { eval(cloned.innerHTML); } catch(e) { U.pw(true, 'error in user script of "' + this.logic().printableName()+ '":', e, 'script:', cloned); }
+    }
+    if (parenttmp) { if (next) parenttmp.insertBefore(htmlRaw, next); else parenttmp.appendChild(htmlRaw); }
+    // console.log('onrefresh:', onrefresh, 'window.onrefresh:', window[onrefresh]);
+    if (onrefresh) { window[onrefresh](this, this.logic(), htmlRaw); }
   }
 
   private autosize(refreshVertex: boolean = true, refreshEdge: boolean = true, debug: boolean = false): IVertex {
     const html: HTMLElement = this.getHtml();
     const autosize: string = html.dataset.autosize;
     // console.log('autosize() ? ', modelPiece.html, ' dataset.autosize:', autosize);
-    U.pe(autosize !== '1' && autosize !== 't' && autosize !== 'true', 'html:', html, 'foreign:', this.htmlForeign);
+    U.pe(autosize !== '1' && autosize !== 't' && autosize !== 'true',
+      'foreignObject:first-child must have data-autosize="true", and style {height: 100%;} required for now.' +
+      ' html:', html, 'foreign:', this.htmlForeign);
     if (autosize !== '1' && autosize !== 't' && autosize !== 'true') { return this; }
     // console.log('autosize() started');
     if (html.style.height !== 'auto') {
@@ -324,16 +365,21 @@ export class IVertex {
 
     for (i = 0; i < data.attributes.length; i++) {
       const field = this.drawA(data.attributes[i]);
-      $attContainer.append(field); }
+      field.id = 'ID' + data.attributes[i].id;
+      $attContainer.append(field);
+    }
 
     for (i = 0; i <  data.references.length; i++) {
       const field = this.drawR(data.references[i]);
-      $refContainer.append(field); }
+      field.id = 'ID' + data.references[i].id;
+      $refContainer.append(field);
+    }
 
     const operations: EOperation[] = data.getOperations();
     for (i = 0; i < operations.length; i++) {
       // console.log('append ref:', data.references[i]);
       const field = this.drawO(operations[i]);
+      field.id = 'ID' + operations[i].id;
       $opContainer.append(field); }
   }
   getStartPointHtml(): HTMLElement | SVGElement {
@@ -366,6 +412,8 @@ export class IVertex {
       if ($duplicate.length) { $foreign.remove(id); }
     }
     graphHtml.appendChild(foreign);
+    foreign.id = 'ID' + data.id;
+    foreign.dataset.vertexID = '' + this.id;
     // graphHtml.innerHTML += foreign.outerHTML;
     // unica soluzione: chiedi a stack e crea manualmente il foreignobject copiando tutti gli attributi.
     // graphHtml.appendChild<HTMLElement | SVGElement>(foreign); problema: non renderizza gli svg che non sono stati creati con document.createElementNS()
@@ -375,9 +423,10 @@ export class IVertex {
     // console.log('drawC_Vertex. size:', this.size, data.html, this.size = U.getSvgSize(data.html as SVGForeignObjectElement));
     if (!this.size) { this.size = this.getSize(); } else { this.setSize(this.size, false, false); }
 
-    foreign.dataset.vertexID = '' + this.id;
     U.pe(this.htmlForeign.tagName.toLowerCase() !== 'foreignobject', 'The custom style root must be a foreignObject node.', this.htmlForeign);
-    U.pe(this.htmlForeign.childNodes.length !== 1, 'The custom style must have a single root node.', this.htmlForeign);
+    U.pe(this.htmlForeign.childNodes.length !== 1, 'The custom style must have a single child node,' +
+      ' without spaces between <foreignObject> and the next tag. found ' + this.htmlForeign.childNodes.length + ' childrens.',
+      this.htmlForeign, this.htmlForeign.childNodes);
     // this.html = this.htmlForeign.firstChild as HTMLElement;
     return foreign; }
 

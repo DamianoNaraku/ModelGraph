@@ -106,7 +106,7 @@ export class ViewHtmlSettings{
     // U.pe(true, this, html, htmlstr, !html, !htmlstr, !html && !htmlstr);
     if (!html) { html = U.toHtml(htmlstr); }
     if (!htmlstr) { htmlstr = html ? html.outerHTML : null; }
-    U.pe(!html || !htmlstr, this, 'html:', html, 'htmlstr:', htmlstr, 'html?', !html, 'htmlstr?', !htmlstr, 'html && htmlstr?', !html && !htmlstr);
+    U.pe(!html || !htmlstr, this, 'html is null:', html, 'htmlstr:', htmlstr, 'html?', !html, 'htmlstr?', !htmlstr, 'html && htmlstr?', !html && !htmlstr);
     U.pe(!!html.parentElement || !!html.parentNode, 'parentElement shuld be null here:', html, this);
     this.html = html;
     const $meta: JQuery<Element> = $(html).find('meta');
@@ -270,12 +270,19 @@ export class ViewRule {
   detach() {
     // if (!this.target) return; target must never be deleted in Viewww.
     U.arrayRemoveAll(this.target.views, this);
+    U.ArrayAdd(this.target.detachedViews, this);
     delete this.viewpoint.viewsDictionary[this.target.id];
     this.setTargetStr();
     // this.target = null; target must never be deleted in ViewRule
   }
 
   getViewPoint(): ViewPoint { return this.viewpoint; }
+
+  delete(): void {
+    console.log('modelview.delete() todo.' +
+      'non posso invece di implementarla lasciarla "orfana" senza target e la faccio ignorare dal loader.' +
+      'altrimenti non potrei cancellare la view senza cancellare il modelpiece, o forse basta settare tutto a null e mollarla lì?');
+  }
 }
 //todo: nuova idea:
 //  creo un set di View[] dentro un ViewPoint.
@@ -340,7 +347,7 @@ export class ViewPoint extends ViewRule{
 
   // toString(): string { return JSON.stringify(this); }
   // should only be called from ViewPointShell
-  apply(m: IModel = null, onlyAttach: boolean = false, debug: boolean = true): void {
+  apply(m: IModel = null, onlyAttach: boolean = false, debug: boolean = false): void {
     if (m !== this.target) this.detach();
     this.target = m = (m || this.target);
     U.pe(!this.target, 'called ViewPoint.apply() without a target.', this);

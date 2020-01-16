@@ -134,15 +134,19 @@ export class MClass extends IClass {
       this.referencesIN = [];
       while (++i < attributes.length) {
         const attr: MAttribute = new MAttribute(this, null, attributes[i]);
-        U.ArrayAdd(this.childrens, attr);
+        /*U.ArrayAdd(this.childrens, attr);*/
         U.ArrayAdd(this.attributes, attr);
+        console.trace();
+        console.log('add[' + i + '/' + this.metaParent.attributes.length + ']:', attr, this.attributes, this.attributes.length, this);
       }
       i = -1;
       while (++i < references.length) {
         const ref: MReference = new MReference(this, null, references[i]);
-        U.ArrayAdd(this.childrens, ref);
+        /*U.ArrayAdd(this.childrens, ref);*/
         U.ArrayAdd(this.references, ref); }
     }
+    U.pe(this.attributes.length > 4, this, this.attributes.length);
+
     /*{                                                           <--- classRoot
         "-xmlns:xmi": "http://www.omg.org/XMI",
         "-xmlns:org.eclipse.example.bowling": "https://org/eclipse/example/bowling",
@@ -172,27 +176,27 @@ export class MClass extends IClass {
           if (metaAttr) {
             const cindex: number = this.getChildrenIndex_ByMetaParent(metaAttr);
             const aindex: number = this.getAttributeIndex_ByMetaParent(metaAttr);
-            const newA: MAttribute = new MAttribute(this, value, metaAttr);
-            this.childrens[cindex] = this.attributes[aindex] = newA;
+            /*const newA: MAttribute = new MAttribute(this, value, metaAttr);
+            this.childrens[cindex] = this.attributes[aindex] = newA;*/
+            this.attributes[aindex].parse(value, true);
           } else if (metaRef) {
             const cindex: number = this.getChildrenIndex_ByMetaParent(metaRef);
             const rindex: number = this.getReferenceIndex_ByMetaParent(metaRef);
-            const newR: MReference = new MReference(this, value, metaRef);
-            this.childrens[cindex] = this.references[rindex] = newR;
+            // const newR: MReference = new MReference(this, value, metaRef);
+            // this.childrens[cindex] = this.references[rindex] = newR;
+            let j: number;
+            let edges: IEdge[] = this.references[rindex].getEdges();
+            for (j = 0; j < edges.length; j++) {}
+            this.references[rindex].parse(value, true);
+
           } else {
             U.pe(true, 'model attribute-or-reference type not found. class:', this, ', json:', json,
               'key/name:', key, ', Iclass:', this.metaParent); }
           break;
       }
     }
-/*
-    this.views = [];
-    for(i = 0; i < this.parent.views.length; i++) {
-      const pv: PackageView = this.parent.views[i];
-      const v = new ClassView(pv);
-      this.views.push(v);
-      pv.classViews.push(v); }*/
-    // this.refreshGUI_Alone();
+    console.log('here2', this, this.attributes.length);
+    U.pe(this.attributes.length > 4, this, this.attributes.length);
   }
   modify_Old(json: Json, destructive: boolean = true): void {
     /*{                                                                                           <-- :classroot

@@ -191,7 +191,7 @@ export class IEdge {
 
     // if (prevVertexSize) { prevPt = prevVertexSize} //IVertex.closestIntersection(); }
     if (debug) {
-      console.clear();
+      U.cclear();
       Status.status.getActiveModel().graph.markg(prevPt, true, 'green');
       if (prevVertexSize) { Status.status.getActiveModel().graph.markgS(prevVertexSize, false, 'white'); }
       Status.status.getActiveModel().graph.markg(nextPt, false, 'green');
@@ -360,7 +360,7 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
     const graph: IGraph = this.logic.getModelRoot().graph;
 
     if (debug) {
-      console.clear();
+      U.cclear();
       if (startVertexSize) { graph.markgS(startVertexSize, true, 'blue'); }
       if (endVertexSize) { graph.markgS(endVertexSize, false); } }
 
@@ -628,7 +628,7 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
     }
     this.shadow.style.cursor = this.html.style.cursor = cursor;
     while (++i < this.midNodes.length) { this.midNodes[i].refreshGUI(null, false); }
-    if (debug) { console.clear(); }
+    if (debug) { U.cclear(); }
     U.pif(debug, 'fake     pre: ', preFake, ', next:', nextFake);
     U.pif(debug, 'real     pre: ', pre, ', next:', next);
     pre.refreshGUI(null, true);
@@ -643,7 +643,7 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
     this.html.setAttributeNS(null, 'stroke-width', '' + 5);
     this.html.classList.add('selected_debug');
     this.startNode.show();
-    if (debug) { console.clear(); }
+    if (debug) { U.cclear(); }
     U.pif(debug, 'midnodes:', this.midNodes);
     for (i = 0; i < this.midNodes; i++) { this.midNodes[i].show(debug); }
     this.endNode.show();
@@ -731,7 +731,7 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
   private appendTailHead(cosa: SVGSVGElement, onEnd: boolean, pathStr: string, debug: boolean = false) {
     if (!cosa) { return; }
     // debug = true;
-    if (debug) console.clear();
+    if (debug) U.cclear();
     const oldPathStr: string = pathStr;
     let startsub: number;
     let endsub: number;

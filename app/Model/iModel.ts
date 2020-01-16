@@ -95,7 +95,7 @@ export abstract class IModel extends ModelPiece {
 
   fullname(): string { return this.name; }
 
-  getVertex(): IVertex { U.pe(true, 'IModel.getVertex();'); return undefined; }
+  getVertex(): IVertex { U.pe(true, 'IModel.getVertex();', this); return undefined; }
 
   getAllReferences(): IReference[] {
     const arr: IReference[] = [];

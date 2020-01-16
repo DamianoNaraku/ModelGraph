@@ -36,7 +36,7 @@ export class ISidebar {
   container: HTMLElement = null;
   packageContainer: HTMLElement = null;
   classContainer: HTMLElement = null;
-  htmls: Dictionary<string /*ModelPiece.fullname*/, HTMLElement | SVGGElement> = null;
+  // htmls: Dictionary<string /*ModelPiece.fullname*/, HTMLElement | SVGGElement> = null;
   // nodeContainer: HTMLDivElement = null;
   constructor(model: IModel, container: HTMLElement) {
     this.model = model;
@@ -49,23 +49,25 @@ export class ISidebar {
     this.classContainer.classList.add('sidebarClassContainer');
     this.container.appendChild(this.packageContainer);
     this.container.appendChild(this.classContainer);
-    this.htmls = this.loadDefaultHtmls(); }
-
-  loadDefaultHtmls(): Dictionary<string, HTMLElement | SVGGElement> {
-    console['' + 'trace']('refresh left iSidebar');
-    // bug: todo: not refreshing quando cambio il nome di un m2class. però i classSelector si aggiornano.
-    this.clear();
-    let arr: IClassifier[];
-    let i;
-    this.htmls = {};
-    /*if (false && false) {
-      arr = this.model.childrens;
-      for (i = 0; i < arr.length; i++) { this.htmls[arr[i].fullname()] = IPackage.defaultSidebarHtml(); } } */
-    arr = this.model.getAllClasses();
-    Array.prototype.push.apply(arr, this.model.getAllEnums());
-    for (i = 0; i < arr.length; i++) { this.htmls[arr[i].fullname()] = arr[i].getSidebarHtml();  }
     this.updateAll();
-    return this.htmls; }
+    // this.htmls = this.loadDefaultHtmls();
+  }
+  /*
+    loadDefaultHtmls(): Dictionary<string, HTMLElement | SVGGElement> /*
+      console.log('refresh left iSidebar');
+      // bug: todo: not refreshing quando cambio il nome di un m2class. però i classSelector si aggiornano.
+      this.clear();
+      let arr: IClassifier[];
+      let i;
+      // this.htmls = {};
+      /*if (false && false) {
+        arr = this.model.childrens;
+        for (i = 0; i < arr.length; i++) { this.htmls[arr[i].fullname()] = IPackage.defaultSidebarHtml(); } } * /
+      // arr = this.model.getAllClasses();
+      // if (this.model.isM3()) Array.prototype.push.apply(arr, this.model.getAllEnums());
+      // for (i = 0; i < arr.length; i++) { this.htmls[arr[i].fullname()] = arr[i].getSidebarHtml();  }
+      this.updateAll();
+      return this.htmls; */
 
   clear() {
     U.clear(this.packageContainer);
@@ -73,10 +75,12 @@ export class ISidebar {
 
 
   updateAll() {
+    this.clear();
     let i;
-    const arr: IClassifier[] = this.model.getAllClasses();
-    Array.prototype.push.apply(arr, this.model.getAllEnums());
-    for (i = 0; i < arr.length; i++) { this.updateNode( arr[i], this.classContainer); }
+    const cla: IClassifier[] = this.model.getAllClasses();
+    const enu: IClassifier[] = this.model.isM2() ? [] : this.model.getAllEnums();
+    for (i = 0; i < cla.length; i++) { this.updateNode(cla[i], this.classContainer); }
+    for (i = 0; i < enu.length; i++) { this.updateNode(enu[i], this.classContainer); }
   }
 
   addEventListeners(html: HTMLElement): void {
@@ -105,18 +109,15 @@ export class ISidebar {
     else { U.pe(true, 'unxpected class type of metaparent:', metaParent); }
     console.log('addSidebarNodeClick done'); }
 
-  updateNode(piece: ModelPiece, containerr: HTMLElement) {
-    let html: HTMLElement = U.cloneHtml(this.htmls['' + piece.fullname()]);
-    html = U.replaceVars<HTMLElement>(piece, html);
+  updateNode(piece: IClassifier, containerr: HTMLElement) {
+    const html: HTMLElement = U.replaceVars<HTMLElement>(piece, piece.getSidebarHtml(), true);
     piece.linkToLogic(html);
     this.addEventListeners(html);
-    // const node: HTMLElement = ISidebar.createNodeContainer();
-    // node.innerHTML = html;
     containerr.appendChild(html); }
-
+/*
   fullnameChanged(old: string, neww: string): void {
     if (!this.htmls[old]) { return; }
     this.htmls[neww] = this.htmls[old];
-    delete this.htmls[old]; }
+    delete this.htmls[old]; }9*/
 }
 

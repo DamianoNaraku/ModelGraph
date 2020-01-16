@@ -38,7 +38,6 @@ export class MPackage extends IPackage {
 
   constructor(model: Model, json: Json, metaparent: IPackage) {
     super(model, json, metaparent);
-    this.parent = model;
     // todo: nel parse il json viene ignorato, cerca come vengono costruite le classi.
     // return;
     // this.setName(name);

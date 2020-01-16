@@ -153,7 +153,7 @@ export class PropertyBarr {
     U.pe(!(o instanceof ModelPiece), 'invalid parameter type:', U.getTSClassName(o), o);
     this.selectedModelPieceIsEdge = isEdge;
     if (!o) { return; }
-    console.log('PropertyBar.show: ', o);
+    // console.log('PropertyBar.show: ', o);
     U.clear(this.container);
     if (false && false) {
     } else if (o instanceof IModel) { this.container.append(this.getM_I(o));
@@ -365,10 +365,10 @@ export class PropertyBarr {
     const $html: JQuery<HTMLElement> = this.getTemplate(eLiteral);
     this.removeOthers($html, '.literal'); // $html.find('.literal').show();
     this.setClassChild(eLiteral, $html);
-    $html.find('.value').val(eLiteral.value).off('change.pbar').on('change.pbar',
+    $html.find('.value').val(eLiteral.ordinal).off('change.pbar').on('change.pbar',
       (evt: Event) => {
         const input: HTMLInputElement = evt.currentTarget as HTMLInputElement;
-        eLiteral.value = +input.value;
+        eLiteral.ordinal = +input.value;
         eLiteral.refreshGUI();
       });
     $html.find('input.literal').val(eLiteral.literal).off('change.pbar').on('change.pbar',

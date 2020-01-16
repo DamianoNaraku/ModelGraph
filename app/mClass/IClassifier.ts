@@ -67,7 +67,7 @@ export abstract class IClassifier extends ModelPiece{
     super.setName(value, refreshGUI);
     const model: IModel = this.parent ? this.getModelRoot() : null;
     let i: number;
-    for (i = 0; model && i < model.instances.length; i++) { model.instances[i].sidebar.fullnameChanged(oldName, this.name); }
+    // for (i = 0; model && i < model.instances.length; i++) { model.instances[i].sidebar.fullnameChanged(oldName, this.name); }
     Type.updateTypeSelectors(null, false, true, true);
     return this.name; }
 

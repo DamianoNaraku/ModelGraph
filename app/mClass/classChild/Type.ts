@@ -1,34 +1,34 @@
 import {
+  AttribETypes,
+  Dictionary,
+  EEnum,
   EOperation,
-  IClass,
-  IField,
-  IGraph, Info, IPackage,
-  IVertex, Json,
+  EParameter,
   M2Attribute,
   M2Class,
+  M2Package,
   M2Reference,
-  M3Attribute,
-  M3Reference,
-  MAttribute, MClass,
+  MAttribute,
   ModelPiece,
-  MReference,
   ShortAttribETypes,
-  Status, EEnum,
-  U, Dictionary, AttribETypes, IAttribute, PropertyBarr, M2Package, IEdge, EParameter, Typedd
+  Status,
+  Typedd,
+  U
 } from '../../common/Joiner';
 import ChangeEvent = JQuery.ChangeEvent;
 
 export class Type {
-  private static all: Type[] = [];
+  public static all: Type[] = [];
   private static idMax: number = 0;
   private static allByID: Dictionary<number, Type> = {};
   static classTypePrefix: string = '#//';
   private typestr: string;
-  public primitiveType: EType;
-  public classType: M2Class;
-  public enumType: EEnum;
-  private owner: ModelPiece;
+  public primitiveType: EType = null;
+  public classType: M2Class = null;
+  public enumType: EEnum = null;
+  public owner: ModelPiece = null; // todo: cambia to Typedd
   private id: number;
+  public printablename: string;
 
   static updateTypeSelectors($searchRoot: JQuery<HTMLElement>, primitives: boolean = true, enums: boolean = true, classes: boolean = true): void{
     if (!$searchRoot) { $searchRoot = $(document.body); }
@@ -40,9 +40,10 @@ export class Type {
     const notquery = (primitives ? U.startSeparator(key) + '.template select[data-primitive="true"]' : '') +
       (enums ? U.startSeparator(key) + '.template select[data-enum="true"]' : '') +
       (classes ? U.startSeparator(key) + '.template select[data-class="true"]' : '');
-    console.log(query);
+//    console.log(query);
     const $selects: JQuery<HTMLSelectElement> = $searchRoot.find(query).not(notquery) as any;
     for (let i = 0; i < $selects.length; i++) { Type.updateTypeSelector($selects[i]); }
+    if (classes && Status.status.m &&  Status.status.m.sidebar) { Status.status.m.sidebar.updateAll(); }
   }
   static updateTypeSelector(selectHtml: HTMLSelectElement): void{
     const addPrimitive = selectHtml.dataset.primitive === "true";
@@ -54,6 +55,7 @@ export class Type {
 
   private static selectors: {all: HTMLSelectElement[], primitives: HTMLSelectElement[], classes: HTMLSelectElement[], enums: HTMLSelectElement[]}
     = {all: [], primitives: [], classes: [], enums: []};
+
   private static makeTypeSelector(selectHtml: HTMLSelectElement, selectedType: Type, addPrimitive: boolean, addEnum: boolean, addClass: boolean, addVoid: boolean): void {
     U.pe(!selectHtml, 'select is null');
     U.clear(selectHtml);
@@ -154,30 +156,42 @@ export class Type {
 
   defaultValue(): any {
     if (this.primitiveType) return this.primitiveType.defaultValue;
-    if (this.enumType) return this.enumType.childrens[0];
+    if (this.enumType) return this.enumType.childrens[0].name;
     return null; }
 
   private applyTypeStr(): void {
     if (!this.typestr || !Status.status.mm) return;
-    const debug = false;
+    this.applyTypeStr0();
+    if (this.primitiveType) this.printablename = this.primitiveType.name;
+    if (this.enumType) this.printablename = this.enumType.name;
+    if (this.classType) this.printablename = this.classType.name ? this.classType.name : this.classType.metaParent.name;
+    if (this.typestr === '???void') this.printablename = 'void';
+    U.pe(!this.printablename, this);
+  }
+  private applyTypeStr0(): void {
+    const debug = true;
     let i: number;
-    const oldClass = this.classType;
-    const oldEnum = this.enumType;
-    const oldPrimitive = this.primitiveType;
-    this.enumType = this.classType = null;
+    let oldClass = this.classType;
+    let oldEnum = this.enumType;
+    let oldPrimitive = this.primitiveType;
+    this.enumType = this.classType = this.primitiveType = null;
     let typestr: string = this.typestr;
     // this.typestr = null;
-    if (typestr.indexOf(Type.classTypePrefix) !== 0) { this.primitiveType = EType.getFromLongString(typestr); return; }
-    const s: string = typestr.substr(Type.classTypePrefix.length);
-    const packages: M2Package[] = Status.status.mm.childrens;
-    for (i = 0; i < packages.length; i++) {
-      const pkg: M2Package = packages[i];
-      const c: M2Class = pkg.getClass(s);
-      if (c) { this.classType = c; break; }
-      const e: EEnum = pkg.getEnum(s);
-      if (e) { this.enumType = e; break; }
+    if(debug) { U.cclear(); }
+    U.pif(debug, 'changeType()', this, this.typestr);
+    this.primitiveType = EType.getFromLongString(typestr, false);
+    if (!this.primitiveType) {
+      U.pe(typestr.indexOf(Type.classTypePrefix) !== 0, 'allyTypeStr(): found typestr neither primitive nor classifier.', this.typestr, this);
+      const s: string = typestr.substr(Type.classTypePrefix.length);
+      const packages: M2Package[] = Status.status.mm.childrens;
+      for (i = 0; i < packages.length; i++) {
+        const pkg: M2Package = packages[i];
+        const c: M2Class = pkg.getClass(s);
+        if (c) { this.classType = c; break; }
+        const e: EEnum = pkg.getEnum(s);
+        if (e) { this.enumType = e; break; } }
     }
-    U.pe(!this.enumType && !this.classType, 'failed to find target: |' + typestr + '|', Status.status.mm);
+    U.pe(!this.primitiveType && !this.enumType && !this.classType, 'failed to find target: |' + typestr + '|', Status.status.mm);
 
     if (this.owner instanceof M2Reference) {
       if (oldClass === this.classType) return;
@@ -186,12 +200,14 @@ export class Type {
       if (this.owner.edges && this.owner.edges.length) { this.owner.edges[0].setTarget(this.classType.vertex); this.owner.edges[0].refreshGui(); }
       U.pif(debug, 'ref target changed; type:' + this + 'inside:', this.owner);
       this.owner.refreshGUI();
+      U.pif(debug, 'exit2: m2reference');
       return; }
 
+    U.pif(debug, 'typechanged:', this.owner, this);
     if (this.owner instanceof M2Attribute) {
-      if (oldPrimitive === this.primitiveType) return;
-      for (i = 0; i < this.owner.instances.length; i++) { MAttribute.typeChange(this.owner.instances[i].values, this.primitiveType, oldPrimitive); }
+      for (i = 0; i < this.owner.instances.length; i++) { this.owner.instances[i].valuesAutofix(); }
       this.owner.refreshGUI();
+      U.pif(debug, 'exit3: attrib.');
       return; }
     if (this.owner instanceof EOperation) {
       this.owner.refreshGUI();
@@ -243,17 +259,17 @@ export class EType {
     noWarning = new EType(AttribETypes.EChar, ShortAttribETypes.EChar, ' ');
     noWarning = new EType(AttribETypes.EString, ShortAttribETypes.EString, '');
     noWarning = new EType(AttribETypes.EBoolean, ShortAttribETypes.EBoolean, true);
-    noWarning = new EType(AttribETypes.EByte, ShortAttribETypes.EByte, 0, -127, 127);
-    noWarning = new EType(AttribETypes.EShort, ShortAttribETypes.EShort, 0, 32768, 32767);
-    noWarning = new EType(AttribETypes.EInt, ShortAttribETypes.EInt, 0, 2147483648, 2147483647);
+    noWarning = new EType(AttribETypes.EByte, ShortAttribETypes.EByte, 0, -128, 127);
+    noWarning = new EType(AttribETypes.EShort, ShortAttribETypes.EShort, 0, -32768, 32767);
+    noWarning = new EType(AttribETypes.EInt, ShortAttribETypes.EInt, 0, -2147483648, 2147483647);
     noWarning = new EType(AttribETypes.ELong, ShortAttribETypes.ELong, 0, -9223372036854775808, 9223372036854775808);
     noWarning = new EType(AttribETypes.EFloat, ShortAttribETypes.EFloat, 0, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY);
     noWarning = new EType(AttribETypes.EDouble, ShortAttribETypes.EDouble, 0,  Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY);
     return EType.shorts; }
 
-  static getFromLongString(ecorelongstring: string): EType {
+  static getFromLongString(ecorelongstring: string, throww: boolean = true): EType {
     switch (ecorelongstring) {
-    default: U.pe(true, 'Etype.Get() unrecognized type: ', ecorelongstring, '; string: ', AttribETypes.EString); break;
+    default: U.pe(throww, 'Etype.Get() unrecognized type: ', ecorelongstring, '; string: ', AttribETypes.EString); break;
     case AttribETypes.void: return EType.get(ShortAttribETypes.void);
     case AttribETypes.EChar: return EType.get(ShortAttribETypes.EChar);
     case AttribETypes.EString: return EType.get(ShortAttribETypes.EString);

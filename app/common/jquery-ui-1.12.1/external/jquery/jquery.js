@@ -8586,7 +8586,7 @@ if ( !getSetAttribute ) {
 	};
 
 	// Some attributes are constructed with empty-string values when not defined
-	attrHandle.id = attrHandle.name = attrHandle.coords =
+	attrHandle.id = attrHandle.printablename = attrHandle.coords =
 		function( elem, name, isXML ) {
 			var ret;
 			if ( !isXML ) {

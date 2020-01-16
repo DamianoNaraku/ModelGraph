@@ -76,6 +76,9 @@ export abstract class IClass extends IClassifier {
   getEdges(): IEdge[] { return this.edges; }
 
   delete(): void {
+    const oldparent = this.parent;
+    super.delete();
+    if (oldparent) U.arrayRemoveAll(oldparent.classes, this);
     // todo: che fare con le reference a quella classe? per ora cancello i campi.
     const pointers: IReference[] = this.getReferencePointingHere();
     let i;

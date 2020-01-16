@@ -97,6 +97,7 @@ export abstract class ModelPiece {
   key: number[] = null;
   views: ViewRule[] = null;
   annotations: EAnnotation[] = [];
+  detachedViews: ViewRule[] = []; // required to delete modelpiece
 
   static GetStyle(model: IModel, tsClass: string, checkCustomizedFirst: boolean = true): HTMLElement | SVGElement {
     let rootSelector: string;
@@ -280,7 +281,7 @@ export abstract class ModelPiece {
   }
   generateModelString(): string {
     const json: Json = this.generateModel();
-    console.log('genmodelstring:', json, 'this:',  this);
+    // console.log('genmodelstring:', json, 'this:',  this);
     return JSON.stringify(json, null, 4);
   }
 
@@ -305,7 +306,7 @@ export abstract class ModelPiece {
     if (!allowEmpty && (!value || value === '')) { U.pw(true, key + ' cannot be empty.'); return valueOld; }
     if (value === valueOld) { return valueOld; }
     const regexp: RegExp = new RegExp((allowEmpty ? '^$|' : '') + '^[a-zA-Z_$][a-zA-Z_$0-9]*$');
-    console.log('set' + key + '.valid ? ' + regexp.test(value) + ' |' + value + '|');
+//    console.log('set' + key + '.valid ? ' + regexp.test(value) + ' |' + value + '|');
     if (!regexp.test(value)) {
       value = value.replace(/([^a-zA-Z_$0-9])/g, '');
       let i: number = 0;
@@ -358,7 +359,7 @@ export abstract class ModelPiece {
     if (!value || value === '') { U.pw(true, 'name cannot be empty.'); return valueOld; }
     if (value === valueOld) { return valueOld; }
     const regexp: RegExp = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
-    console.log('setName.valid ? ' + regexp.test(value) + ' |' + value + '|');
+    // console.log('setName.valid ? ' + regexp.test(value) + ' |' + value + '|');
     if (!regexp.test(value)) {
       value = value.replace(/([^a-zA-Z_$0-9])/g, '');
       let i: number = 0;
@@ -384,12 +385,15 @@ export abstract class ModelPiece {
     this.name = value;
     const model: IModel = this.parent ? this.getModelRoot() : null;
     let i: number;
-    for (i = 0; model && i < model.instances.length; i++) { model.instances[i].sidebar.fullnameChanged(valueOld, this.name); }
+    // for (i = 0; model && i < model.instances.length; i++) { model.instances[i].sidebar.fullnameChanged(valueOld, this.name); }
     if (refreshGUI) { this.refreshGUI(); }
     Type.updateTypeSelectors(null, false, false, true);
     return this.name; }
 
-  fieldChanged(e: JQuery.ChangeEvent): void { U.pe(true, U.getTSClassName(this) + '.fieldChanged() should never be called.'); }
+  fieldChanged(e: JQuery.ChangeEvent): void {
+    // todo: fix for m2 too. i need to enable custom input in custom viewpoints.
+    // U.pe(true, U.getTSClassName(this) + '.fieldChanged() should never be called.');
+  }
 
   copy(other: ModelPiece, nameAppend: string = '_Copy', newParent: ModelPiece = null): void {
     this.setName(other.name + nameAppend);
@@ -417,9 +421,14 @@ export abstract class ModelPiece {
       U.arrayRemoveAll(this.metaParent.instances, this);
       this.metaParent = null; }
     let i: number;
-    for (i = 0; this.childrens && i < this.childrens.length; i++) { this.childrens[i].delete(); }
-    for (i = 0; this.instances && i < this.instances.length; i++) { this.instances[i].delete(); }
-    setTimeout(() => this.getVertex().refreshGUI(), 1);
+    let arr: any = U.shallowArrayCopy<ViewRule>(this.views);
+    for (i = 0; arr && i < arr.length; i++) { arr[i].delete(); }
+    arr = U.shallowArrayCopy<ViewRule>(this.detachedViews);
+    for (i = 0; arr && i < arr.length; i++) { arr[i].delete(); }
+    arr = U.shallowArrayCopy<ModelPiece>(this.childrens);
+    for (i = 0; arr && i < arr.length; i++) { arr[i].delete(); }
+    arr = U.shallowArrayCopy<ModelPiece>(this.instances);
+    for (i = 0; arr && i < arr.length; i++) { arr[i].delete(); }
   }
 
   validate(): boolean {
@@ -566,7 +575,8 @@ export abstract class ModelPiece {
     while (--i >= 0) {
       const v: ViewRule = this.views[i];
       const val: any = v['' + fieldname];
-      U.pe(fieldname in v, 'property |' + fieldname + '| does not exist in ViewRule. Field name has changed without changing the string accordingly.');
+      // U.pe(fieldname in v, 'property |' + fieldname + '| does not exist in ViewRule. Field name has changed without changing the string
+      // accordingly.');
       if (val !== undefined && val !== null) return v;
     }
     if (!this.metaParent) return null;
@@ -574,7 +584,8 @@ export abstract class ModelPiece {
     while (--i >= 0) {
       const v: ViewRule = this.metaParent.views[i];
       const val: any = v['' + fieldname];
-      U.pe(fieldname in v, 'property |' + fieldname + '| does not exist in ViewRule. Field name has changed without changing the string accordingly.(2)');
+      // U.pe(fieldname in v, 'property |' + fieldname + '| does not exist in ViewRule. Field name has changed without changing the string
+      // accordingly.(2)');
       if (val !== undefined && val !== null) return v;
     }
     return null; }

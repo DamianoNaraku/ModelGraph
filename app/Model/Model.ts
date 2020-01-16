@@ -29,13 +29,19 @@ export class Model extends IModel {
 
   getClassRoot(): MClass {
     if (this.classRoot) { return this.classRoot; }
-    if (this.getAllClasses().length) U.pw(true, 'failed to get m1 class root.', this);
+    const classes = this.getAllClasses();
+    if (classes.length) U.pw(true, 'Failed to get m1 class root.<br>You need to select a root class in M1\'s structured editor', this);
+
+    if (classes.length && classes[0]) {
+      classes[0].setRoot(true);
+      U.ps(true, 'Class root automatically selected.'); }
     return null; }
 
   parse(json: Json, destructive: boolean, metamodel: MetaModel = null): void {
     if (!metamodel) {metamodel = Status.status.mm; }
     U.pe(!metamodel, 'parsing a model requires a metamodel linked');
-    U.pe(json === '' + json, 'ModelPiece.parse() parameter must be a parsed ECORE/json');
+    U.pw(json === '' + json, 'ModelPiece.parse() parameter must be a parsed ECORE/json. autofixed.');
+    if (json === '' + json) json = JSON.parse(json + '');
     if (destructive) { this.childrens = []; }
     let key: string;
     for (key in json) {
@@ -43,8 +49,7 @@ export class Model extends IModel {
       const namespacedclass: string = key;
       const mmclass: M2Class = this.metaParent.getClassByNameSpace(namespacedclass, false, true);
       const value: Json = json[key];
-      if (!this.childrens.length) new MPackage(this, null, metamodel.getDefaultPackage());
-      new MClass(this.childrens[0], value, mmclass);
+      new MClass(this.getDefaultPackage(), value, mmclass);
     }
 
     /*
@@ -79,7 +84,7 @@ export class Model extends IModel {
 
   getDefaultPackage(): MPackage {
     if (this.childrens.length !== 0) { return this.childrens[0]; }
-    U.ArrayAdd(this.childrens, new MPackage(null, null, this.metaParent.getDefaultPackage()) );
+    new MPackage(this, null, this.metaParent.getDefaultPackage());
     return this.childrens[0]; }
 
 

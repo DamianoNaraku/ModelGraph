@@ -46,7 +46,7 @@ import {
   IReference,
   M3Reference,
   MAttribute,
-  prjson2xml, prxml2json, Type, LocalStorage, ViewPoint, SaveListEntry, EType, IClassifier, GraphSize
+  prjson2xml, prxml2json, Type, LocalStorage, ViewPoint, SaveListEntry, EType, IClassifier, GraphSize, ELiteral, EEnum
 } from './common/Joiner';
 import { PropertyBarrComponent }   from './guiElements/property-barr/property-barr.component';
 import { MGraphHtmlComponent }     from './guiElements/m-graph-html/m-graph-html.component';
@@ -204,6 +204,7 @@ function globalevents(): void {
     if (e.key === 'Escape') { Status.status.getActiveModel().graph.edgeChangingAbort(e); }
   });
   window['' + 'U'] = U;
+  window['' + 'ModelPiece'] = ModelPiece;
   window['' + 'IModel'] = IModel;
   window['' + 'Status'] = Status;
   window['' + 'M3Model'] = MetaMetaModel;
@@ -213,6 +214,9 @@ function globalevents(): void {
   window['' + 'M3Package'] = M3Package;
   window['' + 'M2Package'] = M2Package;
   window['' + 'MPackage'] = MPackage;
+  window['' + 'Enum'] = EEnum;
+  window['' + 'ELiteral'] = ELiteral;
+  window['' + 'IClassifier'] = IClass;
   window['' + 'IClass'] = IClass;
   window['' + 'M3Class'] = M3Class;
   window['' + 'M2Class'] = M2Class;
@@ -391,6 +395,7 @@ function main() {
       const mp: IClassifier = ModelPiece.getByKeyStr(key) as IClassifier;
       const size: GraphSize = new GraphSize().clone(vdic[key]);
       U.pw(!mp || !(mp instanceof IClassifier), 'invalid vertexposition save, failed to get classifier:', key, vdic);
+      if (!mp || !(mp instanceof IClassifier)) { U.cclear(); console.log(mp, 'key', key, 'vdic', vdic); continue; }
       mp.getVertex().setSize(size);
     }
   }

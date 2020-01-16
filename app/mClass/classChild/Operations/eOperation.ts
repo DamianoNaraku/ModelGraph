@@ -158,7 +158,7 @@ export class EOperation extends Typedd {
 				],*/
   }
 
-
+private static counter = 0;
   private getSignature(maxarguments: number = Number.POSITIVE_INFINITY): string {
     let parameterStr = '';
     maxarguments = Math.min(maxarguments, this.childrens.length);

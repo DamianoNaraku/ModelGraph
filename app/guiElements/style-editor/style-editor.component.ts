@@ -51,18 +51,18 @@ export class StyleEditor {
     this.display = this.$display[0];
     this.templates = this.$templates[0]; }
 
-  // static styleChanged(e: ClipboardEvent | ChangeEvent | KeyDownEvent | KeyUpEvent | KeyboardEvent): HTMLElement | SVGElement { }
   onPaste(e: any): void { // e: ClipboardEvent
     e.preventDefault();
     const div: HTMLDivElement | HTMLTextAreaElement = e.currentTarget as HTMLDivElement | HTMLTextAreaElement;
-    const text: string = (e as unknown as any).originalEvent.clipboardData.getData('text/plain');
-    div.innerText = text;
+    let text: string = (e as unknown as any).originalEvent.clipboardData.getData('text/plain');
+    text = U.replaceAll(text, '\n', ' ');
+    div.innerText = U.replaceAll(text, '\r', ' ');
   }
 
   isVisible(): boolean { return this.$root.is(':visible'); }
   show(m: ModelPiece, clickedLevel: Element) {
     this.clickedLevel = clickedLevel;
-    console.log('styleShow(', m, ')');
+    // console.log('styleShow(', m, ')');
     if (m instanceof IModel) { this.showM(m); return; }
     if (m instanceof IPackage) { this.showM(m.parent); return; }
     // if (m instanceof IPackage) { this.showP(m); return; }
@@ -140,7 +140,7 @@ export class StyleEditor {
 
   setStyleEditor($styleown: JQuery<HTMLElement>, model: IModel, mp: ModelPiece, style: StyleComplexEntry, templateLevel: Element, indexedPath: number[] = null): number[] {
     /// getting the template to fill.
-    const debug: boolean = true;
+    const debug: boolean = false;
     let i: number;
     let styleowntemplate: HTMLElement = $styleown[0];
     const isInherited: boolean = styleowntemplate.classList.contains('inherited');
@@ -155,7 +155,7 @@ export class StyleEditor {
     styleowntemplate = tmp;
     U.pe(!styleowntemplate.parentElement, 'null parent: ',  styleowntemplate, $styleown);
     $styleown = $(styleowntemplate);
-    console.log('styleComplexEntry:', style, 'mp:', mp, styleowntemplate, $styleown);
+    U.pif(debug, 'styleComplexEntry:', style, 'mp:', mp, styleowntemplate, $styleown);
     const obj: {
       editLabel: HTMLLabelElement;
       editAllowed: HTMLButtonElement;
@@ -320,9 +320,6 @@ export class StyleEditor {
                   obj.isParameter.disabled = true; }
     // main input (html); setup input
     obj.input.setAttribute('placeholder', U.replaceVarsString(mp, obj.input.getAttribute('placeholder')));
-    // obj.input.setAttribute('templated', 'true'); // debug, todo: remove
-    console.log('error here after making a instanceStyleObj. mp:', mp, 'htmlTemplateObj', obj, 'templateLevel:', templateLevel,
-      'isInheritable', isInheritable, 'isInherited', isInherited);
     obj.input.innerText = templateLevel.outerHTML;
 
     $styleown.find('.htmllevel').html((isInherited ? 'Instances Html' : 'Own html')
@@ -347,7 +344,7 @@ export class StyleEditor {
     o.text = 'default';
     if (style.isGlobalhtml) o.selected = true;
     optgroup.append(o);
-    console.log('viewpointSelect: ', mp.views);
+    // console.log('viewpointSelect: ', mp.views);
     for (i = 0; i < mp.views.length; i++) {
       const v: ViewRule = mp.views[i];
       o = document.createElement('option');
@@ -377,7 +374,8 @@ export class StyleEditor {
     const onStyleChange = () => {
       const inputHtml: Element = U.toHtml(obj.input.innerText);
       // console.log('PRE: ', inputHtml, 'outer:', inputHtml.outerHTML, 'innertext:', obj.input.innerText);
-      console.log('*** setting inheritable PRE. style.htmlobj', style.htmlobj, 'style:', style, ' templateLevel:', templateLevel, 'templ.parent:', templateLevel.parentElement);
+      U.pif(debug, '*** setting inheritable PRE. style.htmlobj:', style.htmlobj, ', style:', style, ', templateLevel:', templateLevel,
+        'templatelvl.parent:', templateLevel.parentElement, ', inputHtml:', inputHtml);
       if (templateLevel.parentElement) {
         templateLevel.parentElement.insertBefore(inputHtml, templateLevel);
         templateLevel.parentElement.removeChild(templateLevel);
@@ -386,7 +384,7 @@ export class StyleEditor {
         U.pe(!style.view || style.isGlobalhtml, 'default html cannot be modified.', style, 'todo: automatically make new ClassVieww');
         // ??old message?: se tutto va bene qui deve dare errore, crea una nuova ClassVieww e applicalo al modelpiece ed edita quello.
         style.htmlobj.setHtml(templateLevel = inputHtml);
-        console.log('*** setting inheritable POST. style.htmlobj', style.htmlobj, 'style:', style);
+        U.pif(debug,'*** setting inheritable POST. style.htmlobj', style.htmlobj, 'style:', style);
       }
       if (isOwn) { mp.refreshGUI(); }
       if (isInheritable) { mp.refreshInstancesGUI(); }
@@ -399,7 +397,7 @@ export class StyleEditor {
       // console.log('POST: ', inputHtml, 'outer:', inputHtml.outerHTML, 'innertext:', obj.input.innerText);
       // updatePreview();
     };
-    $(obj.input).off('paste.set').on('paste.set', (e: any/*ClipboardEvent*/) => { /*this.onPaste(e);*/ onStyleChange(); })
+    $(obj.input).off('paste.set').on('paste.set', (e: any/*ClipboardEvent*/) => { this.onPaste(e); onStyleChange(); })
       .off('change.set').on('change.set', onStyleChange)
       .off('input.set').on('input.set', onStyleChange)
       .off('blur.set').on('blur.set', onStyleChange)
@@ -430,12 +428,11 @@ export class StyleEditor {
     return indexedPath; }
 
   showMP(m: ModelPiece, clickedLevel: Element = null, asMeasurable: boolean = false, asEdge: boolean = false) {
-    console.log('styleShow(', m, ', ' + U.getTSClassName(m) + ')');
+    // console.log('styleShow(', m, ', ' + U.getTSClassName(m) + ')');
     let i: number;
     this.clickedLevel = clickedLevel = clickedLevel || this.clickedLevel;
     // set htmls
     const style: StyleComplexEntry = m.getStyle();
-    console.log(m);
     const styleinheritable: StyleComplexEntry = m.getInheritableStyle();
     const styleinherited: StyleComplexEntry = m.getInheritedStyle();
     const clickedRoot: Element = ModelPiece.getLogicalRootOfHtml(clickedLevel);
@@ -467,7 +464,7 @@ export class StyleEditor {
     // U.pe(!style.html, $styleown, m, clickedLevel, model, style, instanceshtml);
     // const clickedonStyle: HTMLElement | SVGElement = U.followIndexesPath(style.html, htmlPath) as HTMLElement | SVGElement;
     $html.find('.tsclass').html('' + m.printableName()); // + (htmlDepth === 0 ? ' (root level)' : ' (level&nbsp;' + htmlDepth + ')') );
-    console.log('setStyleEditor inherited, ', styleinherited);
+    // console.log('setStyleEditor inherited, ', styleinherited);
     let inheritedTemplateLevel: Element = null;
     if (styleinherited) {
       const inheritedTemplateRoot: Element = styleinherited.html;
@@ -477,7 +474,7 @@ export class StyleEditor {
 
     }
     this.setStyleEditor($styleInherited, model, m, styleinherited, inheritedTemplateLevel);
-    console.log('setStyleEditor inheritable, ', styleinheritable);
+    // console.log('setStyleEditor inheritable, ', styleinheritable);
     const styleInheritableRoot: Element = styleinheritable ? styleinheritable.html : null;
     if (!model.isM1()) { this.setStyleEditor($styleInheritable, model, m, styleinheritable, styleInheritableRoot); }
     else {$styleInheritable[0].innerHTML = '<h5 class="text-danger">M1 elements cannot give inheritance.</h5>'}
@@ -528,7 +525,7 @@ export class StyleEditor {
     operator.selectedIndex = 1;
     right.pattern = '[.]*';
     const setnameinput = (name: string) => {
-      template.dataset.name = name;
+      template.dataset.printablename = name;
       nameinput.value = name.substr(nameinput.dataset.prefix.length); };
 
     if (attr) {
@@ -612,7 +609,7 @@ export class StyleEditor {
       style.htmlobj.setDependencyArray(featuredependency);
       if (isr_) {
         clickedStyle.removeAttribute(template.dataset.name);
-        template.dataset.name = left.value.trim();
+        template.dataset.printablename = left.value.trim();
         clickedStyle.setAttribute(template.dataset.name, right.value);
       } else { clickedStyle.setAttribute(template.dataset.name, attrStr); }
       $input[0].innerText = clickedStyle.outerHTML;

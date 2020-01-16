@@ -107,7 +107,8 @@ export class M2Class extends IClass {
     super(pkg, Status.status.mmm.getAllClasses()[0]);
     this.instances = [];
     if (!pkg && !json) { return; } // empty constructor for .duplicate();
-    this.parse(json, true); }
+    this.parse(json, true);
+  }
 
   getModelRoot(): MetaModel { return super.getModelRoot() as MetaModel; }
 
@@ -250,6 +251,7 @@ export class M2Class extends IClass {
   duplicate(nameAppend: string = '_Copy', newParent: M2Package = null): M2Class {
     const c: M2Class = new M2Class(null, null);
     c.copy(this);
+    Type.updateTypeSelectors(null, false, false, true);
     c.refreshGUI();
     return c; }
 
@@ -286,7 +288,8 @@ export class M2Class extends IClass {
       const classe: M2Class = classes[i];
       for (j = 0; j < classe.extendsStr.length; j++) {
         const target: M2Class = dictionary[classe.extendsStr[j]];
-        U.pe(!target, 'e1, failed to find extended class:', classe.extendsStr[j], 'in classList:', classes, 'this:', this);
+        U.pe(!target, 'e1, failed to find extended class:', classe.extendsStr[j], 'in classList:', classes,
+          'classe to extend:', classe, 'dictionary:', dictionary, 'classe.extendsStr[j]:', classe.extendsStr[j]);
         classe.extendClass(null, target);
       }
       classe.extendsStr = [];

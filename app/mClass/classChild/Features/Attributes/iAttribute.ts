@@ -14,7 +14,7 @@ export abstract class IAttribute extends IFeature {
 
   constructor(parent: IClass, metaParent: IAttribute) {
     super(parent, metaParent);
-    if (parent) parent.attributes.push(this);
+    if (parent) U.ArrayAdd(parent.attributes, this);
   }
 
   /*static GetDefaultStyle(modelRoot: IModel, type: EType = null): HTMLElement | SVGElement {

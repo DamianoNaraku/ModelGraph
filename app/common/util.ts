@@ -180,6 +180,7 @@ export enum ShortAttribETypes {
 }
 
 export class U {
+  public static loopcounter = 0;
   private static prefix = 'ULibrary_';
   private static sizeofvar: HTMLElement = null;
   private static $sizeofvar: JQuery<HTMLElement> = null;
@@ -272,7 +273,21 @@ export class U {
       str += 'pw[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ' + s + '\t\t\r\n';
       console.warn('pw[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ', s);
     }
-    U.bootstrapPopup(str, 'warning', 3000);
+    U.bootstrapPopup(str, 'warning', 5000);
+    // s = (((b as unknown) as any[])['@makeMeCrash'] as any[])['@makeMeCrash'];
+    return str; }
+
+  static ps(b: boolean, s: any, ...restArgs: any[]): string {
+    if (!b) { return null; }
+    if (restArgs === null || restArgs === undefined) { restArgs = []; }
+    let str = s + '';
+    console.info('ps[0/' + (restArgs.length + 1) + ']: ', s);
+    for (let i = 0; i < restArgs.length; i++) {
+      s = restArgs[i];
+      str += 'ps[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ' + s + '\t\t\r\n';
+      console.info('pw[' + (i + 1) + '/' + (restArgs.length + 1) + ']: ', s);
+    }
+    U.bootstrapPopup(str, 'success', 3000);
     // s = (((b as unknown) as any[])['@makeMeCrash'] as any[])['@makeMeCrash'];
     return str; }
 
@@ -340,10 +355,15 @@ export class U {
     };
     if (!clone.id) { return clone; }
     let lastnum = getLastNum(clone.id) - 1;
-    const tmpID: string = clone.id + (clone.id.indexOf('_Clone') === -1) ? '_Clone' : '';
+    const tmpID: string = clone.id + (clone.id.indexOf('_Clone') === -1 ? '_Clone' : '');
     while (document.getElementById(tmpID + (++lastnum))) {}
     clone.id = tmpID + lastnum;
     return clone;
+  }
+
+  public static clearAttributes(node: Element): void {
+    let j: number;
+    for (j = 0; j < node.attributes.length; j++) { node.removeAttribute(node.attributes[j].name); }
   }
 
   static cloneObj<T extends object>(o: T): Json {
@@ -1458,6 +1478,8 @@ export class U {
     }
     return true; }
 
+  static cclear(): void { console.clear(); console.trace(); }
+
   static toDottedURI(uri: string): string {
     return U.replaceAll(U.replaceAll(uri.substring(uri.indexOf('://') + '://'.length), '\\', '/'), '/', '.');
   }
@@ -1525,9 +1547,8 @@ export class U {
   static isArray(v: any): boolean { return Array.isArray(v); }
 
   static isEmptyObject(v: any, returnIfNull: boolean = true, returnIfUndefined: boolean = false): boolean {
-    if (v === null) { return returnIfNull; }
-    if (v === undefined) { return returnIfUndefined; }
     return U.isObject(v, returnIfNull, returnIfUndefined) && $.isEmptyObject(v); }
+
   static isObject(v: any, returnIfNull: boolean = true, returnIfUndefined: boolean = false, retIfArray: boolean = false): boolean {
     if (v === null) { return returnIfNull; }
     if (v === undefined) { return returnIfUndefined; }
@@ -1830,6 +1851,7 @@ export class U {
   static processMeasurableExport(attr: Attr, logic: ModelPiece, measurableHtml: HTMLElement | SVGElement,
                                  size: Size = null, absTargetSize: Size = null): void {
     const rule: {destination: string, value: any} = U.computeResizableAttribute(attr, logic, measurableHtml, size, absTargetSize);
+    // U.pw(true, 'process export:', rule, attr);
     if (!rule) { return; }
     const attributePseudoSelector = '->';
     rule.destination = U.changeBackVarTemplateDelimitersInMeasurablesAttr(rule.destination);
@@ -1886,7 +1908,7 @@ export class U {
                                size: Size = null, absTargetSize: Size = null): void {
     const rule: {destination: string, value: any} = U.computeResizableAttribute(attr, logic, measurableHtml, size, absTargetSize);
     if (!rule) { return; }
-    // console.log('rule:', rule, 'attr:', attr);
+    console.log('rule:', rule, 'attr:', attr);
     const tmp: {parent: any, childkey: string} = U.replaceSingleVarGetParentAndChildKey(logic, rule.destination);
     if (!tmp) {
       U.pw(true, 'replaceVar of ' + rule.destination + '| failed. while parsing the resizable.rule |' + attr.name + ' in vertex of: ' + logic.name);
@@ -1901,7 +1923,7 @@ export class U {
       break;
     case 'values':
       if (destinationParent instanceof MAttribute) {
-        destinationParent.setValue(rule.value, false, true);
+        destinationParent.setValue(rule.value);
         break;
       }
       U.pw(true, 'The rule ' + attr.name + ': |' + attr.value + '| is trying to set "value" on an invalid modelPiece:', destinationParent);
@@ -1971,9 +1993,9 @@ export class U {
   }
 
   static processMeasurableVariable(attr: Attr, logic: ModelPiece, measurableHtml: HTMLElement | SVGElement,
-                                   size: Size = null, absTargetSize: Size = null, relTargetSize: Size = null, allowVariables: boolean = false): void {
+                                   size: Size = null, absTargetSize: Size = null, relTargetSize: Size = null, allowVariables: boolean = true): void {
     attr.ownerElement.setAttribute(attr.name.substr(1),
-      U.computeMeasurableAttributeRightPart(attr.value, attr, logic, measurableHtml, size, absTargetSize, relTargetSize,false));
+      U.computeMeasurableAttributeRightPart(attr.value, attr, logic, measurableHtml, size, absTargetSize, relTargetSize,allowVariables));
     return; }
 
   static strFirstDiff(s1: string, s2: string, len: number): string[] {
@@ -2141,7 +2163,12 @@ export class U {
     U.startSeparatorKeys[key] = true;
     return ''; }
 
-  static arrayContains(arr: any[], searchElem: any): boolean { return arr && arr.indexOf(searchElem) === -1; }
+  static arrayContains(arr: any[], searchElem: any): boolean {
+    if (!arr) return false;
+    // return arr && arr.indexOf(searchElem) === -1; not working properly on strings. maybe they are evaluated by references and not by values.
+    let i: number;
+    for (i = 0; i < arr.length; i++) { if (arr[i] === searchElem) return true; }
+    return false; }
 
   static toBoolString(bool: boolean): string { return bool ? "true" : "false"; }
   static fromBoolString(str: string): boolean { return str === "true" || str === 't' || +str === 1; }
@@ -2209,6 +2236,12 @@ export class U {
 /*
   static unescapeHtmlEntities(s: string): string { return HE.decode(s); }
   static escapeHtmlEntities(s: string): string { return HE.encode(s); }*/
+  static shallowArrayCopy<T>(arr: T[]): T[] {
+    let ret: T[] = [];
+    let i: number;
+    if (!arr) return null;
+    for (i = 0; i < arr.length; i++) { ret.push(arr[i]); }
+    return ret; }
 }
 
 export enum AttribETypes {
