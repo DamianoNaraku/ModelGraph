@@ -99,7 +99,7 @@ export class IEdge {
 
   static getByID(id: number): IEdge { return IEdge.idToEdge[id]; }
 
-  constructor(logic: IClass | IReference, startv: IVertex = null, end: IVertex = null) {
+  constructor(logic: IClass | IReference, index: number, startv: IVertex = null, end: IVertex = null) {
     if (!startv) {
       if (logic instanceof IClass) { startv = (logic as IClass).getVertex(); }
       if (logic instanceof IReference) { startv = (logic as IReference).getVertex(); } }
@@ -109,7 +109,9 @@ export class IEdge {
     this.id = IEdge.edgeCount++;
     IEdge.idToEdge[this.id] = this;
     this.logic = logic;
-    this.logic.edges.push(this);
+    if (!(this instanceof ExtEdge)) {
+      U.pe(index === null || index === undefined, 'index must be set.');
+      this.logic.edges[index] = this; }
     this.shell = document.createElementNS('http://www.w3.org/2000/svg', 'g'); // U.newSvg<SVGGElement>('g');
     this.html = document.createElementNS('http://www.w3.org/2000/svg', 'path'); // U.newSvg<SVGPathElement>('Path');
     this.shadow = U.newSvg<SVGPathElement>('path');
@@ -141,7 +143,7 @@ export class IEdge {
     this.shadow.setAttribute('stroke', 'none');
     this.shadow.setAttribute('visibility', 'hidden');
     this.shadow.setAttribute('pointer-events', 'stroke');
-    this.refreshGui(); }
+    if (end) this.refreshGui(); }
 
   static generateAggregationHead( fill: string = 'black', stroke: string = 'white', strokeWidth: number = 20): SVGSVGElement {
     // https://jsfiddle.net/Naraku/3hngkrc1/
@@ -331,6 +333,7 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
 
   refreshGui(debug: boolean = false, useRealEndVertex: boolean = null, usemidnodes: boolean = null) {
     debug = false;
+    U.pe(!this.logic, 'IEdge.logic is null:', this);
     if (useRealEndVertex === null) { useRealEndVertex = this.useRealEndVertex; }
     if (usemidnodes === null) { usemidnodes = this.useMidNodes; }
     /* setup variables */
@@ -431,7 +434,7 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
 
   addEventListeners(): void {
     const $html = $(this.shell);
-    $html.off('click.pbar').on('click.pbar', (e: ClickEvent) => IVertex.ChangePropertyBarContentClick(e, true) );
+    $html.off('click.pbar').on('click.pbar', (e: ClickEvent) => IVertex.ChangePropertyBarContentClick(e, this) );
     /*$html.off('mousedown.showStyle').on('mousedown.showStyle',
       (e: MouseDownEvent) => { Status.status.getActiveModel().graph.propertyBar.styleEditor.showE(this.logic); });*/
     $html.off('mousedown.startSetMidPoint').on('mousedown.startSetMidPoint',
@@ -649,7 +652,7 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
     this.endNode.show();
     // if (!triggered) { Status.status.getActiveModel().graph.propertyBar.styleEditor.showE(this.logic); }
     this.refreshGui();
-    IVertex.ChangePropertyBarContentClick(e, true);
+    IVertex.ChangePropertyBarContentClick(e, this);
     e.stopPropagation(); }
 
   onMouseDown(e: MouseDownEvent): void {
@@ -675,9 +678,13 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
     U.arrayRemoveAll(this.start.edgesStart, this);
     U.arrayRemoveAll(this.end.edgesEnd, this);
     U.arrayRemoveAll(IEdge.all, this);
-    U.arrayRemoveAll(this.logic.edges, this);
+    if (!(this instanceof ExtEdge)) {
+      const index = this.getIndex();
+      U.pe(this.logic.edges[index] !== this, 'deleting wrong edge.');
+      this.logic.edges[index] = null; }
     U.arrayRemoveAll(this.owner.edges, this);
-    this.html.parentNode.removeChild(this.html);
+    let shell = '.EdgeShell';
+    this.shell.parentNode.removeChild(this.shell);
     // gc helper
     this.end = null;
     this.logic = null;
@@ -808,4 +815,5 @@ U.pe(lastIsHorizontalSide === null, 'endpoint is not on the boundary of vertex.'
     }
   }
 
+  getIndex(): number { return this.logic.edges.indexOf(this); }
 }

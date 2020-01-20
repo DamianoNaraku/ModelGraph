@@ -1,12 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import {
   AttribETypes, IModel, Json,
-  MClass, MetaModel, Model, prjson2xml, Status, U, // Options,
-  ShortAttribETypes, InputPopup, myFileReader, prxml2json, EType, LocalStorage
-}                            from '../../common/Joiner';
+  MClass, MetaModel, Model, Status, U, // Options,
+  ShortAttribETypes, InputPopup, myFileReader, prxml2json, EType, LocalStorage, prjson2xml
+} from '../../common/Joiner';
 import ChangeEvent = JQuery.ChangeEvent;
 import ClickEvent = JQuery.ClickEvent;
-import {Local}               from 'protractor/built/driverProviders';
 
 // @ts-ignore
 @Component({

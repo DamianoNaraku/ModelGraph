@@ -294,6 +294,11 @@ export abstract class ModelPiece {
     const ending: String = this.endingName(valueMaxLength);
     return this.metaParent.fullname() + ':' + this.id + (ending && ending !== '' ? ':' + ending : ''); }
 
+  public printableNameshort(valueMaxLength: number = 5): string {
+    if (this.name !== null) { return this.fullname(); }
+    const ending: String = this.endingName(valueMaxLength);
+    return this.metaParent.name + ':' + this.id + (ending && ending !== '' ? ':' + ending : ''); }
+
   abstract parse(json: Json, destructive?: boolean): void;
   abstract getVertex(): IVertex;
   abstract generateModel(): Json;
@@ -624,5 +629,56 @@ export abstract class ModelPiece {
     let ret = this.getClassName();
     if (ret.indexOf('m1') !== -1) return null;
     return ret.replace('m2', 'm1').replace('m3', 'm2'); }
+
+  pushUp(): void {
+    if (!this.parent) { return; }
+    let arr: ModelPiece[];
+    let parent: any = this.parent;
+    let i: number;
+    if ((arr = parent.childrens) && (i = arr.indexOf(this)) !== -1){
+      U.arrayRemoveAll(arr, this);
+      U.arrayInsertAt(arr, i - 1, this); }
+    if ((arr = parent.enums) && (i = arr.indexOf(this)) !== -1){
+      U.arrayRemoveAll(arr, this);
+      U.arrayInsertAt(arr, i - 1, this); }
+    if ((arr = parent.classes) && (i = arr.indexOf(this)) !== -1){
+      U.arrayRemoveAll(arr, this);
+      U.arrayInsertAt(arr, i - 1, this); }
+    if ((arr = parent.attributes) && (i = arr.indexOf(this)) !== -1){
+      U.arrayRemoveAll(arr, this);
+      U.arrayInsertAt(arr, i - 1, this); }
+    if ((arr = parent.references) && (i = arr.indexOf(this)) !== -1){
+      U.arrayRemoveAll(arr, this);
+      U.arrayInsertAt(arr, i - 1, this); }
+    if ((arr = parent.operations) && (i = arr.indexOf(this)) !== -1){
+      U.arrayRemoveAll(arr, this);
+      U.arrayInsertAt(arr, i - 1, this); }
+    this.updateKey();
+  }
+  pushDown(): void {
+    if (!this.parent) { return; }
+    let arr: ModelPiece[];
+    let parent: any = this.parent;
+    let i: number;
+    if ((arr = parent.childrens) && (i = arr.indexOf(this)) !== -1){
+      U.arrayRemoveAll(arr, this);
+      U.arrayInsertAt(arr, i - 1, this); }
+    if ((arr = parent.enums) && (i = arr.indexOf(this)) !== -1){
+      U.arrayRemoveAll(arr, this);
+      U.arrayInsertAt(arr, i + 1, this); }
+    if ((arr = parent.classes) && (i = arr.indexOf(this)) !== -1){
+      U.arrayRemoveAll(arr, this);
+      U.arrayInsertAt(arr, i + 1, this); }
+    if ((arr = parent.attributes) && (i = arr.indexOf(this)) !== -1){
+      U.arrayRemoveAll(arr, this);
+      U.arrayInsertAt(arr, i + 1, this); }
+    if ((arr = parent.references) && (i = arr.indexOf(this)) !== -1){
+      U.arrayRemoveAll(arr, this);
+      U.arrayInsertAt(arr, i + 1, this); }
+    if ((arr = parent.operations) && (i = arr.indexOf(this)) !== -1){
+      U.arrayRemoveAll(arr, this);
+      U.arrayInsertAt(arr, i + 1, this); }
+    this.updateKey();
+  }
 }
 export abstract class ModelNone extends ModelPiece {}

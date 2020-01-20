@@ -76,8 +76,8 @@ import * as _pr_xml2json     from '../common/prj_xml2json.js';
 import {IClassifier}         from '../mClass/IClassifier';
 export const prjson2xml = _pr_json2xml;
 export const prxml2json = _pr_xml2json;
-export const $$$: JQueryStatic = require('jquery-ui');
-export const $ui: JQueryStatic = $$$;
+/*export const $$$: JQueryStatic = require('jquery-ui');
+export const $ui: JQueryStatic = $$$;*/
 /*
 // @ts-ignore
 let enc = he.encode;
@@ -90,7 +90,6 @@ let unesc = he.unescape;
 // @ts-ignore
 let ver = he.version;
 export const HE = {encode: enc, decode: dec, escape: esc, unescape: unesc, version: ver};*/
-
 
 
 // NB: se li esporti e usi come identificatori/costruttori nel codice, typescript li collega da una fantomatica user-class con nome __CambiatoTipoCosì

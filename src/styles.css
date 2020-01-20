@@ -15,7 +15,7 @@
 .resizableBorder.right { border-right: 5px solid green; }
 .resizableBorder.top { border-top: 5px solid red; }
 .resizableBorder.bottom { border-bottom: 5px solid red; }
-
+.template{ display: none !important; }
 /* real css */
 .resizableBorderContainer {
   background-color: black;
@@ -108,9 +108,6 @@ button.edit:not(.btn) { background-image: url(../img/black/edit.png); }
   display: flex;
   flex-flow: row;
 }
-.template{
-  display: none;
-}
 .editorShell {
   position: relative;
 }
@@ -153,6 +150,9 @@ button.edit:not(.btn) { background-image: url(../img/black/edit.png); }
   width: 100%;}
 .todo{
   background-color: darkred !important;
+  cursor: not-allowed !important;
+}
+.todo>*, .todo *{
   cursor: not-allowed !important;
 }
 .Vertex select{

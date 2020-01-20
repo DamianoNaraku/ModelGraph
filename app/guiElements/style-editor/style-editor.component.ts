@@ -66,7 +66,7 @@ export class StyleEditor {
     if (m instanceof IModel) { this.showM(m); return; }
     if (m instanceof IPackage) { this.showM(m.parent); return; }
     // if (m instanceof IPackage) { this.showP(m); return; }
-    this.showMP(m, null, false, false);
+    this.showMP(m, null, false, null);
     return;/*
     if (m instanceof IClass) { this.showC(m); }
     if (m instanceof IAttribute) { this.showA(m); }
@@ -427,7 +427,7 @@ export class StyleEditor {
     }
     return indexedPath; }
 
-  showMP(m: ModelPiece, clickedLevel: Element = null, asMeasurable: boolean = false, asEdge: boolean = false) {
+  showMP(m: ModelPiece, clickedLevel: Element = null, asMeasurable: boolean = false, asEdge: IEdge = null) {
     // console.log('styleShow(', m, ', ' + U.getTSClassName(m) + ')');
     let i: number;
     this.clickedLevel = clickedLevel = clickedLevel || this.clickedLevel;
@@ -451,7 +451,7 @@ export class StyleEditor {
     this.updateClickedGUIHighlight();
     // html set END.
     const model: IModel = m.getModelRoot();
-    if (asEdge && (m instanceof IClass || m instanceof IReference) && m.shouldBeDisplayedAsEdge()) { return this.showE(m); }
+    if (asEdge && (m instanceof IClass || m instanceof IReference) && m.shouldBeDisplayedAsEdge()) { return this.showE(m, asEdge); }
     const html: HTMLElement = this.getCopyOfTemplate(m, '.modelpiece', this.display, true);
     const $html = $(html);
     const showAsEdge: HTMLInputElement = $html.find('.showAsEdge')[0] as HTMLInputElement;
@@ -498,7 +498,7 @@ export class StyleEditor {
       showAsEdgeText.innerHTML = 'Show as an edge' + (showAsEdge.disabled ? ' (require&nbsp;>=&nbsp;2&nbsp;references)' : '');
       $(showAsEdge).off('change.set').on('change.set', (e: ChangeEvent) => {
         m.shouldBeDisplayedAsEdge(true);
-        this.showE(m);
+        this.showE(m, asEdge);
       });
     }
 
@@ -778,9 +778,9 @@ export class StyleEditor {
     });
   }
 
-  public showE(m: IClass | IReference) {
+  public showE(m: IClass | IReference, edge: IEdge) {
+    const index = edge.getIndex();
     console.log('styleShowE(', m, ')');
-    const edge: IEdge = m.edges && m.edges.length ? m.edges[0] : null;
     const html: HTMLElement = this.getCopyOfTemplate(m as any, '.edge', this.display, true);
     const $html = $(html);
     const edgeStyle: HTMLSelectElement = $html.find('.edgeStyle')[0] as HTMLSelectElement;

@@ -4,7 +4,7 @@ export class ExtEdge extends IEdge{
   logic: M2Class;
 
   constructor(logic: IClass | IReference, startv: IVertex = null, end: IVertex = null) {
-    super(logic, startv, end);
+    super(logic, null, startv, end);
   }
   canBeLinkedTo(target0: IClass): boolean {
     const target: M2Class = target0 as M2Class;

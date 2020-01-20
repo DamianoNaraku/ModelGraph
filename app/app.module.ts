@@ -45,8 +45,7 @@ import {
   MReference,
   IReference,
   M3Reference,
-  MAttribute,
-  prjson2xml, prxml2json, Type, LocalStorage, ViewPoint, SaveListEntry, EType, IClassifier, GraphSize, ELiteral, EEnum
+  MAttribute, Type, LocalStorage, ViewPoint, SaveListEntry, EType, IClassifier, GraphSize, ELiteral, EEnum
 } from './common/Joiner';
 import { PropertyBarrComponent }   from './guiElements/property-barr/property-barr.component';
 import { MGraphHtmlComponent }     from './guiElements/m-graph-html/m-graph-html.component';
@@ -150,14 +149,14 @@ export class Status {
 }
 
 
-function main0(tentativi: number = 0) {
+export function main0(loadEvent: Event, tentativi: number = 0) {
   // EcoreLayer.test2(); return;
   Status.status = new Status();
   (window as any).global = window;
   (window as any).global.Buffer = (window as any).global.Buffer || require('buffer').Buffer;
   if (document.getElementById('MM_INPUT') === null) {
     if (tentativi++ >= 10)  { U.pe(true, 'failed to load MM_INPUT'); }
-    setTimeout(() => main0(tentativi), 100);
+    setTimeout(() => main0(null, tentativi), 100);
     console.log('main0 wait(100)');
     return;
   }// else { mainForceTabChange(0); }
@@ -363,8 +362,8 @@ function main() {
   useless = new IGraph(Status.status.mm, document.getElementById('metamodel_editor') as unknown as SVGSVGElement);
   useless = new IGraph(Status.status.m, document.getElementById('model_editor') as unknown as SVGSVGElement);
   Status.status.loadedGUI = true;
-  Status.status.mm.graph.propertyBar.show(Status.status.mm, null, false);
-  Status.status.m.graph.propertyBar.show(Status.status.m, null, false);
+  Status.status.mm.graph.propertyBar.show(Status.status.mm, null, null);
+  Status.status.m.graph.propertyBar.show(Status.status.m, null, null);
   Type.updateTypeSelectors(null, true, true, true);
 
   if (!savem2.vertexpos || !savem2.view){
@@ -386,6 +385,7 @@ function main() {
   const vertexposMat: Dictionary<string, GraphPoint>[] = [JSON.parse(savem2.vertexpos), JSON.parse(savem1.vertexpos)] as Dictionary<string, GraphPoint>[];
   // console.log(vpmatjson, Status.status.mm.graph.viewPointShell);
 
+  // return;
   let j: number;
   for (j = 0; j < vertexposMat.length; j++) {
     const vdic: Dictionary<string, GraphPoint> = vertexposMat[j];
@@ -394,8 +394,9 @@ function main() {
       console.log('key:', key, 'varr:', vdic);
       const mp: IClassifier = ModelPiece.getByKeyStr(key) as IClassifier;
       const size: GraphSize = new GraphSize().clone(vdic[key]);
-      U.pw(!mp || !(mp instanceof IClassifier), 'invalid vertexposition save, failed to get classifier:', key, vdic);
-      if (!mp || !(mp instanceof IClassifier)) { U.cclear(); console.log(mp, 'key', key, 'vdic', vdic); continue; }
+      if (!mp || !(mp instanceof IClassifier)) {
+        U.cclear();
+        U.pw(true, 'invalid vertexposition save, failed to get classifier:', key, vdic); continue; }
       mp.getVertex().setSize(size);
     }
   }
@@ -433,4 +434,5 @@ function main() {
   // Options.Load(Status.status);
 
 }
-main0();
+window['' + 'main'] = main0;
+document.addEventListener('DOMContentLoaded', main0);

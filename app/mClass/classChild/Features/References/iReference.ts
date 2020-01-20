@@ -8,7 +8,7 @@ import {
   Json,
   M2Class,
   M2Reference,
-  M3Class, MetaMetaModel, MetaModel,
+  M3Class, MAttribute, MetaMetaModel, MetaModel,
   MReference,
   U
 } from '../../../../common/Joiner';
@@ -33,7 +33,16 @@ export abstract class IReference extends IFeature {
     this.edgeStyleSelected = new EdgeStyle(EdgeModes.straight, 4, '#ffffff', // #ffbb22
       new EdgePointStyle(5, 2, '#ffffff', '#ff0000'));
   }
-  abstract generateEdge(): IEdge[];
+
+  clearTargets(): void {
+    let i: number;
+    const thiss: MReference = this instanceof MReference ? this : null;
+    for (i = 0; thiss && i < thiss.mtarget.length; i++) { thiss.setTarget(i, null); }
+    if (thiss) thiss.mtarget = U.newArray(this.metaParent.upperbound);
+    this.edges = U.newArray(this.metaParent.upperbound); }
+
+  abstract generateEdges(): IEdge[];
+
   abstract duplicate(nameAppend?: string, newParent?: IClass): IReference;
 
   delete(linkStart: number = null, linkEnd: number = null): void {
@@ -59,8 +68,11 @@ export abstract class IReference extends IFeature {
   }
 
   copy(r: IReference, nameAppend: string = '_Copy', newParent: IClass = null): IReference {
+    while (this.edges.length) { if (this.edges[0]) this.edges[0].remove(); }
     super.copy(r, nameAppend, newParent);
-    this.edges = [];
+    this.clearTargets();
+    super.copy(r, nameAppend, newParent);
+    this.generateEdges();
     this.edgeStyleCommon = r.edgeStyleCommon.clone();
     this.edgeStyleHighlight = r.edgeStyleHighlight.clone();
     this.edgeStyleSelected = r.edgeStyleSelected.clone();
@@ -162,7 +174,7 @@ export class M3Reference extends IReference {
 
   duplicate(nameAppend?: string, newParent?: IClass): M3Reference {  U.pe(true, 'Invalid operation: m3Reference.duplicate()'); return this; }
 
-  generateEdge(): IEdge[] { U.pe(true, 'Invalid operation: m3Reference.generateEdge()'); return []; }
+  generateEdges(): IEdge[] { U.pe(true, 'Invalid operation: m3Reference.generateEdges()'); return []; }
 
   generateModel(): Json { U.pe(true, 'Invalid operation: m3Reference.generateModel()'); return {}; }
 

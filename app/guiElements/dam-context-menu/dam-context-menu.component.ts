@@ -11,7 +11,7 @@ import {
   IFeature,
   IReference,
   IAttribute,
-  IClass, ExtEdge, IEdge, IClassifier, IModel
+  IClass, ExtEdge, IEdge, IClassifier, IModel, MReference, GraphPoint, Status
 } from '../../common/Joiner';
 import ClickEvent = JQuery.ClickEvent;
 import ContextMenuEvent = JQuery.ContextMenuEvent;
@@ -55,7 +55,6 @@ export class DamContextMenuComponent implements OnInit {
   show(location: Point, classSelector: string, target: HTMLElement | SVGElement) {
     U.pe(!target, 'target is null.');
     this.clickTarget = target;
-    this.addEventListeners(); // must be done here, per facilità di fare binding usando variabili esterne agli eventi.
     this.html.style.display = 'none'; // if was already displaying, start the scrollDown animation without doing the scrollUp()
     this.$html.slideDown();
     const vertex: IVertex = IVertex.getvertexByHtml(target);
@@ -84,9 +83,11 @@ export class DamContextMenuComponent implements OnInit {
     this.edgecontext.style.display = edge ? '' : 'none';
     this.extedgecontext.style.display = extedge ? '' : 'none';
     this.vertexcontext.style.display = vertex ? '' : 'none';
+    this.$vertexcontext.find('.Reference').hide();
+    this.$vertexcontext.find('.refli.dynamic').remove();
+    const mp: ModelPiece = ModelPiece.getLogic(target);
+    const model: IModel = mp.getModelRoot();
     if (vertex) {
-      const mp: ModelPiece = ModelPiece.getLogic(target);
-      const model: IModel = mp.getModelRoot();
       if (model.isM1()) {
         this.$vertexcontext.find('.m1hide').hide();
         this.$vertexcontext.find('.m2hide').show(); }
@@ -99,24 +100,77 @@ export class DamContextMenuComponent implements OnInit {
         this.$vertexcontext.find('.Vertex').show();
       }
       else {
+        if (mp instanceof MReference) {
+          let i: number;
+          const $refli = this.$vertexcontext.find('.refli.template');
+          for (i = 0; i < mp.mtarget.length; i++) {
+            const target = mp.mtarget[i];
+            const li = U.cloneHtml($refli[0], true);
+            li.classList.remove('template');
+            li.classList.add('dynamic');
+            li.dataset.index = '' + i;
+            const $li = $(li);
+            $li.find('.index').text('' + i);
+            $li.find('.text').text(target ? target.printableNameshort() : 'Empty');
+            $refli[0].parentNode.appendChild(li);
+          }
+          this.$vertexcontext.find('.Reference').show(); }
         this.$vertexcontext.find('.Feature').show();
         this.$vertexcontext.find('.Vertex').hide();
       }
+      const mr: MReference = mp instanceof MReference ? mp : null;
+      const $indexinput = this.$vertexcontext.find('input.byindex');
+      const upperbound = mr ? mr.metaParent.upperbound : null;
+      if (mr) {
+        if (upperbound === -1) $indexinput[0].removeAttribute('max');
+        else $indexinput[0].setAttribute('max', '' + upperbound);
+      } else $indexinput[0].setAttribute('max', '-999');
     }
+    this.addEventListeners(location); // [??? what?] must be done here, per facilità di fare binding usando variabili esterne agli eventi.
 
   }
   hide(): void {
     this.$html.slideUp();
   }
 
-  private addEventListeners() {
+  private addEventListeners(location: Point) {
+    const graphLocation: GraphPoint = Status.status.getActiveModel().graph.toGraphCoord(location);
     const html = this.html;
     const $html = $(html);
-    console.log(this.clickTarget);
     const v: IVertex = IVertex.getvertexByHtml(this.clickTarget);
     const m: ModelPiece = ModelPiece.getLogic(this.clickTarget);
     console.log('contextMenu target:', this.clickTarget, 'modelPiece:', m);
+    const mr: MReference = m instanceof MReference ? m : null;
+    const $indexinput = +$html.find('input.byindex');
+    const upperbound = mr ? mr.metaParent.upperbound : null;
     U.pe(!v, 'vertex null:', v);
+    $html.find('.refli .firstempty').off('click.setref').on('click.setref', (e: ClickEvent) => {
+      let index = mr.getfirstEmptyTarget();
+      if (index === -1) { U.pw(true, 'This reference is already filled to his upperbound.'); e.preventDefault(); e.stopPropagation(); return; }
+      IVertex.linkVertexMouseDown(null, mr.edges[index], graphLocation);
+    });
+    $html.find('.refli button.byindex').off('click.setref').on('click.setref', (e: ClickEvent) => {
+      let index: number = +$indexinput[0].value;
+      if (index < 0 || index >= upperbound) {
+        U.pw(true, 'invalid reference index. It must be a value inside the [0,' + upperbound+'] interval.');
+        return; }
+      IVertex.linkVertexMouseDown(null, mr.edges[index], graphLocation);
+    });
+    $html.find('li.refli.dynamic').off('click.setref').on('click.setref', (e: ClickEvent) => {
+      const index: number = +e.currentTarget.dataset.index;
+      console.log('setting reference[' + index + '] = ', mr.mtarget[index], mr);
+      const edge = mr.edges[index] ? mr.edges[index] : new IEdge(mr, index, v);
+      IVertex.linkVertexMouseDown(null, edge, graphLocation);
+    });
+    // U.pe(true, $html.find('li.refli.dynamic'), $html);
+    $html.find('button.refli.delete').off('click.setref').on('click.setref', (e: ClickEvent) => {
+      e.preventDefault(); e.stopPropagation(); // impedisco di nascondere il contextmenù per tanto poco
+      const li = e.currentTarget.parentNode;
+      const index: number = li.dataset.index;
+      U.pe(!index || U.isNumber(index), 'failed to get index.');
+      mr.setTarget(index, null);
+      $(li).find('.text').text('Empty');
+    });
     $html.find('.Vertex.duplicate').off('click.ctxMenu').on('click.ctxMenu',
       (e: ClickEvent) => { m.duplicate('_Copy', m.parent); });
     $html.find('.Vertex.delete').off('click.ctxMenu').on('click.ctxMenu',
@@ -124,12 +178,16 @@ export class DamContextMenuComponent implements OnInit {
     $html.find('.Vertex.minimize').off('click.ctxMenu').on('click.ctxMenu',
       (e: ClickEvent) => { v.minimize(); });
     $html.find('.Vertex.up').off('click.ctxMenu').on('click.ctxMenu',
-      (e: ClickEvent) => { v.pushUp(); });
+      (e: ClickEvent) => { m.pushDown(); v.pushUp(); }); // must be opposites
     $html.find('.Vertex.down').off('click.ctxMenu').on('click.ctxMenu',
-      (e: ClickEvent) => { v.pushDown(); });
+      (e: ClickEvent) => { m.pushUp(); v.pushDown(); }); // must be opposites
     $html.find('.Vertex.editStyle').off('click.ctxMenu').on('click.ctxMenu',
       (e: ClickEvent) => { U.pw(true, 'deprecato'); /*StyleEditor.editor.show(m);*/ });
 
+    $html.find('.Feature.autofix').off('click.ctxMenu').on('click.ctxMenu',
+      (e: ClickEvent) => { alert('autofix conformity: todo.'); });
+    $html.find('.Feature.autofixinstances').off('click.ctxMenu').on('click.ctxMenu',
+      (e: ClickEvent) => { alert('autofix instances: todo.'); });
     $html.find('.Feature.duplicate').off('click.ctxMenu').on('click.ctxMenu',
       (e: ClickEvent) => { m.duplicate('_Copy', m.parent); });
     $html.find('.Feature.delete').off('click.ctxMenu').on('click.ctxMenu',
@@ -137,11 +195,15 @@ export class DamContextMenuComponent implements OnInit {
     $html.find('.Feature.minimize').off('click.ctxMenu').on('click.ctxMenu',
       (e: ClickEvent) => { v.minimize(); });
     $html.find('.Feature.up').off('click.ctxMenu').on('click.ctxMenu',
-      (e: ClickEvent) => { v.pushUp(); });
+      (e: ClickEvent) => { m.pushUp(); v.refreshGUI(); });
     $html.find('.Feature.down').off('click.ctxMenu').on('click.ctxMenu',
-      (e: ClickEvent) => { v.pushDown(); });
-    $html.find('.Feature.editStyle').off('click.ctxMenu').on('click.ctxMenu',
-      (e: ClickEvent) => { U.pw(true, 'deprecato'); /*StyleEditor.editor.show(m); */});
+      (e: ClickEvent) => { m.pushDown(); v.refreshGUI(); });
+    $html.find('.Feature.link').off('click.ctxMenu').on('click.ctxMenu', (e: ClickEvent) => {
+      let index: number = e.currentTarget.dataset.edgeindex;
+      let r: IReference | IClass = m as IReference | IClass;
+      let edge = r.edges[index];
+      if (!edge) new IEdge(r, index, null, null);
+      IVertex.linkVertexMouseDown(null, edge, graphLocation); /*StyleEditor.editor.show(m); */});
 
   }
   private checkIfHide(e: ClickEvent) {

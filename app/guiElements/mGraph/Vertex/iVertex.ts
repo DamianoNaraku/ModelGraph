@@ -77,19 +77,21 @@ export class IVertex {
     g.x = 'prevent_doublemousedowncheck' as any;
     g.y = 'prevent_doublemousedowncheck' as any;
     return g; }
-
+/*
   static linkVertexMouseDownButton(e: MouseDownEvent): void {
     const ref: IReference = ModelPiece.get(e) as IReference;
     U.pe(!(ref instanceof IReference), 'linkVertexButtons are currently only allowed on IReferences.');
     const edges: IEdge[] = ref.getEdges();
     U.pe(!edges, 'ref.edges === null', ref);
     let edge: IEdge;
-    if (ref.getModelRoot().isMM()) { edge = edges[0]; } else
-    if (ref.upperbound > 0 && edges.length >= ref.upperbound) { edge = edges[edges.length - 1]; }
-    else { edge = new IEdge(ref); }
-    IVertex.linkVertexMouseDown(e, edge); }
+    let index: number;
+    if (ref.getModelRoot().isMM()) { edge = edges[index = 0]; } else
+    if (ref.upperbound > 0 && edges.length >= ref.upperbound) { edge = edges[index = ref.upperbound - 1]; }
+    else { edge = new IEdge(ref); index = edges.length - 1; }
+    if (!edge) edge = new IEdge(ref);
+    IVertex.linkVertexMouseDown(e, edge); }*/
 
-  static linkVertexMouseDown(e: MouseDownEvent, edge: IEdge = null): void {
+  static linkVertexMouseDown(e: MouseDownEvent, edge: IEdge = null, location: GraphPoint = null): void {
     if (e) { e.stopPropagation(); }
     if (IEdge.edgeChanging) { IEdge.edgeChanging.owner.edgeChangingAbort(e); }
     edge = edge ? edge : IEdge.get(e);
@@ -101,7 +103,8 @@ export class IVertex {
     IEdge.edgeChanging = edge;
     edge.useRealEndVertex = false;
     edge.useMidNodes = true;
-    edge.tmpEnd = GraphPoint.fromEvent(e);
+    edge.tmpEnd = location ? location : GraphPoint.fromEvent(e);
+    U.pe(!edge.tmpEnd, 'failed to get coordinates from event:', e);
     edge.tmpEndVertex = null;
     // edge.tmpEndVertex = ref.parent.getVertex();
     edge.refreshGui(); }
@@ -122,14 +125,14 @@ export class IVertex {
     const html: HTMLElement | SVGElement = e.currentTarget;
     const modelPiece: ModelPiece = ModelPiece.getLogic(html);
     modelPiece.fieldChanged(e);
-    modelPiece.getModelRoot().graph.propertyBar.show(null, html,false, true);
+    modelPiece.getModelRoot().graph.propertyBar.show(null, html, null, true);
     // $(html).trigger('click'); // updates the propertyBar
     // const m: IModel = modelPiece.getModelRoot();
     const mm: IModel = Status.status.mm;
     const m: IModel = Status.status.m;
     setTimeout( () => { mm.refreshGUI(); m.refreshGUI(); }, 1); }
 
-  static ChangePropertyBarContentClick(e: ClickEvent, isEdge: boolean = false): ModelPiece {
+  static ChangePropertyBarContentClick(e: ClickEvent, isEdge: IEdge = null): ModelPiece {
     const html: HTMLElement | SVGElement = e.target; // todo: approfondisci i vari tipi di classType (current, orginal...)
     const modelPiece: ModelPiece = ModelPiece.getLogic(html);
     const model: IModel = modelPiece.getModelRoot();
@@ -524,7 +527,7 @@ export class IVertex {
     // if (!IVertex.contextMenu) { IVertex.contextMenu = new MyContextMenuClass(new ContextMenuService()); }
     $html.off('contextmenu').on('contextmenu', (e: ContextMenuEvent): boolean => { return this.vertexContextMenu(e); });
     $html.find('.Attribute, .Reference').off('contextmenu').on('contextmenu', (e: ContextMenuEvent): boolean => { return this.featureContextMenu(e); });
-    $html.find('.LinkVertex').off('mousedown.setReference').on('mousedown.setReference', IVertex.linkVertexMouseDownButton);
+    // $html.find('.LinkVertex').off('mousedown.setReference').on('mousedown.setReference', IVertex.linkVertexMouseDownButton);
     const defaultResizeConfig: ResizableOptions = {};
     const defaultDragConfig: DraggableOptions = {};
     // NB: do not delete the apparantly useless dynamic functions.
@@ -580,13 +583,13 @@ export class IVertex {
     if (!edge.canBeLinkedTo(vertexLogic)) {
       U.pif(debug, 'edge ', edge.logic, 'cannot be linked to ', vertexLogic, 'hoveringvertex:', this);
       return; }
-    if (edge.logic instanceof MReference) edge.logic.linkClass(vertexLogic as MClass);
+    if (edge.logic instanceof MReference) edge.logic.linkClass(vertexLogic as MClass, edge.getIndex(), true);
     if (edge.logic instanceof M2Reference) edge.logic.setType((vertexLogic as M2Class).getEcoreTypeName());
     if (edge instanceof ExtEdge) {
       U.arrayRemoveAll(edge.logic.extends, edge.end.logic() as M2Class);
       U.ArrayAdd(edge.logic.extends, this.logic() as M2Class);
     } else {
-      U.pe(true, 'cst: class edges are currently not supported');
+      U.pe(edge.logic instanceof MClass, 'cst: class edges are currently not supported');
     }
     this.mark(false, 'refhover');
     // altrimenti parte l'onClick su AddFieldButton quando fissi la reference.
@@ -620,7 +623,7 @@ export class IVertex {
     let tmp: HTMLElement = e.target as HTMLElement;
     const thisHtml = this.getHtml();
     // i will not move the vertex while moving a measurable children.
-    while (tmp !== thisHtml) { if (tmp.classList.contains('measurable')) { return; } tmp = tmp.parentElement; }
+    while (tmp && tmp !== thisHtml) { if (tmp.classList.contains('measurable')) { return; } tmp = tmp.parentElement; }
     IVertex.selected = this;
     if (IVertex.selectedGridWasOn.x as any === 'prevent_doublemousedowncheck') {
       IVertex.selectedGridWasOn.x = IVertex.selected.owner.grid.x; }

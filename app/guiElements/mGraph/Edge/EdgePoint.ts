@@ -151,6 +151,8 @@ export class EdgePoint implements IEdgePoint {
   moveTo(pos: GraphPoint, refresh: boolean, centra: boolean = true) {
     if (!this.edge) { return; }
     const r: number = centra ? 0 : (isNaN(-this.html.r) ? 0 : -this.html.r);
+    U.pe(!this.pos || this.pos.x === null || this.pos.x === undefined, 'this.pos.x undefined', this.pos);
+    U.pe(!pos || pos.x === null || pos.x === undefined, 'pos.x undefined', pos);
     this.pos.x = (pos.x + r);
     this.pos.y = (pos.y + r);
     this.html.setAttribute('cx', '' + this.pos.x);

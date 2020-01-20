@@ -59,7 +59,8 @@ export class MClass extends IClass {
     super(pkg, metaVersion);
     if (!pkg && !json && !metaVersion) { return; } // empty constructor for .duplicate();
     U.pe(!metaVersion, 'null metaparent?');
-    this.parse(json, true); }
+    this.parse(json, true);
+  }
 
   endingName(valueMaxLength: number = 10): string {
     if (this.attributes.length > 0) { return this.attributes[0].endingName(valueMaxLength); }

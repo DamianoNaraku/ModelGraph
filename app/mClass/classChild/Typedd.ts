@@ -99,8 +99,8 @@ export abstract class Typedd extends ModelPiece {
   // copy(other: IAttribute, nameAppend: string = '_Copy', newParent: IClass = null): void {
   copy(c: Typedd, nameAppend: string = '_Copy', newParent: ModelPiece = null): void {
     super.copy(c, nameAppend, newParent);
-    this.lowerbound = c.lowerbound;
-    this.upperbound = c.upperbound;
+    this.setLowerbound(c.lowerbound);
+    this.setUpperbound(c.upperbound);
     this.unique = c.unique;
     this.ordered = c.ordered;
     this.setType(c.getType().toEcoreString(), null, false);

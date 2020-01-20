@@ -22,7 +22,7 @@ import {
   ShortAttribETypes,
   Status,
   StyleEditor, Type,
-  U
+  U, IEdge
 } from '../../common/Joiner';
 import ClickEvent = JQuery.ClickEvent;
 import ContextMenuEvent = JQuery.ContextMenuEvent;
@@ -34,7 +34,7 @@ export class PropertyBarr {
   templateContainer: HTMLElement;
   selectedModelPiece: ModelPiece;
   styleEditor: StyleEditor = null;
-  selectedModelPieceIsEdge: boolean;
+  selectedModelPieceIsEdge: IEdge;
   clickedLevel: Element;
 
   private templateMinimizerClick(e: ClickEvent): void {
@@ -87,7 +87,7 @@ export class PropertyBarr {
     e.stopPropagation();
     if (target.classList.contains('list')) return false;
     const mp = ModelPiece.getLogic(target);
-    this.show(mp, mp.getHtmlOnGraph(), false);
+    this.show(mp, mp.getHtmlOnGraph(), null);
     return false; }
 
   private removeOthers($html: JQuery<HTMLElement>, keep: string): void {
@@ -140,15 +140,15 @@ export class PropertyBarr {
     if (!textArea) { return; }
     textArea.value = o.generateModelString(); }
 
-  public show(o: ModelPiece = null, clickedLevel: Element, isEdge: boolean, forceRefresh: boolean = true): void {
+  public show(o: ModelPiece = null, clickedLevel: Element, isEdge: IEdge, forceRefresh: boolean = true): void {
     if (!forceRefresh && this.selectedModelPiece === o && this.selectedModelPieceIsEdge === isEdge) {
       if (clickedLevel === this.clickedLevel) { return; }
       this.clickedLevel = clickedLevel = clickedLevel || this.clickedLevel;
-      if (isEdge) { this.styleEditor.showE(o as IClass | IReference); } else { this.styleEditor.show(o, clickedLevel); }
+      if (isEdge) { this.styleEditor.showE(o as IClass | IReference, isEdge); } else { this.styleEditor.show(o, clickedLevel); }
       return; }
     this.selectedModelPiece = o = (o || this.selectedModelPiece);
     this.clickedLevel = clickedLevel = (clickedLevel || this.clickedLevel);
-    if (isEdge) { this.styleEditor.showE(o as IClass | IReference); } else { this.styleEditor.show(o, clickedLevel); }
+    if (isEdge) { this.styleEditor.showE(o as IClass | IReference, isEdge); } else { this.styleEditor.show(o, clickedLevel); }
 
     U.pe(!(o instanceof ModelPiece), 'invalid parameter type:', U.getTSClassName(o), o);
     this.selectedModelPieceIsEdge = isEdge;

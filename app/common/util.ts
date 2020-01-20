@@ -249,6 +249,8 @@ export class U {
     const highestTimeoutId: number = setTimeout(() => {}, 1) as any;
     for (let i = 0 ; i < highestTimeoutId ; i++) { clearTimeout(i); }
   }
+  static petmp(b: boolean, s: any, ...restArgs: any[]): null { return U.pe(b, s, restArgs); }
+
   static pe(b: boolean, s: any, ...restArgs: any[]): null {
     if (!b) { return null; }
     if (restArgs === null || restArgs === undefined) { restArgs = []; }
@@ -2241,6 +2243,18 @@ export class U {
     let i: number;
     if (!arr) return null;
     for (i = 0; i < arr.length; i++) { ret.push(arr[i]); }
+    return ret; }
+
+  static arrayInsertAt(arr: any[], index: number, item: any): void {
+    U.pe(!arr || !Array.isArray(arr), 'ArrayInsertAt() must have a parameter array');
+    index = Math.max(0, index);
+    index = Math.min(arr.length, index);
+    arr.splice(index, 0, item);
+  }
+
+  static newArray(size: number): any[] {
+    let ret = [];
+    ret.length = Math.max(0, size);
     return ret; }
 }
 

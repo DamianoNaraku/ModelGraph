@@ -312,7 +312,7 @@ export class IGraph {
     for (i = 0; i < classEdges.length; i++) { U.ArrayMerge(this.edges, classEdges[i].generateEdge()); }
     // Reference-edges
     const arrReferences: IReference[] = this.model.getAllReferences();
-    for (i = 0; i < arrReferences.length; i++) { U.ArrayMerge(this.edges, arrReferences[i].generateEdge()); }
+    for (i = 0; i < arrReferences.length; i++) { U.ArrayMerge(this.edges, arrReferences[i].generateEdges()); }
     this.propertyBar = new PropertyBarr(this.model);
     this.viewPointShell = new ViewPointShell(this);
     this.addGraphEventListeners();
@@ -392,6 +392,7 @@ export class IGraph {
     if (!edge || edge.tmpEndVertex) { return; }
     // const ref: IReference | IClass = edge.logic;
     edge.tmpEnd = GraphPoint.fromEvent(evt);
+    U.pe(!edge.tmpEnd, 'failed to get coordinates from event:', evt);
     // console.log('graph.movereference: success!', edge.tmpEnd);
     edge.refreshGui(null, false); }
 

@@ -65,8 +65,8 @@ export class M2Reference extends IReference {
     // this.parsePrintableTypeName(eType);
     // this.linkClass();
     this.containment = Json.read<boolean>(json, ECoreReference.containment, false);
-    this.setLowerbound(Json.read<number>(json, ECoreReference.lowerbound, 0));
-    this.setUpperbound(Json.read<number>(json, ECoreReference.upperbound, 1));
+    this.setLowerbound(+Json.read<number>(json, ECoreReference.lowerbound, 0));
+    this.setUpperbound(+Json.read<number>(json, ECoreReference.upperbound, 1));
     let i: number;/*
     this.views = [];
     for(i = 0; i < this.parent.views.length; i++) {
@@ -86,8 +86,9 @@ export class M2Reference extends IReference {
     if (this.containment != null) { model[ECoreReference.containment] = this.containment; }
     return model; }
 
-  generateEdge(): IEdge[] {
-    const e: IEdge = new IEdge(this, this.parent.getVertex(), this.type.classType.getVertex());
+  generateEdges(): IEdge[] {
+    if (!this.edges) this.edges = [null]; // size must be 1
+    const e: IEdge = new IEdge(this, 0, this.parent.getVertex(), this.type.classType.getVertex());
     return [e]; }
 
   useless(): void {}
@@ -108,11 +109,12 @@ export class M2Reference extends IReference {
   setContainment(b: boolean): void { this.containment = b; }
 
   setUpperbound(n: number): void {
-    this.upperbound = n;
+    super.setUpperbound(n);
     let i = -1;
     while (++i < this.instances.length) {
       const mref: MReference = this.instances[i];
-      mref.delete(mref.mtarget.length, Number.POSITIVE_INFINITY); } }
+      if (n !== -1) { mref.mtarget.length = mref.edges.length = n; }
+      mref.delete(n, Number.POSITIVE_INFINITY); } }
 
   delete(linkStart: number = null, linkEnd: number = null): void {
     super.delete(linkStart, linkEnd);
@@ -134,8 +136,8 @@ export class M2Reference extends IReference {
 
   copy(r: M2Reference, nameAppend: string = '_Copy', newParent: M2Class = null): M2Reference {
     super.copy(r, nameAppend, newParent);
-    this.lowerbound = r.lowerbound;
-    this.upperbound = r.upperbound;
+    this.setLowerbound(r.lowerbound);
+    this.setUpperbound(r.upperbound);
     this.containment = r.containment;
     this.type.changeType(r.type.toEcoreString());
     this.refreshGUI();

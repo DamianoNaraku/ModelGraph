@@ -200,17 +200,23 @@ export class M2Class extends IClass {
 
   addOperation(): EOperation {
     const op: EOperation = new EOperation(this, null);
-    U.ArrayAdd(this.childrens, op);
-    U.ArrayAdd(this.operations, op);
+    let i: number;
+    for (i = 0; i < this.instances.length; i++){
+      const inst: MClass = this.instances[0];
+    }
+    this.refreshInstancesGUI();
     this.refreshGUI();
     return op; }
 
   addReference(): M2Reference {
     const ref: M2Reference = new M2Reference(this, null);
-    U.ArrayAdd(this.childrens, ref);
-    U.ArrayAdd(this.references, ref);
     ref.type.changeType(null, null, this);
-    ref.edges = ref.generateEdge();
+    ref.generateEdges();
+    let i: number;
+    for (i = 0; i < this.instances.length; i++){
+      const inst: MClass = this.instances[i];
+      new MReference(inst, null, ref); }
+    this.refreshInstancesGUI();
     this.refreshGUI();
     // M2Class.updateAllMMClassSelectors(ref.getHtml());
     return ref; }
@@ -218,7 +224,11 @@ export class M2Class extends IClass {
   addAttribute(): M2Attribute {
     console.log('addAttribute: pre', this);
     const attr: M2Attribute = new M2Attribute(this, null);
-    console.log('addAttribute: post', this, attr);
+    let i: number;
+    for (i = 0; i < this.instances.length; i++){
+      const inst: MClass = this.instances[i];
+      new MAttribute(inst, null, attr); }
+    this.refreshInstancesGUI();
     this.refreshGUI();
     return attr; }
 
