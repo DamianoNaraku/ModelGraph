@@ -205,7 +205,7 @@ export class Type {
 
     U.pif(debug, 'typechanged:', this.owner, this);
     if (this.owner instanceof M2Attribute) {
-      for (i = 0; i < this.owner.instances.length; i++) { this.owner.instances[i].valuesAutofix(); }
+      for (i = 0; i < this.owner.instances.length; i++) { (this.owner.instances[i] as MAttribute).valuesAutofix(); }
       this.owner.refreshGUI();
       U.pif(debug, 'exit3: attrib.');
       return; }
