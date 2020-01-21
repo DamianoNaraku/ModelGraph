@@ -8,7 +8,7 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "preinstall": "ls",
+    "preinstall": "npm install -g angular-cli",
     "postinstall": "echo postinstall This runs before Heroku installs your dependencies.",
     "heroku-postinstall": "echo heroku-postinstall This runs before Heroku installs your dependencies.",
     "heroku-prebuild": "echo prebuild This runs before Heroku installs your dependencies.",
