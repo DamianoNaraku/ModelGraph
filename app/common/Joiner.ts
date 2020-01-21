@@ -69,7 +69,7 @@ import * as stringsimilarity from '../../app/common/StringSimilarity.js';
 export let StringSimilarity = stringsimilarity;
 import * as $$               from 'jquery';
 export const $ = $$;
-import * as JQueryUII        from '../../node_modules/jquery-ui';
+import * as JQueryUII        from '../../node_modules/jqueryui';
 export const JQueryUI = JQueryUII;
 import * as _pr_json2xml     from '../common/prj_json2xml.js';
 import * as _pr_xml2json     from '../common/prj_xml2json.js';
