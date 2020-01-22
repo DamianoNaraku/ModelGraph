@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
+    "post-install": "ng build --prod --aot",
     "start": "ng serve",
     "build": "ng build",
     "test": "ng test",
@@ -10,7 +11,8 @@
     "e2e": "ng e2e"
   },
   "engines": {
-    "node": "12.14.1"
+    "node": "12.14.1",
+    "npm": "6.13.4"
   },
   "private": true,
   "dependencies": {
