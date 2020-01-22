@@ -1,0 +1,995 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="7e71d93a-b2ac-4604-a087-15e54e5a3e46" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" />
+    </list>
+    <ignored path="$PROJECT_DIR$/.tmp/" />
+    <ignored path="$PROJECT_DIR$/temp/" />
+    <ignored path="$PROJECT_DIR$/tmp/" />
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/index.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="272">
+              <caret line="16" column="5" selection-start-line="16" selection-start-column="5" selection-end-line="16" selection-end-column="5" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="HTML File" />
+        <option value="JavaScript File" />
+        <option value="CSS File" />
+        <option value="TypeScript File" />
+      </list>
+    </option>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>from</find>
+      <find>main0</find>
+      <find>etaParent.classType.nam</find>
+      <find>main</find>
+      <find>setrefere</find>
+      <find>linkvertexmouseu</find>
+      <find>duplica</find>
+      <find>generateedge(</find>
+      <find>clear</find>
+      <find>generateedges</find>
+      <find>IEdge.edge</find>
+      <find>linkverte</find>
+      <find>getin</find>
+      <find>setta</find>
+      <find>new Array</find>
+      <find>tem</find>
+      <find>.todo</find>
+      <find>:hover</find>
+      <find>upperb</find>
+      <find>not5</find>
+      <find>text(</find>
+      <find>.refli.dyna</find>
+      <find>upperbound</find>
+      <find>html</find>
+      <find>JQueryUI</find>
+      <find>@angular-devkit</find>
+      <find>zone</find>
+      <find>jquery-ui</find>
+      <find>MMATtribute</find>
+      <find>MATtr</find>
+    </findStrings>
+    <replaceStrings>
+      <replace>jsonString</replace>
+      <replace>parent</replace>
+      <replace>position</replace>
+    </replaceStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/app/Database/LocalStorage.ts" />
+        <option value="$PROJECT_DIR$/app/guiElements/property-barr/property-barr.component.css" />
+        <option value="$PROJECT_DIR$/app/guiElements/m-graph-html/m-graph-html.component.css" />
+        <option value="$PROJECT_DIR$/app/guiElements/mm-graph-html/mm-graph-html.component.css" />
+        <option value="$PROJECT_DIR$/app/guiElements/graph-tab-html/graph-tab-html.component.css" />
+        <option value="$PROJECT_DIR$/app/mClass/classChild/Features/Attributes/iAttribute.ts" />
+        <option value="$PROJECT_DIR$/app/Model/Model.ts" />
+        <option value="$PROJECT_DIR$/app/mClass/classChild/Operations/eOperation.ts" />
+        <option value="$PROJECT_DIR$/app/mClass/classChild/Features/Attributes/MAttribute.ts" />
+        <option value="$PROJECT_DIR$/app/guiElements/mm-graph-html/mm-graph-html.component.html" />
+        <option value="$PROJECT_DIR$/app/GuiStyles/viewpoint.ts" />
+        <option value="$PROJECT_DIR$/app/mClass/iClass.ts" />
+        <option value="$PROJECT_DIR$/app/mClass/EEnum.ts" />
+        <option value="$PROJECT_DIR$/app/mClass/classChild/ELiteral.ts" />
+        <option value="$PROJECT_DIR$/app/Model/iModel.ts" />
+        <option value="$PROJECT_DIR$/app/mClass/IClassifier.ts" />
+        <option value="$PROJECT_DIR$/app/Model/mPackage/MPackage.component.ts" />
+        <option value="$PROJECT_DIR$/app/Model/mPackage/MMPackage.ts" />
+        <option value="$PROJECT_DIR$/app/guiElements/isidebar/isidebar.component.ts" />
+        <option value="$PROJECT_DIR$/app/guiElements/top-bar/top-bar.component.ts" />
+        <option value="$PROJECT_DIR$/app/guiElements/m-graph-html/m-graph-html.component.html" />
+        <option value="$PROJECT_DIR$/app/guiElements/mGraph/Edge/ExtEdge.ts" />
+        <option value="$PROJECT_DIR$/app/guiElements/propertyBar/propertyBar.ts" />
+        <option value="$PROJECT_DIR$/app/guiElements/style-editor/style-editor.component.ts" />
+        <option value="$PROJECT_DIR$/app/common/jquery-ui-1.12.1/external/jquery/jquery.js" />
+        <option value="$PROJECT_DIR$/app/Model/modelPiece.ts" />
+        <option value="$PROJECT_DIR$/app/mClass/classChild/Typedd.ts" />
+        <option value="$PROJECT_DIR$/app/mClass/classChild/Features/References/iReference.ts" />
+        <option value="$PROJECT_DIR$/app/guiElements/dam-context-menu/dam-context-menu.component.css" />
+        <option value="$PROJECT_DIR$/src/styles.css" />
+        <option value="$PROJECT_DIR$/app/mClass/MClass.ts" />
+        <option value="$PROJECT_DIR$/app/mClass/classChild/Features/References/M2Reference.ts" />
+        <option value="$PROJECT_DIR$/app/guiElements/dam-context-menu/dam-context-menu.component.html" />
+        <option value="$PROJECT_DIR$/app/common/util.ts" />
+        <option value="$PROJECT_DIR$/app/guiElements/mGraph/Edge/EdgePoint.ts" />
+        <option value="$PROJECT_DIR$/app/guiElements/mGraph/iGraph.ts" />
+        <option value="$PROJECT_DIR$/app/guiElements/dam-context-menu/dam-context-menu.component.ts" />
+        <option value="$PROJECT_DIR$/app/mClass/classChild/Features/References/MReference.ts" />
+        <option value="$PROJECT_DIR$/app/guiElements/mGraph/Vertex/iVertex.ts" />
+        <option value="$PROJECT_DIR$/app/mClass/m2Class.ts" />
+        <option value="$PROJECT_DIR$/app/guiElements/mGraph/Edge/iEdge.ts" />
+        <option value="$PROJECT_DIR$/index.html" />
+        <option value="$PROJECT_DIR$/src/index.html" />
+        <option value="$PROJECT_DIR$/app/mClass/classChild/Type.ts" />
+        <option value="$PROJECT_DIR$/tsconfig.app.json" />
+        <option value="$PROJECT_DIR$/tsconfig.spec.json" />
+        <option value="$PROJECT_DIR$/app/app.module.ts" />
+        <option value="$PROJECT_DIR$/src/tsconfig.app.json" />
+        <option value="$PROJECT_DIR$/src/tsconfig.spec.json" />
+        <option value="$PROJECT_DIR$/app/common/Joiner.ts" />
+        <option value="$PROJECT_DIR$/package.json" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="-8" />
+    <option name="y" value="-8" />
+    <option name="width" value="1364" />
+    <option name="height" value="766" />
+  </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="untitled" type="b2602c69:ProjectViewProjectNode" />
+              <item name="untitled" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="untitled" type="b2602c69:ProjectViewProjectNode" />
+              <item name="untitled" type="462c0819:PsiDirectoryNode" />
+              <item name="dist" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+      <pane id="Scope" />
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="DefaultHtmlFileTemplate" value="HTML File" />
+    <property name="Git.Branch.Popup.ShowAllRemotes" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="editor.config.ad.shown" value="true" />
+    <property name="full.screen.before.presentation.mode" value="false" />
+    <property name="jsx.switch.disabled" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="list.type.of.created.stylesheet" value="CSS" />
+    <property name="node.js.detected.package.tslint" value="true" />
+    <property name="node.js.path.for.package.tslint" value="project" />
+    <property name="node.js.selected.package.tslint" value="C:\Users\diama\WebstormProjects\untitled\node_modules\tslint" />
+    <property name="nodejs.protractor.protractor_package" value="$PROJECT_DIR$/node_modules/protractor" />
+    <property name="nodejs_interpreter_path" value="node" />
+    <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
+    <property name="nodejs_npm_path_reset_for_default_project" value="true" />
+    <property name="nodejs_package_manager_path" value="npm" />
+    <property name="restartRequiresConfirmation" value="false" />
+    <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
+    <property name="settings.editor.selected.configurable" value="settings.typescriptcompiler" />
+    <property name="ts.external.directory.path" value="C:\Users\diama\WebstormProjects\untitled\node_modules\typescript\lib" />
+    <property name="tslint.code.style.apply.dismiss" value="true" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\diama\WebstormProjects\untitled\assets" />
+      <recent name="C:\Users\diama\WebstormProjects\untitled\themes" />
+      <recent name="C:\Users\diama\WebstormProjects\untitled\app\mClass\classChild" />
+      <recent name="C:\Users\diama\WebstormProjects\untitled\app\mClass\classChild\Operations" />
+      <recent name="C:\Users\diama\WebstormProjects\untitled\app\mClass\classChild\Features" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\diama\WebstormProjects\untitled\node_modules" />
+      <recent name="C:\Users\diama\WebstormProjects\untitled\node_modules\@types" />
+      <recent name="C:\Users\diama\WebstormProjects\untitled\app\common" />
+      <recent name="C:\Users\diama\WebstormProjects\untitled\src\app" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager" selected="npm.Angular CLI Server">
+    <configuration name="Tests" type="JavaScriptTestRunnerKarma">
+      <config-file value="$PROJECT_DIR$/src/karma.conf.js" />
+      <karma-package-dir value="$PROJECT_DIR$/node_modules/@angular/cli" />
+      <working-directory value="$PROJECT_DIR$" />
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="E2E Tests" type="JavaScriptTestRunnerProtractor">
+      <config-file value="$PROJECT_DIR$/e2e/protractor.conf.js" />
+      <node-interpreter value="project" />
+      <protractor-package value="$PROJECT_DIR$/node_modules/protractor" />
+      <protractor-options value="" />
+      <envs />
+      <scope-kind value="ALL" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Angular Application" type="JavascriptDebugType" uri="http://localhost:4200">
+      <method v="2" />
+    </configuration>
+    <configuration name="Angular CLI Server" type="js.build_tools.npm">
+      <package-json value="$PROJECT_DIR$/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="start" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="ng" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="ng" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="npm.ng" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="7e71d93a-b2ac-4604-a087-15e54e5a3e46" name="Default Changelist" comment="" />
+      <created>1550712982372</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1550712982372</updated>
+      <workItem from="1550712985453" duration="37440000" />
+      <workItem from="1550954249999" duration="2761000" />
+      <workItem from="1551024346873" duration="17301000" />
+      <workItem from="1551189373400" duration="4163000" />
+      <workItem from="1551198665614" duration="11897000" />
+      <workItem from="1551311360166" duration="169000" />
+      <workItem from="1551311581988" duration="8559000" />
+      <workItem from="1551370016566" duration="12599000" />
+      <workItem from="1551409829739" duration="12223000" />
+      <workItem from="1551483196247" duration="64109000" />
+      <workItem from="1551692683479" duration="1465000" />
+      <workItem from="1551694344546" duration="108000" />
+      <workItem from="1551694480601" duration="13818000" />
+      <workItem from="1551831681129" duration="6204000" />
+      <workItem from="1551840108679" duration="33851000" />
+      <workItem from="1551984384693" duration="8703000" />
+      <workItem from="1552007684939" duration="7174000" />
+      <workItem from="1552071492758" duration="1872000" />
+      <workItem from="1552137710762" duration="38811000" />
+      <workItem from="1552309599656" duration="5835000" />
+      <workItem from="1552355373736" duration="18142000" />
+      <workItem from="1552439308516" duration="47024000" />
+      <workItem from="1552601324178" duration="37777000" />
+      <workItem from="1552829119402" duration="629000" />
+      <workItem from="1552829852630" duration="7631000" />
+      <workItem from="1552845397417" duration="151000" />
+      <workItem from="1552845638717" duration="16957000" />
+      <workItem from="1553019369119" duration="11952000" />
+      <workItem from="1553100144872" duration="17837000" />
+      <workItem from="1553196557314" duration="591000" />
+      <workItem from="1553200825621" duration="4037000" />
+      <workItem from="1553228182239" duration="12356000" />
+      <workItem from="1553302160204" duration="18999000" />
+      <workItem from="1553395268202" duration="4474000" />
+      <workItem from="1553436791782" duration="6090000" />
+      <workItem from="1553525739978" duration="104223000" />
+      <workItem from="1554040524376" duration="12088000" />
+      <workItem from="1554123708860" duration="25957000" />
+      <workItem from="1554310563568" duration="9202000" />
+      <workItem from="1554393259704" duration="599000" />
+      <workItem from="1554404063414" duration="4163000" />
+      <workItem from="1554428166475" duration="14184000" />
+      <workItem from="1554488288076" duration="54473000" />
+      <workItem from="1554684807559" duration="20436000" />
+      <workItem from="1554776076975" duration="1565000" />
+      <workItem from="1554778897962" duration="5255000" />
+      <workItem from="1554818310965" duration="4456000" />
+      <workItem from="1554852892698" duration="9441000" />
+      <workItem from="1554907926200" duration="1806000" />
+      <workItem from="1555338528563" duration="51442000" />
+      <workItem from="1555595802657" duration="15907000" />
+      <workItem from="1555708864059" duration="2123000" />
+      <workItem from="1555721752712" duration="5360000" />
+      <workItem from="1555769475989" duration="890000" />
+      <workItem from="1555781790906" duration="12511000" />
+      <workItem from="1555801133007" duration="7894000" />
+      <workItem from="1555869326640" duration="14310000" />
+      <workItem from="1555940962999" duration="9802000" />
+      <workItem from="1555971855450" duration="25973000" />
+      <workItem from="1556065242481" duration="7930000" />
+      <workItem from="1556106854296" duration="10268000" />
+      <workItem from="1556153489195" duration="12900000" />
+      <workItem from="1556226298785" duration="9430000" />
+      <workItem from="1556289263739" duration="22570000" />
+      <workItem from="1556332134536" duration="12527000" />
+      <workItem from="1556400849333" duration="3565000" />
+      <workItem from="1556413111320" duration="22867000" />
+      <workItem from="1556662443669" duration="6374000" />
+      <workItem from="1556712649256" duration="16706000" />
+      <workItem from="1556798220000" duration="4055000" />
+      <workItem from="1556803418471" duration="19003000" />
+      <workItem from="1556996138222" duration="13894000" />
+      <workItem from="1557021863984" duration="4768000" />
+      <workItem from="1557058383618" duration="13511000" />
+      <workItem from="1557110240717" duration="1516000" />
+      <workItem from="1557154192370" duration="31378000" />
+      <workItem from="1557315827374" duration="10203000" />
+      <workItem from="1557346475143" duration="19254000" />
+      <workItem from="1557445473134" duration="567000" />
+      <workItem from="1557489576885" duration="3028000" />
+      <workItem from="1558311105455" duration="8589000" />
+      <workItem from="1558444386946" duration="1468000" />
+      <workItem from="1558796226942" duration="905000" />
+      <workItem from="1560044103913" duration="4538000" />
+      <workItem from="1561119555232" duration="1966000" />
+      <workItem from="1561302631898" duration="1206000" />
+      <workItem from="1561757113385" duration="261000" />
+      <workItem from="1561765850011" duration="5330000" />
+      <workItem from="1561824169858" duration="4772000" />
+      <workItem from="1561993398694" duration="7466000" />
+      <workItem from="1562100278706" duration="1200000" />
+      <workItem from="1562203154475" duration="4657000" />
+      <workItem from="1562263440229" duration="597000" />
+      <workItem from="1562287346561" duration="3499000" />
+      <workItem from="1562379688406" duration="6429000" />
+      <workItem from="1562455060244" duration="19741000" />
+      <workItem from="1562588045627" duration="578000" />
+      <workItem from="1562712978920" duration="573000" />
+      <workItem from="1562717199156" duration="26489000" />
+      <workItem from="1562929432424" duration="595000" />
+      <workItem from="1562961358809" duration="5881000" />
+      <workItem from="1563059046910" duration="2989000" />
+      <workItem from="1563125288462" duration="18725000" />
+      <workItem from="1563230606908" duration="4116000" />
+      <workItem from="1563293987963" duration="6300000" />
+      <workItem from="1563322587369" duration="24765000" />
+      <workItem from="1563447451098" duration="8840000" />
+      <workItem from="1563488697173" duration="13515000" />
+      <workItem from="1563557412057" duration="4219000" />
+      <workItem from="1563563622857" duration="1706000" />
+      <workItem from="1563569933016" duration="3448000" />
+      <workItem from="1563714566096" duration="17753000" />
+      <workItem from="1563757671652" duration="9011000" />
+      <workItem from="1563926084851" duration="3071000" />
+      <workItem from="1563930453136" duration="8295000" />
+      <workItem from="1563997263145" duration="8915000" />
+      <workItem from="1564017467888" duration="510000" />
+      <workItem from="1564018199160" duration="723000" />
+      <workItem from="1564065059764" duration="5798000" />
+      <workItem from="1564076213714" duration="27987000" />
+      <workItem from="1564157383960" duration="24088000" />
+      <workItem from="1564268712487" duration="582000" />
+      <workItem from="1564363951440" duration="20499000" />
+      <workItem from="1564507008280" duration="4185000" />
+      <workItem from="1564527790193" duration="7796000" />
+      <workItem from="1564579354492" duration="24746000" />
+      <workItem from="1564697435560" duration="14137000" />
+      <workItem from="1564743847958" duration="4211000" />
+      <workItem from="1564757458975" duration="584000" />
+      <workItem from="1564783517074" duration="30693000" />
+      <workItem from="1564946124904" duration="2119000" />
+      <workItem from="1564951103654" duration="417000" />
+      <workItem from="1564954701935" duration="11585000" />
+      <workItem from="1565028158365" duration="4745000" />
+      <workItem from="1565049341822" duration="4415000" />
+      <workItem from="1565094013286" duration="19761000" />
+      <workItem from="1565278296918" duration="1629000" />
+      <workItem from="1565283325995" duration="29249000" />
+      <workItem from="1565391724436" duration="16106000" />
+      <workItem from="1565476013695" duration="639000" />
+      <workItem from="1565476715965" duration="4720000" />
+      <workItem from="1565488696112" duration="22772000" />
+      <workItem from="1565663235224" duration="576000" />
+      <workItem from="1565666049771" duration="30811000" />
+      <workItem from="1565809172394" duration="27730000" />
+      <workItem from="1565900223324" duration="3214000" />
+      <workItem from="1565904731834" duration="8610000" />
+      <workItem from="1565918355604" duration="30911000" />
+      <workItem from="1566196106768" duration="598000" />
+      <workItem from="1566216213835" duration="68000" />
+      <workItem from="1566493245601" duration="9796000" />
+      <workItem from="1566577285318" duration="813000" />
+      <workItem from="1566580954635" duration="22690000" />
+      <workItem from="1566951689541" duration="7888000" />
+      <workItem from="1567006860801" duration="8105000" />
+      <workItem from="1567378356895" duration="3208000" />
+      <workItem from="1567386027358" duration="25382000" />
+      <workItem from="1567531970115" duration="8595000" />
+      <workItem from="1567560090126" duration="2790000" />
+      <workItem from="1567609585705" duration="2709000" />
+      <workItem from="1567639242209" duration="19194000" />
+      <workItem from="1567786660386" duration="484000" />
+      <workItem from="1567787385065" duration="15688000" />
+      <workItem from="1567899923708" duration="593000" />
+      <workItem from="1567907357459" duration="6910000" />
+      <workItem from="1567978323815" duration="4509000" />
+      <workItem from="1568038853339" duration="618000" />
+      <workItem from="1568041284390" duration="11336000" />
+      <workItem from="1568060206016" duration="449000" />
+      <workItem from="1568061810418" duration="337000" />
+      <workItem from="1568062193764" duration="309000" />
+      <workItem from="1568127215757" duration="3856000" />
+      <workItem from="1568145521559" duration="253000" />
+      <workItem from="1568145844640" duration="30091000" />
+      <workItem from="1568244765154" duration="2261000" />
+      <workItem from="1568248674989" duration="801000" />
+      <workItem from="1568249801462" duration="36001000" />
+      <workItem from="1568371468604" duration="10185000" />
+      <workItem from="1568422852982" duration="4357000" />
+      <workItem from="1568462860624" duration="6200000" />
+      <workItem from="1568482327106" duration="24115000" />
+      <workItem from="1568748504715" duration="1001000" />
+      <workItem from="1568751107497" duration="14199000" />
+      <workItem from="1568821430306" duration="1501000" />
+      <workItem from="1568829807516" duration="5551000" />
+      <workItem from="1568849420882" duration="339000" />
+      <workItem from="1568853635853" duration="11040000" />
+      <workItem from="1568910287187" duration="2051000" />
+      <workItem from="1568931624456" duration="992000" />
+      <workItem from="1568961751082" duration="8551000" />
+      <workItem from="1568993436333" duration="1062000" />
+      <workItem from="1568999525083" duration="15019000" />
+      <workItem from="1569081554875" duration="615000" />
+      <workItem from="1569085247224" duration="19088000" />
+      <workItem from="1569289090187" duration="903000" />
+      <workItem from="1569293566023" duration="575000" />
+      <workItem from="1569459781968" duration="669000" />
+      <workItem from="1569691154830" duration="9520000" />
+      <workItem from="1569972726996" duration="531000" />
+      <workItem from="1570148595751" duration="1189000" />
+      <workItem from="1570213157236" duration="5479000" />
+      <workItem from="1570324976303" duration="5850000" />
+      <workItem from="1570408925815" duration="4267000" />
+      <workItem from="1570547885276" duration="3895000" />
+      <workItem from="1570609634293" duration="13879000" />
+      <workItem from="1570691102643" duration="11632000" />
+      <workItem from="1570755810330" duration="2241000" />
+      <workItem from="1570813081953" duration="13019000" />
+      <workItem from="1570839372672" duration="5946000" />
+      <workItem from="1570847410233" duration="646000" />
+      <workItem from="1570891712364" duration="22574000" />
+      <workItem from="1570978174082" duration="31919000" />
+      <workItem from="1571171358041" duration="2652000" />
+      <workItem from="1571264208419" duration="596000" />
+      <workItem from="1571270794127" duration="14275000" />
+      <workItem from="1571447015439" duration="575000" />
+      <workItem from="1571667136317" duration="359000" />
+      <workItem from="1571676992081" duration="8373000" />
+      <workItem from="1571738980516" duration="8361000" />
+      <workItem from="1572272722076" duration="934000" />
+      <workItem from="1572287219941" duration="590000" />
+      <workItem from="1572366683772" duration="2342000" />
+      <workItem from="1572474158374" duration="9929000" />
+      <workItem from="1572706389776" duration="1976000" />
+      <workItem from="1572710750169" duration="20561000" />
+      <workItem from="1572785483318" duration="4205000" />
+      <workItem from="1572876347172" duration="6028000" />
+      <workItem from="1572912237213" duration="11279000" />
+      <workItem from="1572960618902" duration="17531000" />
+      <workItem from="1573002227965" duration="5961000" />
+      <workItem from="1573072186569" duration="17518000" />
+      <workItem from="1573158353476" duration="9200000" />
+      <workItem from="1573181773663" duration="2000" />
+      <workItem from="1573225148373" duration="16315000" />
+      <workItem from="1573303787992" duration="12068000" />
+      <workItem from="1573342863109" duration="3143000" />
+      <workItem from="1573356556740" duration="622000" />
+      <workItem from="1573398531667" duration="586000" />
+      <workItem from="1573417443718" duration="8469000" />
+      <workItem from="1573491672858" duration="11286000" />
+      <workItem from="1573575679837" duration="20731000" />
+      <workItem from="1573682625288" duration="1953000" />
+      <workItem from="1573687657328" duration="14830000" />
+      <workItem from="1573809160156" duration="8901000" />
+      <workItem from="1573928209993" duration="282000" />
+      <workItem from="1573929201722" duration="40818000" />
+      <workItem from="1574128329829" duration="4972000" />
+      <workItem from="1574199816384" duration="5189000" />
+      <workItem from="1574296299892" duration="13899000" />
+      <workItem from="1574543944882" duration="7976000" />
+      <workItem from="1574795288586" duration="599000" />
+      <workItem from="1574822117400" duration="8992000" />
+      <workItem from="1574929926604" duration="8066000" />
+      <workItem from="1574986566394" duration="1188000" />
+      <workItem from="1575107359578" duration="1230000" />
+      <workItem from="1575127357062" duration="955000" />
+      <workItem from="1575139250484" duration="1638000" />
+      <workItem from="1575166315227" duration="1073000" />
+      <workItem from="1575398091850" duration="33994000" />
+      <workItem from="1575627134450" duration="22958000" />
+      <workItem from="1575912112915" duration="33197000" />
+      <workItem from="1576101160864" duration="1999000" />
+      <workItem from="1576108932831" duration="9355000" />
+      <workItem from="1576160335457" duration="19882000" />
+      <workItem from="1576277451969" duration="9602000" />
+      <workItem from="1576418837380" duration="37663000" />
+      <workItem from="1576553724941" duration="8451000" />
+      <workItem from="1576612168136" duration="15567000" />
+      <workItem from="1576713394745" duration="4938000" />
+      <workItem from="1576825559390" duration="9636000" />
+      <workItem from="1576887966988" duration="18416000" />
+      <workItem from="1577003586261" duration="16074000" />
+      <workItem from="1577100242544" duration="4372000" />
+      <workItem from="1577107870360" duration="23000" />
+      <workItem from="1577107938317" duration="20267000" />
+      <workItem from="1577186588161" duration="17797000" />
+      <workItem from="1577227880092" duration="7264000" />
+      <workItem from="1577281597693" duration="20324000" />
+      <workItem from="1577379749541" duration="1441000" />
+      <workItem from="1577382347951" duration="30729000" />
+      <workItem from="1577486801422" duration="1814000" />
+      <workItem from="1577504583373" duration="15152000" />
+      <workItem from="1577564434217" duration="10478000" />
+      <workItem from="1577592837281" duration="2665000" />
+      <workItem from="1577715652640" duration="5917000" />
+      <workItem from="1577755967177" duration="1400000" />
+      <workItem from="1577803058349" duration="8361000" />
+      <workItem from="1577980708199" duration="3490000" />
+      <workItem from="1577989305704" duration="13348000" />
+      <workItem from="1578061092696" duration="13668000" />
+      <workItem from="1578142776325" duration="9614000" />
+      <workItem from="1578326931223" duration="781000" />
+      <workItem from="1578339992314" duration="1206000" />
+      <workItem from="1578366690171" duration="25337000" />
+      <workItem from="1578445729349" duration="9472000" />
+      <workItem from="1578495744241" duration="6127000" />
+      <workItem from="1578526893933" duration="60489000" />
+      <workItem from="1578929917054" duration="4879000" />
+      <workItem from="1578956122411" duration="46643000" />
+      <workItem from="1579131804915" duration="5502000" />
+      <workItem from="1579144343783" duration="100327000" />
+      <workItem from="1579632031090" duration="2826000" />
+      <workItem from="1579640031956" duration="1943000" />
+      <workItem from="1579644612720" duration="186000" />
+      <workItem from="1579645463942" duration="4660000" />
+      <workItem from="1579655397673" duration="873000" />
+    </task>
+    <task id="LOCAL-00001" summary="midway graph scroll &amp; zoom">
+      <created>1577383952531</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1577383952533</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
+    <servers />
+  </component>
+  <component name="TimeTrackingManager">
+    <option name="totallyTimeSpent" value="3310106000" />
+  </component>
+  <component name="TodoView" selected-index="4">
+    <todo-panel id="selected-file">
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+    <todo-panel id="all">
+      <are-packages-shown value="true" />
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="-8" y="-8" width="1382" height="784" extended-state="6" />
+    <layout>
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.69184893" visible="true" weight="0.21709532" />
+      <window_info id="Favorites" order="1" side_tool="true" />
+      <window_info id="npm" order="2" sideWeight="0.22417583" side_tool="true" weight="0.09002976" />
+      <window_info anchor="bottom" id="Messages" order="0" weight="0.32872504" />
+      <window_info anchor="bottom" id="Docker" order="1" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Find" order="2" sideWeight="0.7193646" weight="0.32872504" />
+      <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.7068452" weight="0.39938557" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="4" sideWeight="0.6316964" visible="true" weight="0.3686636" />
+      <window_info anchor="bottom" id="Event Log" order="5" sideWeight="0.2806354" side_tool="true" weight="0.32872504" />
+      <window_info anchor="bottom" id="TODO" order="6" sideWeight="0.4985119" weight="0.32872504" />
+      <window_info anchor="bottom" id="Version Control" order="7" sideWeight="0.4940476" weight="0.32872504" />
+      <window_info anchor="bottom" id="Message" order="8" />
+      <window_info anchor="bottom" id="TypeScript" order="9" sideWeight="0.7170953" weight="0.33794162" />
+      <window_info anchor="bottom" id="Cvs" order="10" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="11" weight="0.4" />
+      <window_info anchor="bottom" id="Inspection Results" order="12" weight="0.3296875" />
+      <window_info anchor="bottom" id="Run" order="13" sideWeight="0.7170953" weight="0.30568355" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" x="805" y="237" width="181" height="503" id="Hierarchy" order="2" sideWeight="0.6163022" visible="true" weight="0.16792738" />
+      <window_info anchor="right" auto_hide="true" id="Structure" order="3" sideWeight="0.3836978" type="SLIDING" weight="0.22087745" />
+    </layout>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
+    <MESSAGE value="midway graph scroll &amp; zoom" />
+    <option name="LAST_COMMIT_MESSAGE" value="midway graph scroll &amp; zoom" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <default-breakpoints>
+        <breakpoint enabled="true" type="javascript-exception">
+          <properties />
+        </breakpoint>
+      </default-breakpoints>
+    </breakpoint-manager>
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/app/guiElements/m-graph-html/m-graph-html.component.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="137">
+          <caret line="65" column="131" selection-start-line="65" selection-start-column="131" selection-end-line="65" selection-end-column="131" />
+          <folding>
+            <element signature="n#ul#0;n#div#1;n#div#0;n#div#0;n#!!top" />
+            <element signature="n#style#0;n#div#0;n#foreignobject#0;n#div#3;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#div#0;n#div#0;n#foreignobject#0;n#div#3;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#div#0;n#div#0;n#div#0;n#foreignobject#0;n#div#3;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#span#0;n#div#0;n#div#3;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#span#1;n#div#0;n#div#3;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#span#0;n#div#1;n#div#3;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#span#1;n#div#1;n#div#3;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#div#1;n#div#2;n#div#3;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#div#0;n#div#1;n#div#2;n#div#3;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#select#0;n#div#0;n#div#1;n#div#2;n#div#3;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#div#1;n#div#1;n#div#2;n#div#3;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#div#3;n#div#3;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#select#0;n#div#3;n#div#3;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#input#0;n#div#3;n#div#3;n#div#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/compiledjs - Copia (2).js" />
+    <entry file="file://$PROJECT_DIR$/app/guiElements/top-bar/top-bar.component.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-3402">
+          <caret line="60" column="21" selection-start-line="60" selection-start-column="21" selection-end-line="60" selection-end-column="21" />
+          <folding>
+            <element signature="e#0#50#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/guiElements/mGraph/Edge/ExtEdge.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="102">
+          <caret line="6" column="17" selection-start-line="6" selection-start-column="17" selection-end-line="6" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/guiElements/style-editor/style-editor.component.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-77">
+          <caret line="501" selection-start-line="501" selection-end-line="501" />
+          <folding>
+            <element signature="e#0#48#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/common/jquery-ui-1.12.1/external/jquery/jquery.js" />
+    <entry file="file://$PROJECT_DIR$/styles.css">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret column="29" selection-start-column="29" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/Model/modelPiece.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="201">
+          <caret line="289" column="2" selection-start-line="289" selection-start-column="2" selection-end-line="289" selection-end-column="2" />
+          <folding>
+            <element signature="e#0#491#0" expanded="true" />
+            <element signature="n#!!block;n#pushUp#0;n#ModelPiece#0" />
+            <element signature="n#!!block;n#pushDown#0;n#ModelPiece#0" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/mClass/classChild/Features/References/iReference.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="136">
+          <caret line="41" column="45" selection-start-line="41" selection-start-column="45" selection-end-line="41" selection-end-column="45" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/guiElements/dam-context-menu/dam-context-menu.component.css">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="137">
+          <caret line="83" column="15" selection-start-line="83" selection-start-column="15" selection-end-line="83" selection-end-column="15" />
+          <folding>
+            <element signature="e#468#545#0" />
+            <element signature="e#559#585#0" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/mClass/MClass.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="146">
+          <caret line="61" column="27" selection-start-line="61" selection-start-column="27" selection-end-line="61" selection-end-column="27" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/styles.css">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="205">
+          <caret line="154" column="16" selection-start-line="154" selection-start-column="16" selection-end-line="154" selection-end-column="16" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/guiElements/propertyBar/propertyBar.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="129">
+          <caret line="281" column="10" selection-start-line="281" selection-start-column="10" selection-end-line="281" selection-end-column="10" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/mClass/classChild/Operations/eParameter.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="137">
+          <caret line="80" column="77" lean-forward="true" selection-start-line="80" selection-start-column="77" selection-end-line="80" selection-end-column="77" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/mClass/classChild/Typedd.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="236">
+          <caret line="141" column="2" selection-start-line="141" selection-start-column="2" selection-end-line="141" selection-end-column="2" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/mClass/classChild/Operations/eOperation.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="137">
+          <caret line="110" column="9" selection-start-line="110" selection-start-column="9" selection-end-line="110" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/mClass/classChild/Features/References/M2Reference.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="129">
+          <caret line="68" column="9" selection-start-line="68" selection-start-column="9" selection-end-line="68" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/guiElements/dam-context-menu/dam-context-menu.component.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="187">
+          <caret line="11" column="113" selection-start-line="11" selection-start-column="113" selection-end-line="11" selection-end-column="113" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/guiElements/dam-context-menu/dam-context-menu.component.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="153">
+          <caret line="138" column="26" lean-forward="true" selection-start-line="138" selection-start-column="26" selection-end-line="138" selection-end-column="26" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/guiElements/mGraph/iGraph.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="129">
+          <caret line="417" column="30" selection-start-line="417" selection-start-column="30" selection-end-line="417" selection-end-column="30" />
+          <folding>
+            <element signature="e#0#311#0" expanded="true" />
+            <element signature="n#style#0;n#div#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/guiElements/mGraph/Edge/EdgePoint.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="134">
+          <caret line="83" column="20" selection-start-line="83" selection-start-column="20" selection-end-line="83" selection-end-column="20" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/guiElements/mGraph/Vertex/iVertex.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="304">
+          <caret line="707" column="119" selection-start-line="707" selection-start-column="119" selection-end-line="707" selection-end-column="119" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/mClass/iClass.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="142">
+          <caret line="269" column="2" selection-start-line="269" selection-start-column="2" selection-end-line="269" selection-end-column="2" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <folding>
+            <element signature="e#0#47#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/mClass/classChild/Features/References/MReference.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="113">
+          <caret line="203" column="26" selection-start-line="203" selection-start-column="26" selection-end-line="203" selection-end-column="26" />
+          <folding>
+            <element signature="e#0#436#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/guiElements/mGraph/Edge/iEdge.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="287">
+          <caret line="685" column="29" selection-start-line="685" selection-start-column="29" selection-end-line="685" selection-end-column="29" />
+          <folding>
+            <element signature="e#0#345#0" expanded="true" />
+            <element signature="n#!!block;n#staticInit#0;n#IEdge#0" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/dist/untitled/index.html" />
+    <entry file="file://$PROJECT_DIR$/dist/jodel.html" />
+    <entry file="file://$PROJECT_DIR$/node_modules/webpack/lib/NormalModuleFactory.js" />
+    <entry file="file://$PROJECT_DIR$/dist/index.html" />
+    <entry file="file://$PROJECT_DIR$/node_modules/@angular-devkit/build-angular/src/angular-cli-files/models/webpack-configs/typescript.js" />
+    <entry file="file://$PROJECT_DIR$/node_modules/@types/jquery-ui/LICENSE" />
+    <entry file="file://$PROJECT_DIR$/app/mClass/m2Class.ts">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="198">
+          <caret line="210" column="110" selection-start-line="210" selection-start-column="110" selection-end-line="210" selection-end-column="110" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/mClass/classChild/Type.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="265">
+          <caret line="207" column="97" selection-start-line="207" selection-start-column="97" selection-end-line="207" selection-end-column="97" />
+          <folding>
+            <element signature="e#0#232#0" expanded="true" />
+            <element signature="n#!!block;n#updateTypeSelector#0;n#Type#0" />
+            <element signature="n#!!block;n#toEcoreString#0;n#Type#0" />
+            <element signature="n#!!block;n#toShortString#0;n#Type#0" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/common/util.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="111">
+          <caret line="11" column="60" selection-start-line="11" selection-start-column="60" selection-end-line="11" selection-end-column="60" />
+          <folding>
+            <element signature="n#myFileReader#0" />
+            <element signature="n#InputPopup#0" />
+            <element signature="n#ShortAttribETypes#0" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/node_modules/jqueryui/ui/i18n/datepicker-af.js" />
+    <entry file="file://$PROJECT_DIR$/npm">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tsconfig.json">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/node_modules/@angular/cli/bin/ng" />
+    <entry file="file://$PROJECT_DIR$/app/common/jquery-ui-1.12.1/LICENSE.txt" />
+    <entry file="file://$PROJECT_DIR$/src/tsconfig.spec.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="272">
+          <caret line="16" column="15" lean-forward="true" selection-start-line="16" selection-start-column="15" selection-end-line="16" selection-end-column="15" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/app.module.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1887">
+          <caret line="165" column="5" selection-start-line="165" selection-start-column="5" selection-end-line="165" selection-end-column="5" />
+          <folding>
+            <element signature="e#0#64#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/tsconfig.app.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="221">
+          <caret line="13" selection-start-line="13" selection-end-line="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/mClass/classChild/Features/Attributes/mmAttribute.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <folding>
+            <element signature="e#0#187#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/mClass/classChild/Features/Attributes/MAttribute.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3128">
+          <caret line="198" column="2" selection-start-line="198" selection-start-column="2" selection-end-line="198" selection-end-column="2" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/common/Joiner.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="195">
+          <caret line="56" column="56" selection-start-line="56" selection-start-column="56" selection-end-line="56" selection-end-column="56" />
+          <folding>
+            <element signature="n#!!doc" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tsconfig.spec.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="119">
+          <caret line="7" column="15" selection-start-line="7" selection-start-column="15" selection-end-line="7" selection-end-column="15" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tsconfig.app.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="102">
+          <caret line="6" column="23" selection-start-line="6" selection-start-column="23" selection-end-line="6" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/package.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="323">
+          <caret line="19" column="38" selection-start-line="19" selection-start-column="38" selection-end-line="19" selection-end-column="38" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="272">
+          <caret line="16" column="5" selection-start-line="16" selection-start-column="5" selection-end-line="16" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>
