@@ -163,7 +163,7 @@ export function main0(loadEvent: Event, tentativi: number = 0) {
 
   // U.loadScript('./app/common/jquery-ui-1.12.1/jquery-ui.js');
   // U.loadScript('./app/common/jquery-ui-1.12.1/jquery-ui.structure.js');
-  U.loadScript('https://code.jquery.com/ui/1.12.1/jquery-ui.min.js');
+  // U.loadScript('https://code.jquery.com/ui/1.12.1/jquery-ui.min.js');
   main();
   // console.log('main(), $ loaded:', $ !== undefined, 'status: ', Status.status);
 }

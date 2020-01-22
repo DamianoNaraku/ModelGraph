@@ -5,7 +5,7 @@
     "types": [
       "jasmine",
       "node",
-      "jquery", "jquery-ui", "jqueryui"
+      "jquery", "jqueryui"
     ]
   },
   "files": [
