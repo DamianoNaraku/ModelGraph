@@ -52,7 +52,7 @@ export {IReference, M3Reference} from '../mClass/classChild/Features/References/
 export {M2Reference} from '../mClass/classChild/Features/References/M2Reference';
 export {MReference} from '../mClass/classChild/Features/References/MReference';
 export {IAttribute, M3Attribute} from '../mClass/classChild/Features/Attributes/iAttribute';
-export {M2Attribute} from '../mClass/classChild/Features/Attributes/MMAttribute';
+export {M2Attribute} from '../mClass/classChild/Features/Attributes/mmAttribute';
 export {MAttribute} from '../mClass/classChild/Features/Attributes/MAttribute';
 export {EAnnotation} from '../../app/Model/EAnnotation';
 export {EAnnotationDetail} from '../../app/Model/EAnnotationDetail';
